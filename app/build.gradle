@@ -17,7 +17,9 @@ android {
     compileSdkMinor = 2
     ndkVersion '30.0.16248370'
     defaultConfig {
-        applicationId 'me.zhanghai.android.files'
+        // mftlrs: own applicationId; namespace and Kotlin package stay upstream's. Keep in sync
+        // with android:targetPackage in res/xml/shortcuts.xml.
+        applicationId 'io.github.efimov_r.mftlrs'
         minSdk 23
         // Not supporting the ACCESS_LOCAL_NETWORK runtime permission yet.
         //noinspection OldTargetApi

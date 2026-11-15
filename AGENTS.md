@@ -28,7 +28,7 @@
 
 ## Структура кода
 
-Пакет и `namespace` — `me.zhanghai.android.files`, `applicationId` такой же (пока не переименован).
+Пакет и `namespace` — `me.zhanghai.android.files`, как у upstream. `applicationId` — свой (`app/build.gradle`), совпадает с `targetPackage` в `res/xml/shortcuts.xml`.
 
 ```
 app/src/main/
