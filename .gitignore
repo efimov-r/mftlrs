@@ -6,5 +6,11 @@
 /local.properties
 /signing.jks
 /signing.properties
+# mftlrs: signing keys anywhere in the tree and Android Studio "Generate Signed App" output.
+*.jks
+*.keystore
+/app/release/
+/CLAUDE.local.md
+/.claude/settings.local.json
 .DS_Store
 *.iml

@@ -29,8 +29,10 @@ import me.zhanghai.android.files.provider.sftp.client.Client as SftpClient
 import me.zhanghai.android.files.provider.smb.client.Client as SmbClient
 import me.zhanghai.android.files.provider.webdav.client.Client as WebDavClient
 
+// mftlrs: initializeFirebase removed.
+// TODO(mftlrs): initialize ACRA. It should run as early as possible, ideally in
+//  Application.attachBaseContext(), but this app has no Application subclass.
 val appInitializers = listOf(
-    ::initializeFirebase,
     ::disableHiddenApiChecks,
     ::initializeWebViewDebugging,
     ::initializeCoil,
@@ -41,12 +43,6 @@ val appInitializers = listOf(
     ::initializeNightMode,
     ::createNotificationChannels
 )
-
-private fun initializeFirebase() {
-//#ifdef NONFREE
-    me.zhanghai.android.files.nonfree.FirebaseInitializer.initialize()
-//#endif
-}
 
 private fun disableHiddenApiChecks() {
     HiddenApi.disableHiddenApiChecks()
