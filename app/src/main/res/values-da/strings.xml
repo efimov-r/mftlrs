@@ -7,8 +7,6 @@
 
 <resources>
 
-    <string name="app_name">Material Filer</string>
-
     <string name="close">Luk</string>
     <string name="copy">Kopiér</string>
     <string name="cut">Klip</string>

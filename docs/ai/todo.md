@@ -11,7 +11,7 @@
 - [ ] Проверить сборку: `.\gradlew.bat assembleDebug` и запуск на устройстве
 - [ ] Добавить удалённый `upstream`: `git remote add upstream https://github.com/zhanghai/MaterialFiles.git`
 - [ ] Подключить ACRA с диалогом отправки — [decisions.md](decisions.md); Firebase уже вырезан, места под ACRA помечены `TODO(mftlrs)` — [architecture.md](architecture.md), «Отчёты о падениях»
-- [ ] Ребрендинг: своё название (`app_name` во всех 33 локалях, `fastlane/.../title.txt`), иконка, экран «О программе», README, `fastlane/metadata`, `PRIVACY.md`. Firebase и `applicationId` — сделано
+- [ ] Ребрендинг: иконка и баннер с надписью (`drawable-xhdpi/banner.png`, `art/banner.svg`, картинки fastlane), экран «О программе», README, описания и changelogs `fastlane/metadata`, `PRIVACY.md`. Firebase, `applicationId` и название `app_name` — сделано
 - [ ] Решить, коммитить ли `gradle/gradle-daemon-jvm.properties`
 - [ ] Обсудить хранение настроек: сложные значения (хранилища, закладки, сортировка, пути) лежат в SharedPreferences как Parcel → Base64, любое изменение этих классов без миграции молча сбрасывает настройки — [gotchas.md](gotchas.md), «Настройки хранятся как Parcel»
 - [ ] Редизайн без боковой панели — что затронет: [architecture.md](architecture.md), «Боковая панель»

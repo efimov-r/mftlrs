@@ -1,1 +1,3 @@
+// mftlrs: explicit project name, independent of the checkout folder name.
+rootProject.name = 'mftlrs'
 include ':app'

@@ -174,7 +174,7 @@ Coil 2 со своими загрузчиками: `PathAttributesFetcher` (че
 
 ## Ресурсы, переводы, метаданные
 
-- 33 перевода в `res/values-*` (есть `values-ru`); upstream переводит через Transifex. `app_name` переведён отдельно в каждой локали.
+- 33 перевода в `res/values-*` (есть `values-ru`); upstream переводит через Transifex. Название `app_name` = `mftlrs` — только в `values/strings.xml`, `translatable="false"`, в локалях его нет.
 - Иконка — `mipmap-*/launcher_icon`, баннер Android TV — `drawable/banner`.
 - `fastlane/metadata/android/` — тексты и скриншоты для Google Play и F-Droid (оригинальные).
 - `README.md`, `README_zh-CN.md`, `PRIVACY.md`, `SECURITY.md`, `.github/pull_request_template.md` — оригинальные, про MaterialFiles.
