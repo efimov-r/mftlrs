@@ -1,6 +1,6 @@
 # mftlrs
 
-Файловый менеджер с открытым кодом для Android 6.0+, основанный на [Material Files](https://github.com/zhanghai/MaterialFiles) автора Hai Zhang.
+Файловый менеджер с открытым кодом для Android 8.0+, основанный на [Material Files](https://github.com/zhanghai/MaterialFiles) автора Hai Zhang.
 
 > mftlrs — независимый форк. Он не связан с проектом Material Files и его автором и не одобрен ими. О проблемах в mftlrs пишите в [issues этого репозитория](../../issues), а не в оригинальный проект.
 
@@ -11,7 +11,8 @@
 - удалены Firebase Analytics и Crashlytics — приложение не собирает и не отправляет данные;
 - своё название и идентификатор приложения — ставится рядом с Material Files, не заменяя его;
 - экран «О программе» ведёт в этот репозиторий, оригинал указан в пункте «Основано на»;
-- убрана поддержка Android TV.
+- убрана поддержка Android TV;
+- минимальная версия — Android 8.0 (у Material Files — 6.0).
 
 ## Возможности
 

@@ -21,7 +21,8 @@ android {
         // mftlrs: own applicationId; namespace and Kotlin package stay upstream's. Keep in sync
         // with android:targetPackage in res/xml/shortcuts.xml.
         applicationId 'io.github.efimov_r.mftlrs'
-        minSdk 23
+        // mftlrs: 26 instead of upstream's 23 — adaptive icons everywhere, no baked PNG icons.
+        minSdk 26
         // Not supporting the ACCESS_LOCAL_NETWORK runtime permission yet.
         //noinspection OldTargetApi
         targetSdk 36

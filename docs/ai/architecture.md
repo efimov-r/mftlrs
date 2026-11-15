@@ -175,7 +175,7 @@ Coil 2 со своими загрузчиками: `PathAttributesFetcher` (че
 ## Ресурсы, переводы, метаданные
 
 - 33 перевода в `res/values-*` (есть `values-ru`); upstream переводит через Transifex. Название `app_name` = `mftlrs` — только в `values/strings.xml`, `translatable="false"`, в локалях его нет.
-- Иконка — `mipmap-*/launcher_icon` (адаптивная: фон — цвет `color_primary_light`, белая папка — PNG, монохромный слой — вектор; для Android 6–7.1 — PNG), исходники — `art/*.svg`. Баннера Android TV нет.
+- Иконка — только адаптивная, `mipmap-anydpi-v26/launcher_icon.xml`: фон — цвет `color_primary_light`, белая папка — `mipmap-*/launcher_icon_foreground.png`, монохромный слой — вектор. Иконки ярлыков — тоже адаптивные: серый фон и векторный значок цвета `color_primary_light`. Запечённых PNG нет (minSdk 26). Исходники — `art/*.svg`, выгрузка PNG переднего слоя и иконки для магазина — `art/generate-png.sh` + `deploy-png.sh` (Inkscape). Баннера Android TV нет.
 - `fastlane/metadata/android/` — тексты и скриншоты для Google Play и F-Droid (оригинальные).
 - `README.md`, `PRIVACY.md`, `SECURITY.md`, `fastlane/metadata/android/en-US/*.txt` — свои, про mftlrs, с указанием «основано на Material Files». Скриншоты и картинки fastlane — пока upstream.
 - Экран «О программе» (`about/`): ссылки — на форк; пункт «Основано на» — на upstream; в «Лицензиях» (`raw/licenses.xml`) первой — запись mftlrs. Правила атрибуции — [decisions.md](decisions.md), заголовки файлов — [style.md](style.md).
