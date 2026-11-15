@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018 Hai Zhang <dreaming.in.code.zh@gmail.com>
  * All Rights Reserved.
+ * Modified for mftlrs, 2026.
  */
 
 package me.zhanghai.android.files.settings
@@ -21,7 +22,6 @@ import me.zhanghai.android.files.provider.root.RootStrategy
 import me.zhanghai.android.files.storage.FileSystemRoot
 import me.zhanghai.android.files.storage.PrimaryStorageVolume
 import me.zhanghai.android.files.storage.Storage
-import me.zhanghai.android.files.theme.custom.ThemeColor
 import me.zhanghai.android.files.theme.night.NightMode
 import java.io.File
 
@@ -99,26 +99,11 @@ object Settings {
             R.string.pref_key_ftp_server_writable, R.bool.pref_default_value_ftp_server_writable
         )
 
-    val THEME_COLOR: SettingLiveData<ThemeColor> =
-        EnumSettingLiveData(
-            R.string.pref_key_theme_color, R.string.pref_default_value_theme_color,
-            ThemeColor::class.java
-        )
-
-    val MATERIAL_DESIGN_3: SettingLiveData<Boolean> =
-        BooleanSettingLiveData(
-            R.string.pref_key_material_design_3, R.bool.pref_default_value_material_design_3
-        )
-
+    // mftlrs: THEME_COLOR, MATERIAL_DESIGN_3 and BLACK_NIGHT_MODE removed — two fixed themes.
     val NIGHT_MODE: SettingLiveData<NightMode> =
         EnumSettingLiveData(
             R.string.pref_key_night_mode, R.string.pref_default_value_night_mode,
             NightMode::class.java
-        )
-
-    val BLACK_NIGHT_MODE: SettingLiveData<Boolean> =
-        BooleanSettingLiveData(
-            R.string.pref_key_black_night_mode, R.bool.pref_default_value_black_night_mode
         )
 
     val FILE_LIST_ANIMATION: SettingLiveData<Boolean> =

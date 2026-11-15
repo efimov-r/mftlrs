@@ -3,11 +3,13 @@
 <!--
   ~ Copyright (c) 2021 Hai Zhang <dreaming.in.code.zh@gmail.com>
   ~ All Rights Reserved.
+  ~ Modified for mftlrs, 2026.
   -->
 
 <resources>
 
-    <style name="Platform.V23.Theme.MaterialFiles.Material3" parent="Theme.Material3.DynamicColors.DayNight.NoActionBar">
+    <!-- mftlrs: fixed mftlrs palette (themes_mftlrs.xml) instead of dynamic colors. -->
+    <style name="Platform.V23.Theme.MaterialFiles.Material3" parent="Theme.Mftlrs.Material3.DayNight">
         <item name="colorPrimaryDark">@color/system_window_scrim_material3</item>
         <item name="android:windowLightStatusBar">?isLightTheme</item>
     </style>
@@ -60,7 +62,8 @@
     </style>
     <style name="Theme.MaterialFiles.Material3.Translucent" parent="Base.Theme.MaterialFiles.Material3.Translucent" />
 
-    <style name="Platform.V23.Theme.MaterialFiles.Material3.Immersive" parent="Theme.Material3.DynamicColors.Dark.NoActionBar">
+    <!-- mftlrs: fixed dark mftlrs palette instead of dynamic colors. -->
+    <style name="Platform.V23.Theme.MaterialFiles.Material3.Immersive" parent="Theme.Mftlrs.Material3.Dark">
         <item name="android:navigationBarColor">?colorPrimaryDark</item>
 
         <item name="colorPrimaryDark">@color/dark_50_percent</item>
@@ -98,8 +101,5 @@
         <item name="colorAppBarSurface">@color/dark_50_percent</item>
     </style>
     <style name="Theme.MaterialFiles.Material3.Immersive" parent="Base.Theme.MaterialFiles.Material3.Immersive" />
-
-    <style name="Theme.MaterialFiles.Material3.Black" />
-    <style name="Theme.MaterialFiles.Material3.Translucent.Black" />
-    <style name="Theme.MaterialFiles.Material3.Immersive.Black" />
+    <!-- mftlrs: .Black variants (black night mode) removed. -->
 </resources>

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018 Hai Zhang <dreaming.in.code.zh@gmail.com>
  * All Rights Reserved.
+ * Modified for mftlrs, 2026.
  */
 
 package me.zhanghai.android.files.settings
@@ -10,7 +11,6 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
-import androidx.annotation.StyleRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.add
@@ -18,7 +18,6 @@ import androidx.fragment.app.commit
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.WriteWith
 import me.zhanghai.android.files.app.AppActivity
-import me.zhanghai.android.files.theme.custom.CustomThemeHelper.OnThemeChangedListener
 import me.zhanghai.android.files.theme.night.NightModeHelper.OnNightModeChangedListener
 import me.zhanghai.android.files.util.BundleParceler
 import me.zhanghai.android.files.util.ParcelableArgs
@@ -27,7 +26,8 @@ import me.zhanghai.android.files.util.getArgsOrNull
 import me.zhanghai.android.files.util.putArgs
 import me.zhanghai.android.files.util.startActivitySafe
 
-class SettingsActivity : AppActivity(), OnThemeChangedListener, OnNightModeChangedListener {
+// mftlrs: OnThemeChangedListener removed — the theme no longer changes at runtime.
+class SettingsActivity : AppActivity(), OnNightModeChangedListener {
     private var isRestarting = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,13 +46,6 @@ class SettingsActivity : AppActivity(), OnThemeChangedListener, OnNightModeChang
         // HACK: Prevent this activity from being recreated due to locale change.
         delegate.onDestroy()
         AppCompatDelegate.setApplicationLocales(locales)
-        restart()
-    }
-
-    override fun onThemeChanged(@StyleRes theme: Int) {
-        // ActivityCompat.recreate() may call ActivityRecreator.recreate() without calling
-        // Activity.recreate(), so we cannot simply override it. To work around this, we just
-        // manually call restart().
         restart()
     }
 

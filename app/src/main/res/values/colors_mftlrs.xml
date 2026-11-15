@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ Copyright (c) 2026 mftlrs contributors
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  -->
+
+<!-- Палитра mftlrs: роли Material 3 для светлой и тёмной темы. -->
+<resources>
+
+    <color name="mftlrs_light_primary">#12876A</color>
+    <color name="mftlrs_light_on_primary">#FFFFFF</color>
+    <color name="mftlrs_light_primary_container">#C8EEE3</color>
+    <color name="mftlrs_light_on_primary_container">#00281F</color>
+    <color name="mftlrs_light_primary_inverse">#7ADBC0</color>
+    <color name="mftlrs_light_secondary">#55646F</color>
+    <color name="mftlrs_light_on_secondary">#FFFFFF</color>
+    <color name="mftlrs_light_secondary_container">#DCE4EA</color>
+    <color name="mftlrs_light_on_secondary_container">#1C2227</color>
+    <color name="mftlrs_light_tertiary">#C25A10</color>
+    <color name="mftlrs_light_on_tertiary">#FFFFFF</color>
+    <color name="mftlrs_light_tertiary_container">#FFDCC2</color>
+    <color name="mftlrs_light_on_tertiary_container">#3A1A00</color>
+    <color name="mftlrs_light_background">#EEF1F3</color>
+    <color name="mftlrs_light_on_background">#1C2227</color>
+    <color name="mftlrs_light_surface">#EEF1F3</color>
+    <color name="mftlrs_light_on_surface">#1C2227</color>
+    <color name="mftlrs_light_surface_variant">#DFE5E9</color>
+    <color name="mftlrs_light_on_surface_variant">#4D5A64</color>
+    <color name="mftlrs_light_surface_inverse">#2D3840</color>
+    <color name="mftlrs_light_on_surface_inverse">#EEF1F3</color>
+    <color name="mftlrs_light_error">#C62828</color>
+    <color name="mftlrs_light_on_error">#FFFFFF</color>
+    <color name="mftlrs_light_error_container">#FFDAD6</color>
+    <color name="mftlrs_light_on_error_container">#410002</color>
+    <color name="mftlrs_light_outline">#7B8994</color>
+    <color name="mftlrs_light_outline_variant">#CBD3D9</color>
+    <color name="mftlrs_light_surface_bright">#FAFBFC</color>
+    <color name="mftlrs_light_surface_dim">#D9DEE2</color>
+    <color name="mftlrs_light_surface_container_lowest">#FFFFFF</color>
+    <color name="mftlrs_light_surface_container_low">#F6F8F9</color>
+    <color name="mftlrs_light_surface_container">#FAFBFC</color>
+    <color name="mftlrs_light_surface_container_high">#E7EBEE</color>
+    <color name="mftlrs_light_surface_container_highest">#DFE5E9</color>
+
+    <color name="mftlrs_dark_primary">#28B48C</color>
+    <color name="mftlrs_dark_on_primary">#00261C</color>
+    <color name="mftlrs_dark_primary_container">#1C4A44</color>
+    <color name="mftlrs_dark_on_primary_container">#BDEFE2</color>
+    <color name="mftlrs_dark_primary_inverse">#12876A</color>
+    <color name="mftlrs_dark_secondary">#A9B8C3</color>
+    <color name="mftlrs_dark_on_secondary">#1C2227</color>
+    <color name="mftlrs_dark_secondary_container">#3A4A55</color>
+    <color name="mftlrs_dark_on_secondary_container">#E1E8ED</color>
+    <color name="mftlrs_dark_tertiary">#F08A3C</color>
+    <color name="mftlrs_dark_on_tertiary">#3A1A00</color>
+    <color name="mftlrs_dark_tertiary_container">#5A3412</color>
+    <color name="mftlrs_dark_on_tertiary_container">#FFDCC2</color>
+    <color name="mftlrs_dark_background">#1C2227</color>
+    <color name="mftlrs_dark_on_background">#E1E6EA</color>
+    <color name="mftlrs_dark_surface">#1C2227</color>
+    <color name="mftlrs_dark_on_surface">#E1E6EA</color>
+    <color name="mftlrs_dark_surface_variant">#2D3840</color>
+    <color name="mftlrs_dark_on_surface_variant">#A8B6C0</color>
+    <color name="mftlrs_dark_surface_inverse">#E1E6EA</color>
+    <color name="mftlrs_dark_on_surface_inverse">#1C2227</color>
+    <color name="mftlrs_dark_error">#F06B6B</color>
+    <color name="mftlrs_dark_on_error">#3A0808</color>
+    <color name="mftlrs_dark_error_container">#5C2222</color>
+    <color name="mftlrs_dark_on_error_container">#FFDAD6</color>
+    <color name="mftlrs_dark_outline">#6B7C88</color>
+    <color name="mftlrs_dark_outline_variant">#3A4752</color>
+    <color name="mftlrs_dark_surface_bright">#354450</color>
+    <color name="mftlrs_dark_surface_dim">#161B1F</color>
+    <color name="mftlrs_dark_surface_container_lowest">#161B1F</color>
+    <color name="mftlrs_dark_surface_container_low">#20272C</color>
+    <color name="mftlrs_dark_surface_container">#263036</color>
+    <color name="mftlrs_dark_surface_container_high">#2D3840</color>
+    <color name="mftlrs_dark_surface_container_highest">#354450</color>
+</resources>

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018 Hai Zhang <dreaming.in.code.zh@gmail.com>
  * All Rights Reserved.
+ * Modified for mftlrs, 2026.
  */
 
 package androidx.swiperefreshlayout.widget;
@@ -33,19 +34,13 @@ public class ThemedSwipeRefreshLayout extends SwipeRefreshLayout {
 
     private void init() {
         Context context = getContext();
-        boolean isMaterial3Theme = ContextExtensionsKt.isMaterial3Theme(context);
-        int backgroundColor;
-        if (isMaterial3Theme) {
-            int surfaceColor = ContextExtensionsKt.getColorByAttr(context,
-                    com.google.android.material.R.attr.colorSurface);
-            @SuppressLint("PrivateResource")
-            int overlayColor = ContextCompatKt.getColorCompat(context,
-                    com.google.android.material.R.color.m3_popupmenu_overlay_color);
-            backgroundColor = ColorUtils.compositeColors(overlayColor, surfaceColor);
-        } else {
-            backgroundColor = ContextExtensionsKt.getColorByAttr(context,
-                    androidx.appcompat.R.attr.colorBackgroundFloating);
-        }
+        // mftlrs: Material 3 only.
+        int surfaceColor = ContextExtensionsKt.getColorByAttr(context,
+                com.google.android.material.R.attr.colorSurface);
+        @SuppressLint("PrivateResource")
+        int overlayColor = ContextCompatKt.getColorCompat(context,
+                com.google.android.material.R.color.m3_popupmenu_overlay_color);
+        int backgroundColor = ColorUtils.compositeColors(overlayColor, surfaceColor);
         ((ShapeDrawable) mCircleView.getBackground()).getPaint().setColor(backgroundColor);
         setColorSchemeColors(ContextExtensionsKt.getColorByAttr(context,
                 androidx.appcompat.R.attr.colorAccent));

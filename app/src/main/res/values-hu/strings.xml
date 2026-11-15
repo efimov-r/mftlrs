@@ -615,9 +615,6 @@
     <string name="settings_title">Beállítások</string>
     <string name="settings_interface_title">Felület</string>
     <string name="settings_locale_title">Nyelv</string>
-    <string name="settings_theme_color_title">Téma színe</string>
-    <string name="settings_theme_color_summary">A szín, amely a leggyakrabban megjelenik az alkalmazásban</string>
-    <string name="settings_material_design_3_title">Material Design 3</string>
     <string name="settings_night_mode_title">Éjszakai mód</string>
     <string-array name="settings_night_mode_entries">
         <item>Rendszertéma követése</item>
@@ -626,7 +623,6 @@
         <item>Idő alapján</item>
         <item>Akkumulátortöltöttség alapján</item>
     </string-array>
-    <string name="settings_black_night_mode">Fekete éjszakai mód</string>
     <string name="settings_file_list_animation_title">Fájllista animáció</string>
     <string name="settings_file_name_ellipsize_title">Hosszú fájlnév megjelenítése</string>
     <string-array name="settings_file_name_ellipsize_entries">

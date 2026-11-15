@@ -22,7 +22,6 @@ import me.zhanghai.android.files.storage.SftpServerAuthenticator
 import me.zhanghai.android.files.storage.SmbServerAuthenticator
 import me.zhanghai.android.files.storage.StorageVolumeListLiveData
 import me.zhanghai.android.files.storage.WebDavServerAuthenticator
-import me.zhanghai.android.files.theme.custom.CustomThemeHelper
 import me.zhanghai.android.files.theme.night.NightModeHelper
 import java.util.Properties
 import me.zhanghai.android.files.provider.ftp.client.Client as FtpClient
@@ -30,7 +29,7 @@ import me.zhanghai.android.files.provider.sftp.client.Client as SftpClient
 import me.zhanghai.android.files.provider.smb.client.Client as SmbClient
 import me.zhanghai.android.files.provider.webdav.client.Client as WebDavClient
 
-// mftlrs: initializeFirebase removed.
+// mftlrs: initializeFirebase and initializeCustomTheme removed.
 // TODO(mftlrs): initialize ACRA. It should run as early as possible, ideally in
 //  Application.attachBaseContext(), but this app has no Application subclass.
 val appInitializers = listOf(
@@ -40,7 +39,6 @@ val appInitializers = listOf(
     ::initializeFileSystemProviders,
     ::upgradeApp,
     ::initializeLiveDataObjects,
-    ::initializeCustomTheme,
     ::initializeNightMode,
     ::createNotificationChannels
 )
@@ -77,10 +75,6 @@ private fun initializeLiveDataObjects() {
     // Force initialization of LiveData objects so that it won't happen on a background thread.
     StorageVolumeListLiveData.value
     Settings.FILE_LIST_DEFAULT_DIRECTORY.value
-}
-
-private fun initializeCustomTheme() {
-    CustomThemeHelper.initialize(application)
 }
 
 private fun initializeNightMode() {

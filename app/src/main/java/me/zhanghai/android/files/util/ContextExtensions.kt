@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2020 Hai Zhang <dreaming.in.code.zh@gmail.com>
  * All Rights Reserved.
+ * Modified for mftlrs, 2026.
  */
 
 package me.zhanghai.android.files.util
@@ -211,9 +212,7 @@ val Context.hasW960Dp: Boolean
 val Context.isLightTheme: Boolean
     get() = getBooleanByAttr(androidx.appcompat.R.attr.isLightTheme)
 
-val Context.isMaterial3Theme: Boolean
-    @SuppressLint("PrivateResource")
-    get() = getBooleanByAttr(com.google.android.material.R.attr.isMaterial3Theme)
+// mftlrs: isMaterial3Theme removed — Material 3 only.
 
 val Context.isOrientationLandscape: Boolean
     get() = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE

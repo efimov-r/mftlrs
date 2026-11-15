@@ -554,9 +554,6 @@
     <string name="settings_title">Setări</string>
     <string name="settings_interface_title">Interfață</string>
     <string name="settings_locale_title">Limbă</string>
-    <string name="settings_theme_color_title">Culoarea temei</string>
-    <string name="settings_theme_color_summary">Culoarea ce apare cel mai frecvent în aplicație</string>
-    <string name="settings_material_design_3_title">Material Design 3</string>
     <string name="settings_night_mode_title">Mod de noapte</string>
     <string-array name="settings_night_mode_entries">
         <item>Urmează sistemul</item>
@@ -565,7 +562,6 @@
         <item>În funcție de timp</item>
         <item>În funcție de economizorul de baterie</item>
     </string-array>
-    <string name="settings_black_night_mode">Mod de noapte negru</string>
     <string name="settings_file_list_animation_title">Animații liste fișiere</string>
     <string name="settings_file_name_ellipsize_title">Arată numele lung al fișierului</string>
     <string-array name="settings_file_name_ellipsize_entries">

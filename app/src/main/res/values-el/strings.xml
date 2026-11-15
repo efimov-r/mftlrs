@@ -615,9 +615,6 @@
     <string name="settings_title">Ρυθμίσεις</string>
     <string name="settings_interface_title">Διεπαφή</string>
     <string name="settings_locale_title">Γλώσσα</string>
-    <string name="settings_theme_color_title">Χρώμα θέματος</string>
-    <string name="settings_theme_color_summary">Χρώμα που εμφανίζεται συχνότερα στην εφαρμογή</string>
-    <string name="settings_material_design_3_title">Σχεδίαση Υλικού 3</string>
     <string name="settings_night_mode_title">Νυχτερινή λειτουργία</string>
     <string-array name="settings_night_mode_entries">
         <item>Ακολουθεί το σύστημα</item>
@@ -626,7 +623,6 @@
         <item>Βάσει ώρας</item>
         <item>Βάσει εξοικονόμησης μπαταρίας</item>
     </string-array>
-    <string name="settings_black_night_mode">Μαύρη νυχτερινή λειτουργία</string>
     <string name="settings_file_list_animation_title">Κινούμενη εικόνα λίστας αρχείων</string>
     <string name="settings_file_name_ellipsize_title">Εμφάνιση μακροσκελούς ονόματος αρχείου</string>
     <string-array name="settings_file_name_ellipsize_entries">

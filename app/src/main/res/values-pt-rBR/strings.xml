@@ -647,9 +647,6 @@
     <string name="settings_title">Configurações</string>
     <string name="settings_interface_title">Interface</string>
     <string name="settings_locale_title">Idioma</string>
-    <string name="settings_theme_color_title">Cor do tema</string>
-    <string name="settings_theme_color_summary">A cor que aparece com mais frequência no app</string>
-    <string name="settings_material_design_3_title">Material Design 3</string>
     <string name="settings_night_mode_title">Modo noturno</string>
     <string-array name="settings_night_mode_entries">
         <item>Seguir o sistema</item>
@@ -658,7 +655,6 @@
         <item>Baseado no horário</item>
         <item>Baseado na economia de bateria</item>
     </string-array>
-    <string name="settings_black_night_mode">Modo noturno preto</string>
     <string name="settings_file_list_animation_title">Animação da lista de arquivos</string>
     <string name="settings_file_name_ellipsize_title">Exibir nome de arquivo longo</string>
     <string-array name="settings_file_name_ellipsize_entries">

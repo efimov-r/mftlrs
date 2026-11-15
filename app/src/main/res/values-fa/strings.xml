@@ -510,9 +510,6 @@
     <string name="ftp_server_writable_title">اجازهٔ نوشتن</string>
     <string name="settings_title">تنظیمات</string>
     <string name="settings_interface_title">رابط</string>
-    <string name="settings_theme_color_title">رنگ زمینه</string>
-    <string name="settings_theme_color_summary">رنگی که بیشتر در برنامه ظاهر می‌شود</string>
-    <string name="settings_material_design_3_title">طراحی متریال ۳</string>
     <string name="settings_night_mode_title">حالت شب</string>
     <string-array name="settings_night_mode_entries">
         <item>پی‌روی از سامانه</item>
@@ -521,7 +518,6 @@
         <item>بر پایهٔ زمان</item>
         <item>بر پایهٔ محافظ باتری</item>
     </string-array>
-    <string name="settings_black_night_mode">حالت شب تاریک</string>
     <string name="settings_file_list_animation_title">پویانمایی فهرست پرونده‌ها</string>
     <string name="settings_file_name_ellipsize_title">نمایش نام پروندهٔ طولانی</string>
     <string-array name="settings_file_name_ellipsize_entries">

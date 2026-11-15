@@ -735,9 +735,6 @@
     <string name="settings_title">الإعدادات</string>
     <string name="settings_interface_title">واجهة المستخدم</string>
     <string name="settings_locale_title">لغة</string>
-    <string name="settings_theme_color_title">لون السمة</string>
-    <string name="settings_theme_color_summary">اللون الذي يظهر بشكل متكرر في التطبيق</string>
-    <string name="settings_material_design_3_title">تصميم ماتيريال 3</string>
     <string name="settings_night_mode_title">الوضع الليلي</string>
     <string-array name="settings_night_mode_entries">
         <item>اتبع النظام</item>
@@ -746,7 +743,6 @@
         <item>يعتمد على الوقت</item>
         <item>يعتمد على وضع توفير الطاقة</item>
     </string-array>
-    <string name="settings_black_night_mode">الوضع الليلي الأسود</string>
     <string name="settings_file_list_animation_title">التأثيرات المتحركة لقائمة الملفات</string>
     <string name="settings_file_name_ellipsize_title">عرض اسم ملف طويل</string>
     <string-array name="settings_file_name_ellipsize_entries">

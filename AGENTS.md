@@ -7,7 +7,7 @@
 - **Языки:** Kotlin 2.4 — почти весь код; Java — 8 классов в чужих пакетах для доступа к package-private API библиотек; C — JNI (`syscall.c`, `hiddenapi.c`); AIDL — IPC с root-процессом.
 - **Сборка:** Gradle 9.6, Groovy DSL (`build.gradle`, не `.kts`), AGP 9.4.1, один модуль `:app`, NDK + CMake (`app/CMakeLists.txt`). Версии библиотек — прямо в `app/build.gradle`, без version catalog.
 - **Android:** minSdk 26 (у upstream — 23), targetSdk 36, compileSdk 37; Java 11 + core library desugaring.
-- **UI:** Android Views + ViewBinding, Fragments, ViewModel + LiveData, Material Components (темы MD2 и MD3). Compose нет.
+- **UI:** Android Views + ViewBinding, Fragments, ViewModel + LiveData, Material Components, только Material 3: две фиксированные темы, светлая и тёмная. Compose нет.
 - **Файловый бэкенд:** Java NIO2 через бэкпорт `retrofile` (пакет `java8.nio.*`), свой `FileSystemProvider` на каждый источник.
 - **Библиотеки:** smbj, sshj + BouncyCastle, commons-net, dav4jvm, Apache FtpServer, libarchive, libsu, Shizuku, Coil 2 (Firebase вырезан, будет ACRA) — что за что отвечает: [docs/ai/features.md](docs/ai/features.md).
 - **Хранение:** БД нет, только SharedPreferences.
@@ -43,7 +43,7 @@ app/src/main/
 │   ├── viewer/          — просмотр картинок, текстовый редактор, «Сохранить как»
 │   ├── ftpserver/       — встроенный FTP-сервер и плитка в шторке
 │   ├── settings/        — все ключи настроек (Settings.kt) и экраны настроек
-│   ├── theme/, colorpicker/ — цвет темы, MD2/MD3, ночной режим
+│   ├── theme/night/     — ночной режим (выбор светлой или тёмной темы); палитра и темы — res/values/colors_mftlrs.xml, themes_mftlrs.xml
 │   ├── coil/            — миниатюры: картинки, видео, PDF, иконки APK
 │   ├── file/            — FileItem, MIME-типы, FileProvider для отдачи файлов другим приложениям
 │   ├── util/, compat/, ui/ — расширения, обёртки над API разных версий Android, свои View

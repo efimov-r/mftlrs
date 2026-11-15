@@ -615,9 +615,6 @@
     <string name="settings_title">Innstillinger</string>
     <string name="settings_interface_title">Grensesnitt</string>
     <string name="settings_locale_title">Språk</string>
-    <string name="settings_theme_color_title">Temafarge</string>
-    <string name="settings_theme_color_summary">Den mest brukte fargen i appen</string>
-    <string name="settings_material_design_3_title">Material Design 3</string>
     <string name="settings_night_mode_title">Nattmodus</string>
     <string-array name="settings_night_mode_entries">
         <item>Følg systemet</item>
@@ -626,7 +623,6 @@
         <item>Basert på tid</item>
         <item>Basert på batterisparing</item>
     </string-array>
-    <string name="settings_black_night_mode">Svart nattmodus</string>
     <string name="settings_file_list_animation_title">Animér fillisten</string>
     <string name="settings_file_name_ellipsize_title">Visning av lange filnavn</string>
     <string-array name="settings_file_name_ellipsize_entries">

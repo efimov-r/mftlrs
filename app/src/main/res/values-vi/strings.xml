@@ -489,9 +489,6 @@
     <string name="ftp_server_writable_title">Cho phép ghi</string>
     <string name="settings_title">Cài đặt</string>
     <string name="settings_interface_title">Giao diện</string>
-    <string name="settings_theme_color_title">Màu chủ đề</string>
-    <string name="settings_theme_color_summary">Màu thường xuyên xuất hiện nhất trong ứng dụng</string>
-    <string name="settings_material_design_3_title">Thiết kế Material 3</string>
     <string name="settings_night_mode_title">Chế độ ban đêm</string>
     <string-array name="settings_night_mode_entries">
         <item>Theo hệ thống</item>
@@ -500,7 +497,6 @@
         <item>Dựa theo thời gian</item>
         <item>Dựa theo chế độ tiết kiệm pin</item>
     </string-array>
-    <string name="settings_black_night_mode">Chế độ ban đêm đen</string>
     <string name="settings_file_list_animation_title">Hoạt ảnh danh sách tệp</string>
     <string name="settings_file_name_ellipsize_title">Hiển thị tên tệp dài</string>
     <string-array name="settings_file_name_ellipsize_entries">

@@ -615,9 +615,6 @@
     <string name="settings_title">Configuración</string>
     <string name="settings_interface_title">Interface</string>
     <string name="settings_locale_title">Lingua</string>
-    <string name="settings_theme_color_title">Cor do tema</string>
-    <string name="settings_theme_color_summary">Cor que aparece con máis frecuencia na aplicación</string>
-    <string name="settings_material_design_3_title">Material Design 3</string>
     <string name="settings_night_mode_title">Modo noite</string>
     <string-array name="settings_night_mode_entries">
         <item>Seguir o sistema</item>
@@ -626,7 +623,6 @@
         <item>Baseado no tempo</item>
         <item>Baseado no aforro de batería</item>
     </string-array>
-    <string name="settings_black_night_mode">Modo noite negro</string>
     <string name="settings_file_list_animation_title">Animación da lista de ficheiros</string>
     <string name="settings_file_name_ellipsize_title">Amosar o nome longo do ficheiro</string>
     <string-array name="settings_file_name_ellipsize_entries">

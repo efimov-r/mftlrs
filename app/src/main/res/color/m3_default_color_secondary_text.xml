@@ -3,12 +3,14 @@
 <!--
   ~ Copyright (c) 2022 Hai Zhang <dreaming.in.code.zh@gmail.com>
   ~ All Rights Reserved.
+  ~ Modified for mftlrs, 2026.
   -->
 
+<!-- mftlrs: mftlrs palette instead of the baseline Material 3 colors. -->
 <selector
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="PrivateResource">
-    <item android:state_enabled="false" android:alpha="@dimen/material_emphasis_disabled" android:color="@color/m3_sys_color_light_on_surface" />
-    <item android:color="@color/m3_sys_color_light_outline" />
+    <item android:state_enabled="false" android:alpha="@dimen/material_emphasis_disabled" android:color="@color/mftlrs_light_on_surface" />
+    <item android:color="@color/mftlrs_light_on_surface_variant" />
 </selector>

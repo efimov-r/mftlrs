@@ -146,8 +146,11 @@ Apache FtpServer (`FtpServer.kt`) с файловой системой `Provider
 
 ## Темы — `theme/`, `colorpicker/`
 
-- `ThemeColor` — enum цветов; `CustomThemeHelper` применяет цвет и переключатель Material Design 3 (`Settings.MATERIAL_DESIGN_3`) и пересоздаёт Activity при смене; `NightModeHelper` — ночной режим и «чисто чёрный».
-- Ресурсы: `res/values/themes.xml`, `themes_material3.xml`, `themes_custom.xml`, `styles*.xml`, `colors_*.xml`, `color-v31/` (динамические цвета Android 12).
+- **В mftlrs две фиксированные темы — светлая и тёмная** (2026-11-15). Палитра — `values/colors_mftlrs.xml` (роли Material 3, `mftlrs_light_*`, `mftlrs_dark_*`), темы — `values/themes_mftlrs.xml`: `Theme.Mftlrs.Material3.Light`, `.Dark`, `.DayNight` (в `values-night/themes_mftlrs.xml` указывает на `.Dark`). Upstream-тема `Theme.MaterialFiles.Material3` наследует `.DayNight`, просмотрщик картинок (`…Material3.Immersive`) — `.Dark`.
+- Манифест ссылается прямо на `Theme.MaterialFiles.Material3`, `.Material3.Translucent`, `.Material3.Immersive`; подмены темы во время работы нет.
+- **Удалено полностью** (2026-11-15): Material Design 2 (`themes.xml` во всех `values-v*`, MD2-стили в `styles.xml`, ветки `isMaterial3Theme` в `FileListAdapter`, `ThemedSpeedDialView`, `ThemedSwipeRefreshLayout`), выбор цвета (`theme/custom/` — `CustomThemeHelper`, `ThemeColor`, `ThemeColorPreference`; пакет `colorpicker/`; `themes_custom.xml`, `colors_custom.xml`, `colors_material.xml`, `colors_google.xml`, `utils/generate-custom-themes.sh`), чёрный фон тёмной темы (стили `.Black`), цвета из обоев (`color-v31/`), настройки `THEME_COLOR`, `MATERIAL_DESIGN_3`, `BLACK_NIGHT_MODE` с ключами и строками во всех локалях.
+- Светлая или тёмная — по настройке «Ночной режим» (`NightModeHelper`): как в системе, выкл., вкл., по времени, при энергосбережении.
+- `color_primary_light` / `_dark` (`values/colors.xml`) — тоже палитра mftlrs: ими красятся уведомления. Вторичный текст — `color/m3_*default_color_secondary_text.xml`, переведены на `on_surface_variant` палитры. `colors_google_material3.xml` (нейтральная палитра `m3_ref_palette_*` для библиотеки) оставлен.
 
 ## Миниатюры — `coil/`
 

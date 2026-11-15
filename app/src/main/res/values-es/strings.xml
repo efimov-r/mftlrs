@@ -645,9 +645,6 @@
     <string name="settings_title">Ajustes</string>
     <string name="settings_interface_title">Interfaz</string>
     <string name="settings_locale_title">Idioma</string>
-    <string name="settings_theme_color_title">Color de tema</string>
-    <string name="settings_theme_color_summary">Color que aparece más frecuentemente en la aplicación</string>
-    <string name="settings_material_design_3_title">Material Design 3</string>
     <string name="settings_night_mode_title">Tema oscuro</string>
     <string-array name="settings_night_mode_entries">
         <item>Seguir al sistema</item>
@@ -656,7 +653,6 @@
         <item>Según el horario</item>
         <item>Según el ahorro de batería</item>
     </string-array>
-    <string name="settings_black_night_mode">Usar negro puro</string>
     <string name="settings_file_list_animation_title">Animación en la lista de archivos</string>
     <string name="settings_file_name_ellipsize_title">En nombres de archivo extensos</string>
     <string-array name="settings_file_name_ellipsize_entries">

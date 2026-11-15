@@ -615,9 +615,6 @@
     <string name="settings_title">Instellingen</string>
     <string name="settings_interface_title">Uiterlijk</string>
     <string name="settings_locale_title">Taal</string>
-    <string name="settings_theme_color_title">Themakleur</string>
-    <string name="settings_theme_color_summary">De kleur die het vaakst wordt gebruikt in de app</string>
-    <string name="settings_material_design_3_title">Material Design 3</string>
     <string name="settings_night_mode_title">Nachtmodus</string>
     <string-array name="settings_night_mode_entries">
         <item>Systeeminstellingen gebruiken</item>
@@ -626,7 +623,6 @@
         <item>Op een bepaald tijdstip</item>
         <item>Ingesteld door batterijbesparing</item>
     </string-array>
-    <string name="settings_black_night_mode">Nachtmodus</string>
     <string name="settings_file_list_animation_title">Animatie tonen in bestandslijst</string>
     <string name="settings_file_name_ellipsize_title">Lange bestandsnamen tonen</string>
     <string-array name="settings_file_name_ellipsize_entries">

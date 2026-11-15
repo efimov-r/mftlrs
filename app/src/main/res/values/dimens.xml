@@ -3,6 +3,7 @@
 <!--
   ~ Copyright (c) 2018 Hai Zhang <dreaming.in.code.zh@gmail.com>
   ~ All Rights Reserved.
+  ~ Modified for mftlrs, 2026.
   -->
 
 <resources>
@@ -25,8 +26,6 @@
     <dimen name="dialog_padding_minus_16dp">8dp</dimen>
     <dimen name="navigation_max_width">320dp</dimen>
     <dimen name="navigation_header_height">172dp</dimen>
-    <dimen name="navigation_item_horizontal_padding">24dp</dimen>
-    <dimen name="navigation_item_icon_padding">24dp</dimen>
     <dimen name="tab_layout_height">48dp</dimen>
     <dimen name="list_vertical_padding">8dp</dimen>
     <dimen name="list_bottom_padding_with_fab">88dp</dimen>

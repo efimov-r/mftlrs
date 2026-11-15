@@ -617,9 +617,6 @@
     <string name="settings_title">Stillingar</string>
     <string name="settings_interface_title">Viðmót</string>
     <string name="settings_locale_title">Tungumál</string>
-    <string name="settings_theme_color_title">Litur þema</string>
-    <string name="settings_theme_color_summary">Litur sem birtist oftast í forritinu</string>
-    <string name="settings_material_design_3_title">Material-hönnun 3</string>
     <string name="settings_night_mode_title">Næturhamur</string>
     <string-array name="settings_night_mode_entries">
         <item>Fylgja kerfi</item>
@@ -628,7 +625,6 @@
         <item>Byggt á tíma sólarhrings</item>
         <item>Byggt á rafhlöðusparnaði</item>
     </string-array>
-    <string name="settings_black_night_mode">Svartur næturhamur</string>
     <string name="settings_file_list_animation_title">Hreyfa skráalista</string>
     <string name="settings_file_name_ellipsize_title">Birta löng skráaheiti</string>
     <string-array name="settings_file_name_ellipsize_entries">

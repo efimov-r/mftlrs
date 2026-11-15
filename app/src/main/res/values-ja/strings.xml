@@ -585,9 +585,6 @@
     <string name="settings_title">設定</string>
     <string name="settings_interface_title">外観</string>
     <string name="settings_locale_title">言語</string>
-    <string name="settings_theme_color_title">テーマカラー</string>
-    <string name="settings_theme_color_summary">アプリ内で優先して使用する色です</string>
-    <string name="settings_material_design_3_title">Material Design 3</string>
     <string name="settings_night_mode_title">夜間モード</string>
     <string-array name="settings_night_mode_entries">
         <item>システム設定に従う</item>
@@ -596,7 +593,6 @@
         <item>時刻に従う</item>
         <item>バッテリーセーバーに従う</item>
     </string-array>
-    <string name="settings_black_night_mode">夜間モードで黒を使用</string>
     <string name="settings_file_list_animation_title">ファイル一覧のアニメーション</string>
     <string name="settings_file_name_ellipsize_title">長いファイル名の表示方法</string>
     <string-array name="settings_file_name_ellipsize_entries">

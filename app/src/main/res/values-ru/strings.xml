@@ -677,9 +677,6 @@
     <string name="settings_title">Настройки</string>
     <string name="settings_interface_title">Интерфейс</string>
     <string name="settings_locale_title">Язык</string>
-    <string name="settings_theme_color_title">Цвет темы</string>
-    <string name="settings_theme_color_summary">Цвет для элементов в приложении</string>
-    <string name="settings_material_design_3_title">Material Design 3</string>
     <string name="settings_night_mode_title">Ночной режим</string>
     <string-array name="settings_night_mode_entries">
         <item>Использовать системные настройки</item>
@@ -688,7 +685,6 @@
         <item>На основе времени</item>
         <item>На основе энергосберегающего режима</item>
     </string-array>
-    <string name="settings_black_night_mode">Ночная тема</string>
     <string name="settings_file_list_animation_title">Анимация списка файлов</string>
     <string name="settings_file_name_ellipsize_title">Отображение длинных имен файлов</string>
     <string-array name="settings_file_name_ellipsize_entries">

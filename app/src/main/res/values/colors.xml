@@ -12,21 +12,13 @@
     <color name="dark_50_percent">#80000000</color>
     <color name="dark_70_percent">#B3000000</color>
 
-    <color name="system_window_scrim_light">#99FFFFFF</color>
-    <color name="system_window_scrim_dark">#66202124</color>
-    <color name="system_window_scrim">@color/system_window_scrim_light</color>
-
-    <color name="system_window_scrim_dark_black">#66000000</color>
-    <!-- Make lint happy, although actually we never use this in a non-night configuration. -->
-    <color name="color_primary_dark_black">@android:color/transparent</color>
-
-    <color name="color_primary_light">@color/google_blue_600</color>
-    <color name="color_primary_dark">@color/google_blue_300</color>
+    <!--
+      ~ mftlrs: Material Design 2 colors (system window scrim, surface, black night mode) removed;
+      ~ color_primary is the notification accent — mftlrs palette.
+      -->
+    <color name="color_primary_light">@color/mftlrs_light_primary</color>
+    <color name="color_primary_dark">@color/mftlrs_dark_primary</color>
     <color name="color_primary">@color/color_primary_light</color>
-
-    <color name="color_surface_light">@android:color/white</color>
-    <color name="color_surface_dark">@color/google_grey_900</color>
-    <color name="color_surface">@color/color_surface_light</color>
 
     <color name="activity_icon_tint">@color/secondary_text_default_material_light</color>
 

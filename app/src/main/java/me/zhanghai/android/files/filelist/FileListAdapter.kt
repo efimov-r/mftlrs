@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018 Hai Zhang <dreaming.in.code.zh@gmail.com>
  * All Rights Reserved.
+ * Modified for mftlrs, 2026.
  */
 
 package me.zhanghai.android.files.filelist
@@ -37,7 +38,6 @@ import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.ui.AnimatedListAdapter
 import me.zhanghai.android.files.ui.CheckableForegroundLinearLayout
 import me.zhanghai.android.files.ui.CheckableItemBackground
-import me.zhanghai.android.files.util.isMaterial3Theme
 import me.zhanghai.android.files.util.layoutInflater
 import me.zhanghai.android.files.util.valueCompat
 import java.util.Locale
@@ -179,25 +179,17 @@ class FileListAdapter(
             FileViewType.GRID -> ViewHolder(FileItemGridBinding.inflate(inflater, parent, false))
         }
         return holder.apply {
+            // mftlrs: Material 3 only.
             itemLayout.apply {
                 val context = context
-                val isMaterial3Theme = context.isMaterial3Theme
-                if (viewType == FileViewType.GRID && isMaterial3Theme) {
+                if (viewType == FileViewType.GRID) {
                     foregroundCompat =
                         context.getDrawableCompat(R.drawable.file_item_grid_foreground_material3)
                 }
-                background = if (viewType == FileViewType.GRID && isMaterial3Theme) {
+                background = if (viewType == FileViewType.GRID) {
                     CheckableItemBackground.create(4f, 12f, context)
                 } else {
                     CheckableItemBackground.create(0f, 0f, context)
-                }
-            }
-            thumbnailOutlineView?.apply {
-                val context = context
-                if (context.isMaterial3Theme) {
-                    background = context.getDrawableCompat(
-                        R.drawable.file_item_grid_thumbnail_outline_material3
-                    )
                 }
             }
             popupMenu = PopupMenu(menuButton.context, menuButton)

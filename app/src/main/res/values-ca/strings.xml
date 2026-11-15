@@ -556,9 +556,6 @@
     <string name="settings_title">Configuració</string>
     <string name="settings_interface_title">Interfície</string>
     <string name="settings_locale_title">Idioma</string>
-    <string name="settings_theme_color_title">Color del tema</string>
-    <string name="settings_theme_color_summary">El color que apareix amb més freqüència a l\'aplicació</string>
-    <string name="settings_material_design_3_title">Material Design 3</string>
     <string name="settings_night_mode_title">Mode nocturn</string>
     <string-array name="settings_night_mode_entries">
         <item>Segueix el sistema</item>
@@ -567,7 +564,6 @@
         <item>Basat en el temps</item>
         <item>Basat en l\'estalvi de bateria</item>
     </string-array>
-    <string name="settings_black_night_mode">Mode nocturn negre</string>
     <string name="settings_file_list_animation_title">Animació de la llista de fitxers</string>
     <string name="settings_file_name_ellipsize_title">Mostra el nom de fitxer llarg</string>
     <string-array name="settings_file_name_ellipsize_entries">
