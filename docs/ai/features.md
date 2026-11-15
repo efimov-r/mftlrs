@@ -64,7 +64,7 @@
 - **FTP-сервер (3):** `ftpserver-core`, `mina-core` 2.1.3, `slf4j-android`.
 - **EXIF, аудио, видео (2):** `exifinterface`, `androidsvg`.
 - **Хранилища (2):** `advrecyclerview`, `materialshadowninepatch`.
-- **Миниатюры (5):** `coil`, `coil-gif`, `coil-svg`, `coil-video`, `appiconloader`.
+- **Миниатюры (5):** `coil`, `coil-gif`, `coil-svg`, `coil-video`, `appiconloader`. Для Compose — ещё `coil-compose` (mftlrs).
 - **Темы (1):** `material`.
 - **Просмотр картинок (4):** `PhotoView`, `subsampling-scale-image-view`, `systemuihelper`, `insetter`.
 - **О программе (1):** `licensesdialog`.

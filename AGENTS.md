@@ -7,7 +7,7 @@
 - **Языки:** Kotlin 2.4 — почти весь код; Java — 8 классов в чужих пакетах для доступа к package-private API библиотек; C — JNI (`syscall.c`, `hiddenapi.c`); AIDL — IPC с root-процессом.
 - **Сборка:** Gradle 9.6, Groovy DSL (`build.gradle`, не `.kts`), AGP 9.4.1, один модуль `:app`, NDK + CMake (`app/CMakeLists.txt`). Версии библиотек — прямо в `app/build.gradle`, без version catalog.
 - **Android:** minSdk 26 (у upstream — 23), targetSdk 36, compileSdk 37; Java 11 + core library desugaring.
-- **UI:** Android Views + ViewBinding, Fragments, ViewModel + LiveData, Material Components, только Material 3: две фиксированные темы, светлая и тёмная. Compose нет.
+- **UI:** Android Views + ViewBinding, Fragments, ViewModel + LiveData, Material Components, только Material 3: две фиксированные темы, светлая и тёмная. Compose подключён (BOM, Material 3, `runtime-livedata`, `coil-compose`) для нового главного экрана, тема — `theme/MftlrsTheme.kt`; экранов на Compose пока нет.
 - **Файловый бэкенд:** Java NIO2 через бэкпорт `retrofile` (пакет `java8.nio.*`), свой `FileSystemProvider` на каждый источник.
 - **Библиотеки:** smbj, sshj + BouncyCastle, commons-net, dav4jvm, Apache FtpServer, libarchive, libsu, Shizuku, Coil 2 (Firebase вырезан, будет ACRA) — что за что отвечает: [docs/ai/features.md](docs/ai/features.md).
 - **Хранение:** БД нет, только SharedPreferences.
@@ -43,7 +43,7 @@ app/src/main/
 │   ├── viewer/          — просмотр картинок, текстовый редактор, «Сохранить как»
 │   ├── ftpserver/       — встроенный FTP-сервер и плитка в шторке
 │   ├── settings/        — все ключи настроек (Settings.kt) и экраны настроек
-│   ├── theme/night/     — ночной режим (выбор светлой или тёмной темы); палитра и темы — res/values/colors_mftlrs.xml, themes_mftlrs.xml
+│   ├── theme/           — MftlrsTheme.kt: тема Compose; night/ — ночной режим (выбор светлой или тёмной темы); палитра и темы Views — res/values/colors_mftlrs.xml, themes_mftlrs.xml
 │   ├── coil/            — миниатюры: картинки, видео, PDF, иконки APK
 │   ├── file/            — FileItem, MIME-типы, FileProvider для отдачи файлов другим приложениям
 │   ├── util/, compat/, ui/ — расширения, обёртки над API разных версий Android, свои View
@@ -77,6 +77,7 @@ app/src/main/
 | [docs/ai/todo.md](docs/ai/todo.md) | что в работе и что дальше | в начале сессии |
 | [docs/ai/architecture.md](docs/ai/architecture.md) | подробная карта кода: где что лежит и как работает | перед правкой незнакомой части кода |
 | [docs/ai/ui-inventory.md](docs/ai/ui-inventory.md) | перечень Activity, Fragment, диалогов, Preference, адаптеров, своих View и разметки | перед изменениями интерфейса и при оценке переделки UI |
+| [docs/ai/file-list-checklist.md](docs/ai/file-list-checklist.md) | ручной чек-лист поведения главного экрана | после изменений в `filelist/` и `navigation/` |
 | [docs/ai/features.md](docs/ai/features.md) | функции: строки кода, библиотеки, убирать ли | перед удалением или добавлением функций и библиотек |
 | [docs/ai/upstream.md](docs/ai/upstream.md) | upstream, форки, жалобы пользователей, сравнение с другими менеджерами | при выборе доработок и синхронизации с upstream |
 | [docs/ai/bugs.md](docs/ai/bugs.md) | известные баги и их статус | при ошибке — до того, как чинить |

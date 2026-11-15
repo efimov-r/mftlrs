@@ -6,6 +6,8 @@
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-parcelize'
+// mftlrs: Compose for the new main screen.
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 apply from: '../signing.gradle'
 
@@ -41,6 +43,8 @@ android {
     buildFeatures {
         aidl true
         buildConfig true
+        // mftlrs: Compose for the new main screen.
+        compose true
         resValues true
         viewBinding true
     }
@@ -133,6 +137,12 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.2.0'
     implementation 'com.google.android.material:material:1.14.0'
+    // mftlrs: Compose for the new main screen.
+    implementation platform('androidx.compose:compose-bom:2026.09.00')
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.runtime:runtime-livedata'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
 
     implementation 'com.caverock:androidsvg-aar:1.4'
     implementation 'com.davemorrissey.labs:subsampling-scale-image-view-androidx:3.10.0'
@@ -183,6 +193,8 @@ dependencies {
     }
     implementation platform('io.coil-kt:coil-bom:2.7.0')
     implementation 'io.coil-kt:coil'
+    // mftlrs: Coil for Compose, same Coil 2 as the custom fetchers in coil/.
+    implementation 'io.coil-kt:coil-compose'
     implementation 'io.coil-kt:coil-gif'
     implementation 'io.coil-kt:coil-svg'
     implementation 'io.coil-kt:coil-video'
