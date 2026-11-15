@@ -41,7 +41,8 @@
 | «Сохранить как» | 46 (0,1%) | 0 | `viewer/saveas/` | **Оставить** |
 | Папки QQ, TIM, WeChat | ~40 (<0,1%) | 0 | `navigation/NavigationItems.kt`, входят в боковую панель | **Убрать** — на Android 11+ и так скрыты |
 | Терминал | 25 (<0,1%) | 0 | `terminal/` | **Проверить** — зовёт заброшенный Android Terminal Emulator, с Termux, вероятно, не работает |
-| Android TV, DeX | — | 0 | манифест, `drawable/banner`, `drawable-television/` | **По желанию** — почти ничего не стоит |
+| Android TV | — | 0 | — | **Убрано** 2026-11-15: `leanback`, `LEANBACK_LAUNCHER`, баннер, `drawable-television/` |
+| Samsung DeX, оконный режим | — | 0 | манифест: `resizeableActivity`, `touchscreen required=false` | **Оставить** |
 | Переводы (33) | — | 0 | `res/values-*` | **Оставить**; новые строки — минимум en и ru |
 
 ## Библиотеки по функциям

@@ -39,7 +39,7 @@ FileJobService (копирование, удаление, архивы…) и Ft
 
 | Компонент | Зачем |
 |---|---|
-| `filelist.FileListActivity` | лаунчер (и Android TV); `VIEW` папок и архивов (список MIME в манифесте); системный выбор файла: `GET_CONTENT`, `OPEN_DOCUMENT`, `CREATE_DOCUMENT`; свои действия `VIEW_DOWNLOADS` (ярлык) |
+| `filelist.FileListActivity` | лаунчер (поддержка Android TV убрана); `VIEW` папок и архивов (список MIME в манифесте); системный выбор файла: `GET_CONTENT`, `OPEN_DOCUMENT`, `CREATE_DOCUMENT`; свои действия `VIEW_DOWNLOADS` (ярлык) |
 | `filelist.OpenFileActivity` | действие `…intent.action.OPEN_FILE` — открыть файл по пути (из ярлыков на рабочем столе) |
 | `filelist.EditFileActivity`, `OpenFileAsDialogActivity` | пункты «Изменить» и «Открыть как» в системном chooser |
 | `viewer.text.TextEditorActivity` | `VIEW` для `text/*`, JSON, XML, YAML, скриптов |
@@ -175,7 +175,7 @@ Coil 2 со своими загрузчиками: `PathAttributesFetcher` (че
 ## Ресурсы, переводы, метаданные
 
 - 33 перевода в `res/values-*` (есть `values-ru`); upstream переводит через Transifex. Название `app_name` = `mftlrs` — только в `values/strings.xml`, `translatable="false"`, в локалях его нет.
-- Иконка — `mipmap-*/launcher_icon`, баннер Android TV — `drawable/banner`.
+- Иконка — `mipmap-*/launcher_icon` (адаптивная: фон — цвет `color_primary_light`, белая папка — PNG, монохромный слой — вектор; для Android 6–7.1 — PNG), исходники — `art/*.svg`. Баннера Android TV нет.
 - `fastlane/metadata/android/` — тексты и скриншоты для Google Play и F-Droid (оригинальные).
 - `README.md`, `PRIVACY.md`, `SECURITY.md`, `fastlane/metadata/android/en-US/*.txt` — свои, про mftlrs, с указанием «основано на Material Files». Скриншоты и картинки fastlane — пока upstream.
 - Экран «О программе» (`about/`): ссылки — на форк; пункт «Основано на» — на upstream; в «Лицензиях» (`raw/licenses.xml`) первой — запись mftlrs. Правила атрибуции — [decisions.md](decisions.md), заголовки файлов — [style.md](style.md).
