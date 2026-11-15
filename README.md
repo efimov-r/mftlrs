@@ -1,72 +1,51 @@
-# Material Files
+# mftlrs
 
-[本文中文版](README_zh-CN.md)
+Файловый менеджер с открытым кодом для Android 6.0+, основанный на [Material Files](https://github.com/zhanghai/MaterialFiles) автора Hai Zhang.
 
-[![Android CI status](https://github.com/zhanghai/MaterialFiles/workflows/Android%20CI/badge.svg)](https://github.com/zhanghai/MaterialFiles/actions) [![GitHub release](https://img.shields.io/github/v/release/zhanghai/MaterialFiles)](https://github.com/zhanghai/MaterialFiles/releases) [![License](https://img.shields.io/github/license/zhanghai/MaterialFiles?color=blue)](LICENSE)
+> mftlrs — независимый форк. Он не связан с проектом Material Files и его автором и не одобрен ими. О проблемах в mftlrs пишите в [issues этого репозитория](../../issues), а не в оригинальный проект.
 
-An open source Material Design file manager, for Android 5.0+.
+## Состояние
 
-[<img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="240">](https://play.google.com/store/apps/details?id=me.zhanghai.android.files) [<img alt="Get it on F-Droid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" width="240">](https://f-droid.org/packages/me.zhanghai.android.files) [<img alt="Get it on GitHub" src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" width="240">](https://github.com/zhanghai/MaterialFiles/releases/latest/download/app-release-universal.apk)
+Что уже изменено по сравнению с Material Files 1.7.5:
 
-[Help translation on Transifex](https://www.transifex.com/zhanghai/MaterialFiles/) ([Search Android & GNOME translations](https://translations.zhanghai.me/), [Microsoft language resources](https://learn.microsoft.com/en-us/globalization/reference/microsoft-language-resources), [MIME type translations](https://gitlab.freedesktop.org/xdg/shared-mime-info/-/tree/master/po))
+- удалены Firebase Analytics и Crashlytics — приложение не собирает и не отправляет данные;
+- своё название и идентификатор приложения — ставится рядом с Material Files, не заменяя его;
+- экран «О программе» ведёт в этот репозиторий, оригинал указан в пункте «Основано на».
 
-## Preview
+## Возможности
 
-<p><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="32%" /> <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="32%" /> <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="32%" />
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="32%" /> <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" width="32%" /> <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" width="32%" /></p>
+Унаследованы от Material Files:
 
-## Features
+- Хлебные крошки: удобная навигация по файловой системе.
+- Root: просмотр и управление файлами с правами root или через Shizuku.
+- Архивы: просмотр, распаковка и создание распространённых архивов.
+- Сетевые хранилища: файлы на серверах FTP, SFTP, SMB и WebDAV.
+- Темы: настраиваемые цвета интерфейса, ночной режим с чисто чёрным фоном.
+- Знает Linux: символические ссылки, права доступа и контекст SELinux.
+- Надёжность: работает через системные вызовы Linux, а не разбирает вывод `ls`.
 
-- Open source: Lightweight, clean and secure.
-- Material Design: Follows Material Design guidelines, with attention into details.
-- Breadcrumbs: Navigate in the filesystem with ease.
-- Root support: View and manage files with root access.
-- Archive support: View, extract and create common compressed files.
-- NAS support: View and manage files on FTP, SFTP, SMB and WebDAV servers.
-- Themes: Customizable UI colors, plus night mode with optional true black.
-- Linux-aware: Like [Nautilus](https://apps.gnome.org/Nautilus/), knows symbolic links, file permissions and SELinux context.
-- Robust: Uses Linux system calls under the hood, not yet another [`ls` parser](https://news.ycombinator.com/item?id=7994720).
-- Well-implemented: Built upon the right things, including [Java NIO2 File API](https://docs.oracle.com/javase/8/docs/api/java/nio/file/package-summary.html) and [LiveData](https://developer.android.com/topic/libraries/architecture/livedata).
+## Сборка
 
-## Why Material Files?
+```
+./gradlew assembleDebug
+```
 
-Because I like Material Design, and clean Material Design.
+APK появится в `app/build/outputs/apk/debug/`.
 
-There are already a handful of powerful file managers, but most of them just aren't Material Design. And even among the ones with Material Design, they usually have various minor design flaws (layout, alignment, padding, icon, font, etc) across the app which makes me uncomfortable, while still being minor enough so that not everybody would care to fix it. So I had to create my own.
+## Благодарности
 
-Because I want an open source file manager.
+mftlrs основан на [Material Files](https://github.com/zhanghai/MaterialFiles), Copyright (C) 2018 Hai Zhang, лицензия GNU General Public License v3.0.
 
-Most of the popular and reliable file managers are just closed source, and I sometimes use them to view and modify files that require root access. But deep down inside, I just feel uneasy with giving any closed source app the root access to my device. After all, that means giving literally full access to my device, which stays with me every day and stores my own information, and what apps do with such access merely depends on their good intent.
+- Копирайты оригинала в исходных файлах сохранены.
+- В заголовке файлов upstream, изменённых для mftlrs, есть строка `Modified for mftlrs`, а сами правки помечены комментариями `mftlrs:`.
+- Автор Material Files не отвечает за ошибки в mftlrs.
 
-Because I want a file manager that is implemented the right way.
+## Лицензия
 
-- This app implemented [Java NIO2 File API](https://docs.oracle.com/javase/8/docs/api/java/nio/file/package-summary.html) as its backend, instead of inventing a custom model for file information/operations, which often gets coupled with UI logic and grows into a mixture of everything ([example](https://github.com/TeamAmaze/AmazeFileManager/blob/master/app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java)). On the contrary, a decoupled backend allows cleaner code (which means less bugs), and easier addition of support for other file systems.
-
-- This app doesn't use `java.io.File` or parse the output of `ls`, but built bindings to Linux syscalls to properly access the file system. `java.io.File` is an old API missing many features, and just can't handle things like symbolic links correctly, which is the reason why many people rather parse `ls` instead. However parsing the output `ls` is not only slow, but also [unreliable](https://news.ycombinator.com/item?id=7994720), which made [Cabinet](https://github.com/aminb/cabinet/blob/master/app/src/main/java/com/afollestad/cabinet/file/root/LsParser.java) broken on newer Android versions. By virtue of using Linux syscalls, this app is able to be fast and smooth, and handle advanced things like Linux permissions, symbolic links and even SELinux context. It can also handle file names with invalid UTF-8 encoding because paths are not naively stored as Java `String`s, which most file managers does and fails during file operation.
-
-- This app built its frontend upon modern `ViewModel` and `LiveData` which enables a clear code structure and support for rotation. It also properly handles things like errors during file operation, file conflicts and foreground/background state.
-
-In a word, this app tries to follow the best practices on Android and do the right thing, while keeping its source code clean and maintainable.
-
-Because I know people can do it right.
-
-[Nautilus](https://wiki.gnome.org/Apps/Files) is a beautifully-designed and user-friendly file manager on Linux desktop, and it's fully Linux-aware. [Phonograph](https://github.com/kabouzeid/Phonograph) is an open source Material Design music player app (which I've been using for years), and it has just the right Material Design and implementation.
-
-So, it's time for yet another Android file manager.
-
-## Inclusion in custom ROMs
-
-Thank you if you choose to include Material Files in your custom ROM! However since I've received several user complaints due to improper inclusion, I'd like to offer some suggestions on including this app properly for the good of end users:
-
-- Please don't replace the AOSP [DocumentsUI](https://android.googlesource.com/platform/packages/apps/DocumentsUI/) app with this app. This app is not designed to replace DocumentsUI and can't handle a number of functionalities in DocumentsUI - in fact, it relies on DocumentsUI to do things like granting external SD card access.
-
-- Please make sure this app can be uninstalled or at least disabled. Some users may not want this app for a variety of reasons, and get very upset when they can't remove it.
-
-- Please avoid conflict with the Play/F-Droid version of this app. App stores cannot update apps signed with a different certificate, so you can either ship an APK that's signed by me (or F-Droid) so that users will be able to update it on Play/F-Droid, or fork this project and rename the package name when you need to sign the APK with a different certificate and potentially making other changes.
-
-## License
+Программа распространяется по лицензии GNU GPL версии 3 или (по вашему выбору) любой более поздней версии. Полный текст — в файле [LICENSE](LICENSE). Официальный текст уведомления:
 
     Copyright (C) 2018 Hai Zhang
+    Copyright (C) 2026 mftlrs contributors
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

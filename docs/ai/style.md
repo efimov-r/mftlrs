@@ -8,6 +8,21 @@
 - **Новые файлы mftlrs** — правила ниже.
 - Архитектурные приёмы — как в проекте: ViewModel + LiveData для состояния экрана, `java8.nio` для файлов, ViewBinding. Новые асинхронные вещи можно писать на корутинах и Flow — upstream сам так делает в новом коде (`storage/LanSmbServerListLiveData.kt`).
 
+## Заголовки файлов и авторство
+
+Требование GPLv3: сохранить копирайт автора и пометить изменённые файлы с датой — чтобы ошибки форка не приписывали автору upstream ([decisions.md](decisions.md)).
+
+- **Файл upstream, который меняем:** копирайт Hai Zhang не трогать; в заголовок — строка `Modified for mftlrs, <год>.` сразу после `All Rights Reserved.` (в XML — с префиксом `  ~ `, в Kotlin/Gradle — ` * `). Если строка уже есть — не дублировать. Сами правки — с комментарием `mftlrs:`.
+- **Новый файл mftlrs:**
+  ```
+  /*
+   * Copyright (c) 2026 mftlrs contributors
+   * SPDX-License-Identifier: GPL-3.0-or-later
+   */
+  ```
+  В XML — то же в `<!-- -->`.
+- Правообладатель форка везде — `mftlrs contributors`, без имён.
+
 ## Код (Kotlin, новые файлы)
 
 ### Форматирование

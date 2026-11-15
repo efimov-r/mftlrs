@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2020 Hai Zhang <dreaming.in.code.zh@gmail.com>
  * All Rights Reserved.
+ * Modified for mftlrs, 2026.
  */
 
 package me.zhanghai.android.files.app

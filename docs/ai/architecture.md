@@ -177,7 +177,8 @@ Coil 2 со своими загрузчиками: `PathAttributesFetcher` (че
 - 33 перевода в `res/values-*` (есть `values-ru`); upstream переводит через Transifex. Название `app_name` = `mftlrs` — только в `values/strings.xml`, `translatable="false"`, в локалях его нет.
 - Иконка — `mipmap-*/launcher_icon`, баннер Android TV — `drawable/banner`.
 - `fastlane/metadata/android/` — тексты и скриншоты для Google Play и F-Droid (оригинальные).
-- `README.md`, `README_zh-CN.md`, `PRIVACY.md`, `SECURITY.md`, `.github/pull_request_template.md` — оригинальные, про MaterialFiles.
+- `README.md`, `PRIVACY.md`, `SECURITY.md`, `fastlane/metadata/android/en-US/*.txt` — свои, про mftlrs, с указанием «основано на Material Files». Скриншоты и картинки fastlane — пока upstream.
+- Экран «О программе» (`about/`): ссылки — на форк; пункт «Основано на» — на upstream; в «Лицензиях» (`raw/licenses.xml`) первой — запись mftlrs. Правила атрибуции — [decisions.md](decisions.md), заголовки файлов — [style.md](style.md).
 
 ## CI
 
