@@ -683,7 +683,6 @@
         <item>W oparciu o czas</item>
         <item>W oparciu o oszczędzanie baterii</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animacja listy plików</string>
     <string name="settings_file_name_ellipsize_title">Wyświetlanie długiej nazwy pliku</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Skrócona na początku</item>

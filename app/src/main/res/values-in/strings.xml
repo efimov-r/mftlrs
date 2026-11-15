@@ -591,7 +591,6 @@
         <item>Berdasarkan waktu</item>
         <item>Berdasarkan penghemat baterai</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animasi daftar berkas</string>
     <string name="settings_file_name_ellipsize_title">Tampilkan nama berkas panjang</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Elipsis di awal</item>

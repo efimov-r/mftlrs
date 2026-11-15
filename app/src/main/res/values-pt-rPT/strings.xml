@@ -648,7 +648,6 @@
         <item>Baseado na hora</item>
         <item>Baseado na poupança de bateria</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animação da lista de ficheiros</string>
     <string name="settings_file_name_ellipsize_title">Mostrar nome longo</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Elipse no início</item>

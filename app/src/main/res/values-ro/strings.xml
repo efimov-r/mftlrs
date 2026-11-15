@@ -562,7 +562,6 @@
         <item>În funcție de timp</item>
         <item>În funcție de economizorul de baterie</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animații liste fișiere</string>
     <string name="settings_file_name_ellipsize_title">Arată numele lung al fișierului</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Elipsizează începutul</item>

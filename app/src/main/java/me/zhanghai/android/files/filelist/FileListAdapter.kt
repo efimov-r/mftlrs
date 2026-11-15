@@ -34,17 +34,16 @@ import me.zhanghai.android.files.file.iconRes
 import me.zhanghai.android.files.file.isApk
 import me.zhanghai.android.files.provider.archive.isArchivePath
 import me.zhanghai.android.files.provider.common.isEncrypted
-import me.zhanghai.android.files.settings.Settings
-import me.zhanghai.android.files.ui.AnimatedListAdapter
 import me.zhanghai.android.files.ui.CheckableForegroundLinearLayout
 import me.zhanghai.android.files.ui.CheckableItemBackground
+import me.zhanghai.android.files.ui.ListAdapter
 import me.zhanghai.android.files.util.layoutInflater
-import me.zhanghai.android.files.util.valueCompat
 import java.util.Locale
 
+// mftlrs: file list animation removed together with its setting.
 class FileListAdapter(
     private val listener: Listener
-) : AnimatedListAdapter<FileItem, FileListAdapter.ViewHolder>(CALLBACK), PopupTextProvider {
+) : ListAdapter<FileItem, FileListAdapter.ViewHolder>(CALLBACK), PopupTextProvider {
     private var isSearching = false
 
     private lateinit var _viewType: FileViewType
@@ -226,7 +225,6 @@ class FileListAdapter(
         if (payloads.isNotEmpty()) {
             return
         }
-        bindViewHolderAnimation(holder)
         holder.itemLayout.apply {
             setOnClickListener {
                 if (selectedFiles.isEmpty()) {
@@ -392,9 +390,6 @@ class FileListAdapter(
                 file.attributes.lastModifiedTime().toInstant().formatShort(view.context)
         }
     }
-
-    override val isAnimationEnabled: Boolean
-        get() = Settings.FILE_LIST_ANIMATION.valueCompat
 
     companion object {
         private val PAYLOAD_STATE_CHANGED = Any()

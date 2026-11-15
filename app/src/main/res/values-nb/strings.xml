@@ -623,7 +623,6 @@
         <item>Basert på tid</item>
         <item>Basert på batterisparing</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animér fillisten</string>
     <string name="settings_file_name_ellipsize_title">Visning av lange filnavn</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Ellipse i starten</item>

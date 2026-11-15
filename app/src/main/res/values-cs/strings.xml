@@ -677,7 +677,6 @@
         <item>Podle času</item>
         <item>Podle spořiče baterie</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animace při zobrazení souborů</string>
     <string name="settings_file_name_ellipsize_title">Způsob zobrazení dlouhého názvu souboru</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Zobrazit od konce</item>

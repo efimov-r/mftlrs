@@ -653,7 +653,6 @@
         <item>Según el horario</item>
         <item>Según el ahorro de batería</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animación en la lista de archivos</string>
     <string name="settings_file_name_ellipsize_title">En nombres de archivo extensos</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Recortar al principio</item>

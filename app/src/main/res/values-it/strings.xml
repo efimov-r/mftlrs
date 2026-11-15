@@ -653,7 +653,6 @@
         <item>A seconda dell\'ora</item>
         <item>A seconda del risparmio energetico</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animazione elenco file</string>
     <string name="settings_file_name_ellipsize_title">Mostra nomi file lunghi</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Puntini all\'inizio</item>

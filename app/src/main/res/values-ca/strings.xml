@@ -564,7 +564,6 @@
         <item>Basat en el temps</item>
         <item>Basat en l\'estalvi de bateria</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animació de la llista de fitxers</string>
     <string name="settings_file_name_ellipsize_title">Mostra el nom de fitxer llarg</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Escurça el principi</item>

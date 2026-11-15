@@ -583,7 +583,6 @@
         <item>Pagal laiką</item>
         <item>Pagal akumuliatoriaus taupymą</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Failų sąrašo animacija</string>
     <string name="settings_file_name_ellipsize_title">Rodyti ilgą failo pavadinimą</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Elipsuok pradžią</item>

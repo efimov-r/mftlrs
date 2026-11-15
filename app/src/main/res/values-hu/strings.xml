@@ -623,7 +623,6 @@
         <item>Idő alapján</item>
         <item>Akkumulátortöltöttség alapján</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Fájllista animáció</string>
     <string name="settings_file_name_ellipsize_title">Hosszú fájlnév megjelenítése</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Kipontozás az elején</item>

@@ -497,7 +497,6 @@
         <item>Zamana göre</item>
         <item>Pil tasarrufuna göre</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Dosya listesi animasyonu</string>
     <string name="settings_file_name_ellipsize_title">Uzun dosya adı görüntüle</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Baştan kısalt</item>

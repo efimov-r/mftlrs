@@ -623,7 +623,6 @@
         <item>Op een bepaald tijdstip</item>
         <item>Ingesteld door batterijbesparing</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animatie tonen in bestandslijst</string>
     <string name="settings_file_name_ellipsize_title">Lange bestandsnamen tonen</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Ellips toevoegen aan begin van naam</item>

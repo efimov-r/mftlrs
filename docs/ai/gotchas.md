@@ -3,9 +3,9 @@
 На чём легко ошибиться и как правильно. Новые записи — сверху. Пока записи — по чтению кода (2026-11-15), не по реальным ошибкам.
 
 ## Слияние с upstream: удалённые темы и настройки
-- **Что случится:** конфликты «удалено у нас — изменено у upstream» в `themes.xml`, `themes_custom.xml`, `theme/custom/`, `colorpicker/`; при неаккуратном разрешении возвращаются Material Design 2, выбор цвета, цвета из обоев или строки удалённых настроек
-- **Причина:** в mftlrs только Material 3 с фиксированной палитрой ([decisions.md](decisions.md), «Две фиксированные темы»), а upstream продолжает развивать MD2, выбор цвета и Material You
-- **Как правильно:** удалённые файлы оставлять удалёнными; правки upstream в общих файлах (`themes_material3.xml`, `styles*.xml`, `FileListAdapter` и др.) переносить, но без веток MD2 и `isMaterial3Theme`; новые строки `settings_theme_color*`, `settings_material_design_3_title`, `settings_black_night_mode` в локалях не принимать. После слияния — поиск по `ThemeColor`, `MATERIAL_DESIGN_3`, `isMaterial3Theme`, `DynamicColors` должен быть пустым
+- **Что случится:** конфликты «удалено у нас — изменено у upstream» в `themes.xml`, `themes_custom.xml`, `theme/custom/`, `colorpicker/`, `ui/AnimatedListAdapter.kt`, `anim/list_item.xml`; при неаккуратном разрешении возвращаются Material Design 2, выбор цвета, цвета из обоев, анимация списка файлов или строки удалённых настроек
+- **Причина:** в mftlrs только Material 3 с фиксированной палитрой ([decisions.md](decisions.md), «Две фиксированные темы»), а upstream продолжает развивать MD2, выбор цвета и Material You. Анимация списка файлов и её настройка удалены (2026-11-15): `FileListAdapter` наследует `ListAdapter` напрямую
+- **Как правильно:** удалённые файлы оставлять удалёнными; правки upstream в общих файлах (`themes_material3.xml`, `styles*.xml`, `FileListAdapter` и др.) переносить, но без веток MD2, `isMaterial3Theme` и `bindViewHolderAnimation`; новые строки `settings_theme_color*`, `settings_material_design_3_title`, `settings_black_night_mode`, `settings_file_list_animation_title` в локалях не принимать. После слияния — поиск по `ThemeColor`, `MATERIAL_DESIGN_3`, `isMaterial3Theme`, `DynamicColors`, `FILE_LIST_ANIMATION`, `AnimatedListAdapter` должен быть пустым
 
 ## Смена цвета иконки — в нескольких местах
 - **Что случится:** иконка в приложении одного цвета, а иконка в магазине или исходники `art/` — другого

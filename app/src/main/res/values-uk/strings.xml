@@ -685,7 +685,6 @@
         <item>На основі часу</item>
         <item>На основі режиму економії батареї</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Анімація списку файлів</string>
     <string name="settings_file_name_ellipsize_title">Відображати довгі назви файлів</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Еліпсувати початок</item>

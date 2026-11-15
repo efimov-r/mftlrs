@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018 Hai Zhang <dreaming.in.code.zh@gmail.com>
  * All Rights Reserved.
+ * Modified for mftlrs, 2026.
  */
 
 package me.zhanghai.android.files.filelist
@@ -612,7 +613,6 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         if (files != null) {
             updateAdapterFileList()
         } else {
-            // This resets animation as well.
             adapter.clear()
         }
         if (stateful is Success) {

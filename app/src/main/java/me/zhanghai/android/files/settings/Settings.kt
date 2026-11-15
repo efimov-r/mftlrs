@@ -106,10 +106,7 @@ object Settings {
             NightMode::class.java
         )
 
-    val FILE_LIST_ANIMATION: SettingLiveData<Boolean> =
-        BooleanSettingLiveData(
-            R.string.pref_key_file_list_animation, R.bool.pref_default_value_file_list_animation
-        )
+    // mftlrs: FILE_LIST_ANIMATION removed — no file list animation.
 
     val FILE_NAME_ELLIPSIZE: SettingLiveData<TextUtils.TruncateAt> =
         EnumSettingLiveData(

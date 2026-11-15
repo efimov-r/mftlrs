@@ -76,6 +76,7 @@ app/src/main/
 |---|---|---|
 | [docs/ai/todo.md](docs/ai/todo.md) | что в работе и что дальше | в начале сессии |
 | [docs/ai/architecture.md](docs/ai/architecture.md) | подробная карта кода: где что лежит и как работает | перед правкой незнакомой части кода |
+| [docs/ai/ui-inventory.md](docs/ai/ui-inventory.md) | перечень Activity, Fragment, диалогов, Preference, адаптеров, своих View и разметки | перед изменениями интерфейса и при оценке переделки UI |
 | [docs/ai/features.md](docs/ai/features.md) | функции: строки кода, библиотеки, убирать ли | перед удалением или добавлением функций и библиотек |
 | [docs/ai/upstream.md](docs/ai/upstream.md) | upstream, форки, жалобы пользователей, сравнение с другими менеджерами | при выборе доработок и синхронизации с upstream |
 | [docs/ai/bugs.md](docs/ai/bugs.md) | известные баги и их статус | при ошибке — до того, как чинить |

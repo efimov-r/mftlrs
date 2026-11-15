@@ -623,7 +623,6 @@
         <item>Baseado no tempo</item>
         <item>Baseado no aforro de batería</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animación da lista de ficheiros</string>
     <string name="settings_file_name_ellipsize_title">Amosar o nome longo do ficheiro</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Truncar no comezo</item>

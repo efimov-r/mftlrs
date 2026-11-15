@@ -751,7 +751,6 @@
         <item>Based on time</item>
         <item>Based on battery saver</item>
     </string-array>
-    <string name="settings_file_list_animation_title">File list animation</string>
     <string name="settings_file_name_ellipsize_title">Display long file name</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Ellipsize the beginning</item>

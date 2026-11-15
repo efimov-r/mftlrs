@@ -497,7 +497,6 @@
         <item>Dựa theo thời gian</item>
         <item>Dựa theo chế độ tiết kiệm pin</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Hoạt ảnh danh sách tệp</string>
     <string name="settings_file_name_ellipsize_title">Hiển thị tên tệp dài</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Rút ngắn ở đầu</item>

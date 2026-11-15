@@ -593,7 +593,6 @@
         <item>時刻に従う</item>
         <item>バッテリーセーバーに従う</item>
     </string-array>
-    <string name="settings_file_list_animation_title">ファイル一覧のアニメーション</string>
     <string name="settings_file_name_ellipsize_title">長いファイル名の表示方法</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>先頭を省略</item>

@@ -623,7 +623,6 @@
         <item>Zeitbasiert</item>
         <item>Basierend auf dem Batteriesparmodus</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Dateiliste animieren</string>
     <string name="settings_file_name_ellipsize_title">Langen Dateinamen anzeigen</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Den Anfang kürzen</item>

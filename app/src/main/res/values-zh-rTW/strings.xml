@@ -594,7 +594,6 @@
         <item>基於時間</item>
         <item>基於省電模式</item>
     </string-array>
-    <string name="settings_file_list_animation_title">檔案列表動畫</string>
     <string name="settings_file_name_ellipsize_title">顯示長檔案名稱</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>省略開頭</item>

@@ -518,7 +518,6 @@
         <item>بر پایهٔ زمان</item>
         <item>بر پایهٔ محافظ باتری</item>
     </string-array>
-    <string name="settings_file_list_animation_title">پویانمایی فهرست پرونده‌ها</string>
     <string name="settings_file_name_ellipsize_title">نمایش نام پروندهٔ طولانی</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>پیچاندن ابتدا</item>

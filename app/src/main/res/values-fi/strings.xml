@@ -508,7 +508,6 @@
         <item>Aikaan perustuen</item>
         <item>Virransäästöön perustue</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Tiedostolistan anmiaatioita</string>
     <string name="settings_file_name_ellipsize_title">Näytä pitkä tiedostonimi</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Lyhennä alusta</item>

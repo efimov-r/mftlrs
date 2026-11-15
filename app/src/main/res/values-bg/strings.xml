@@ -623,7 +623,6 @@
         <item>Според времето</item>
         <item>Според пестенето на батерия</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Анимиране на списъка на файлове</string>
     <string name="settings_file_name_ellipsize_title">Показване на дълги имена на файлове</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Многоточие в началото</item>

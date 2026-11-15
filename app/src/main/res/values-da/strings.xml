@@ -623,7 +623,6 @@
         <item>Baseret på tid</item>
         <item>Baseret på batterisparer</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animation af filliste</string>
     <string name="settings_file_name_ellipsize_title">Vis langt filnavn</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Ellipsér begyndelsen</item>

@@ -743,7 +743,6 @@
         <item>يعتمد على الوقت</item>
         <item>يعتمد على وضع توفير الطاقة</item>
     </string-array>
-    <string name="settings_file_list_animation_title">التأثيرات المتحركة لقائمة الملفات</string>
     <string name="settings_file_name_ellipsize_title">عرض اسم ملف طويل</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>قلل من البداية</item>

@@ -625,7 +625,6 @@
         <item>Byggt á tíma sólarhrings</item>
         <item>Byggt á rafhlöðusparnaði</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Hreyfa skráalista</string>
     <string name="settings_file_name_ellipsize_title">Birta löng skráaheiti</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Setja úrfellingarpunkta í byrjun</item>

@@ -685,7 +685,6 @@
         <item>На основе времени</item>
         <item>На основе энергосберегающего режима</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Анимация списка файлов</string>
     <string name="settings_file_name_ellipsize_title">Отображение длинных имен файлов</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Многоточие в начале</item>

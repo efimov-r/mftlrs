@@ -20,11 +20,9 @@ import android.os.Bundle
 import android.os.Looper
 import android.util.TypedValue
 import android.view.LayoutInflater
-import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.view.animation.Interpolator
 import android.widget.Toast
-import androidx.annotation.AnimRes
 import androidx.annotation.AnyRes
 import androidx.annotation.ArrayRes
 import androidx.annotation.AttrRes
@@ -58,7 +56,7 @@ val Context.activity: Activity?
         }
     }
 
-fun Context.getAnimation(@AnimRes id: Int): Animation = AnimationUtils.loadAnimation(this, id)
+// mftlrs: getAnimation() removed together with the file list animation.
 
 fun Context.getBoolean(@BoolRes id: Int): Boolean = resources.getBoolean(id)
 

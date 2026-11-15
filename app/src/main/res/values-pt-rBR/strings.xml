@@ -655,7 +655,6 @@
         <item>Baseado no horário</item>
         <item>Baseado na economia de bateria</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Animação da lista de arquivos</string>
     <string name="settings_file_name_ellipsize_title">Exibir nome de arquivo longo</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>Eliminar o início</item>

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2020 Hai Zhang <dreaming.in.code.zh@gmail.com>
  * All Rights Reserved.
+ * Modified for mftlrs, 2026.
  */
 
 package me.zhanghai.android.files.util
@@ -10,11 +11,9 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.view.animation.Animation
 import android.view.animation.Interpolator
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.annotation.AnimRes
 import androidx.annotation.AnyRes
 import androidx.annotation.ArrayRes
 import androidx.annotation.AttrRes
@@ -45,7 +44,7 @@ fun Fragment.finish() {
     requireActivity().finish()
 }
 
-fun Fragment.getAnimation(@AnimRes id: Int): Animation = requireContext().getAnimation(id)
+// mftlrs: getAnimation() removed together with the file list animation.
 
 fun Fragment.getBoolean(@BoolRes id: Int): Boolean = requireContext().getBoolean(id)
 

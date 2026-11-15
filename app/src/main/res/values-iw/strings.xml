@@ -655,7 +655,6 @@
         <item>מבוסס זמן</item>
         <item>מבוסס על שמירת הסוללה</item>
     </string-array>
-    <string name="settings_file_list_animation_title">אנימציית רשימת קבצים</string>
     <string name="settings_file_name_ellipsize_title">הצגת שם קובץ ארוך</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>התחלה אליפסית</item>

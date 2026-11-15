@@ -593,7 +593,6 @@
         <item>시간대에 따름</item>
         <item>배터리 절약 모드 사용 시</item>
     </string-array>
-    <string name="settings_file_list_animation_title">파일 목록 애니메이션</string>
     <string name="settings_file_name_ellipsize_title">긴 파일 이름 표시</string>
     <string-array name="settings_file_name_ellipsize_entries">
         <item>앞부분 생략</item>

@@ -338,7 +338,6 @@
         <item>Denboraren arabera</item>
         <item>Bateria aurrezlearen arabera</item>
     </string-array>
-    <string name="settings_file_list_animation_title">Fitxategien zerrendaren animazioa</string>
     <string name="settings_behavior_title">Portaera</string>
     <string name="settings_default_directory_title">Lehenetsitako karpeta</string>
     <string name="settings_standard_directories_title">Karpeta estandarrak</string>
