@@ -2,6 +2,16 @@
 
 На чём легко ошибиться и как правильно. Новые записи — сверху. Пока записи — по чтению кода (2026-11-15), не по реальным ошибкам.
 
+## Цвет верхней панели списка файлов не зависит от `colorAppBarSurface`
+- **Что случится:** правка `colorAppBarSurface` в теме не меняет панель главного экрана; при слиянии с upstream возвращается `liftOnScroll` — панель снова того же цвета, что список, и перекрашивается только при прокрутке
+- **Причина:** в `layout/file_list_fragment_app_bar_include.xml` фон `CoordinatorAppBarLayout` и `overlayToolbar` — `?colorSurfaceContainer`, `liftOnScroll="false"`; `file_list_toolbar_scroll_flags` в `values/integers.xml` — `noScroll`, панель не прячется (2026-11-15)
+- **Как правильно:** цвет панели менять через `colorSurfaceContainer` или прямо в этом layout; фон `overlayToolbar` держать таким же, как у панели — синхронизация через `syncBackgroundColorTo` без `liftOnScroll` не срабатывает
+
+## `gradlew` без `JAVA_HOME`
+- **Что случится:** `ERROR: JAVA_HOME is not set and no 'java' command could be found`
+- **Причина:** JDK не в PATH
+- **Как правильно:** подходит JDK из Android Studio: в PowerShell `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"` в той же команде перед `.\gradlew.bat`
+
 ## Слияние с upstream: удалённые темы и настройки
 - **Что случится:** конфликты «удалено у нас — изменено у upstream» в `themes.xml`, `themes_custom.xml`, `theme/custom/`, `colorpicker/`, `ui/AnimatedListAdapter.kt`, `anim/list_item.xml`; при неаккуратном разрешении возвращаются Material Design 2, выбор цвета, цвета из обоев, анимация списка файлов или строки удалённых настроек
 - **Причина:** в mftlrs только Material 3 с фиксированной палитрой ([decisions.md](decisions.md), «Две фиксированные темы»), а upstream продолжает развивать MD2, выбор цвета и Material You. Анимация списка файлов и её настройка удалены (2026-11-15): `FileListAdapter` наследует `ListAdapter` напрямую
