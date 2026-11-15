@@ -22,7 +22,7 @@
 .\gradlew.bat assembleRelease                  # подпись: signing.properties в корне или переменные STORE_FILE, STORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
 ```
 
-- Сборка агентом ещё не проверялась.
+- Сборка проверена агентом 2026-11-15: `assembleDebug lintVitalRelease` — успешно, первая сборка ~5,5 мин; `gradlew` требует `JAVA_HOME` (JDK 17+), daemon по `gradle/gradle-daemon-jvm.properties` — JDK 25. Предупреждения компилятора — из кода upstream.
 - Release: R8 (`minifyEnabled`, `shrinkResources`), правила — `app/proguard-rules.pro`.
 - Подводные камни сборки — [docs/ai/gotchas.md](docs/ai/gotchas.md).
 

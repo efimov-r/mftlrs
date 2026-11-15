@@ -3,6 +3,7 @@
 <!--
   ~ Copyright (c) 2019 Hai Zhang <dreaming.in.code.zh@gmail.com>
   ~ All Rights Reserved.
+  ~ Modified for mftlrs, 2026.
   -->
 
 <vector
@@ -18,7 +19,7 @@
         android:translateX="32.4"
         android:translateY="32.4">
         <path
-            android:fillColor="@color/color_primary_light"
+            android:fillColor="@color/launcher_icon_color"
             android:pathData="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
     </group>
 </vector>

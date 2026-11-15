@@ -3,6 +3,7 @@
 <!--
   ~ Copyright (c) 2018 Hai Zhang <dreaming.in.code.zh@gmail.com>
   ~ All Rights Reserved.
+  ~ Modified for mftlrs, 2026.
   -->
 
 <resources>
@@ -30,6 +31,8 @@
     <color name="activity_icon_tint">@color/secondary_text_default_material_light</color>
 
     <color name="shortcut_icon_background">#F5F5F5</color>
+    <!-- mftlrs: launcher icon background and shortcut icon glyphs, independent of the theme. -->
+    <color name="launcher_icon_color">#12876A</color>
 
     <color name="file_icon_light_blue">#4B86F0</color>
     <color name="file_icon_blue">#4285F4</color>
