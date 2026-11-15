@@ -20,7 +20,6 @@ import me.zhanghai.android.files.util.displayWidth
 import me.zhanghai.android.files.util.getDimensionPixelSize
 import me.zhanghai.android.files.util.getDimensionPixelSizeByAttr
 import me.zhanghai.android.files.util.getDrawableByAttr
-import me.zhanghai.android.files.util.isLayoutDirectionRtl
 
 class NavigationRecyclerView : RecyclerView {
     private val verticalPadding = context.getDimensionPixelSize(
@@ -66,24 +65,15 @@ class NavigationRecyclerView : RecyclerView {
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
-        val isLayoutDirectionRtl = isLayoutDirectionRtl
-        insetStart = if (isLayoutDirectionRtl) {
-            insets.systemWindowInsetRight
-        } else {
-            insets.systemWindowInsetLeft
-        }
-        val paddingLeft = if (isLayoutDirectionRtl) 0 else insetStart
-        val paddingRight = if (isLayoutDirectionRtl) insetStart else 0
+        // mftlrs: RTL is disabled (supportsRtl="false"), the drawer is always on the left.
+        insetStart = insets.systemWindowInsetLeft
         insetTop = insets.systemWindowInsetTop
         setPadding(
-            paddingLeft, verticalPadding + insetTop, paddingRight,
+            insetStart, verticalPadding + insetTop, 0,
             verticalPadding + insets.systemWindowInsetBottom
         )
         requestLayout()
-        return insets.replaceSystemWindowInsets(
-            insets.systemWindowInsetLeft - paddingLeft, 0,
-            insets.systemWindowInsetRight - paddingRight, 0
-        )
+        return insets.replaceSystemWindowInsets(0, 0, insets.systemWindowInsetRight, 0)
     }
 
     override fun draw(canvas: Canvas) {

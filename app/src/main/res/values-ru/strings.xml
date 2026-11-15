@@ -10,6 +10,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="ImpliedQuantity">
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Закрыть %1$s?</string>
+    <string name="file_list_exit_minimize">Свернуть</string>
+
     <string name="close">Закрыть</string>
     <string name="copy">Копировать</string>
     <string name="cut">Вырезать</string>

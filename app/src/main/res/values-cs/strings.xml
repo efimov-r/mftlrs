@@ -8,6 +8,10 @@
 
 <resources>
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Zavřít %1$s?</string>
+    <string name="file_list_exit_minimize">Minimalizovat</string>
+
     <string name="close">Zavřít</string>
     <string name="copy">Kopírovat</string>
     <string name="cut">Vyjmout</string>
@@ -723,4 +727,5 @@
     <string name="about_author_name_title">Hai Zhang</string>
     <string name="about_author_github_title">Sledovat na GitHubu</string>
     <string name="about_author_twitter_title">Sledovat na Twitteru</string>
+    <string name="about_based_on_title">Založeno na</string>
 </resources>

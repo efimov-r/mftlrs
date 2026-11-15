@@ -177,7 +177,7 @@ Coil 2 со своими загрузчиками: `PathAttributesFetcher` (че
 
 ## Ресурсы, переводы, метаданные
 
-- 33 перевода в `res/values-*` (есть `values-ru`); upstream переводит через Transifex. Название `app_name` = `mftlrs` — только в `values/strings.xml`, `translatable="false"`, в локалях его нет.
+- 22 перевода в `res/values-*` (есть `values-ru`); upstream переводит через Transifex. 11 локалей удалены 2026-11-15, в том числе все RTL; в манифесте `supportsRtl="false"` — раскладка всегда слева направо, код учёта направления письма удалён ([decisions.md](decisions.md), «Переводы»). Список языков в настройках (`LocalePreference`) строится из папок `values-*` через `generateLocaleConfig`. Название `app_name` = `mftlrs` — только в `values/strings.xml`, `translatable="false"`, в локалях его нет.
 - Иконка — только адаптивная, `mipmap-anydpi-v26/launcher_icon.xml`: фон — цвет `launcher_icon_color`, белая папка — `mipmap-*/launcher_icon_foreground.png`, монохромный слой — вектор. Иконки ярлыков — тоже адаптивные: серый фон и векторный значок цвета `launcher_icon_color`. `launcher_icon_color` (`values/colors.xml`) — отдельный от темы цвет `#12876A` (бирюзово-зелёный); иконки не зависят от `color_primary_light`. Тот же цвет — в `art/*.svg` и `art/generate-png.sh`. Запечённых PNG нет (minSdk 26). Исходники — `art/*.svg`, выгрузка PNG переднего слоя и иконки для магазина — `art/generate-png.sh` + `deploy-png.sh` (Inkscape). Баннера Android TV нет.
 - `fastlane/metadata/android/` — тексты и скриншоты для Google Play и F-Droid (оригинальные).
 - `README.md`, `PRIVACY.md`, `SECURITY.md`, `fastlane/metadata/android/en-US/*.txt` — свои, про mftlrs, с указанием «основано на Material Files». Скриншоты и картинки fastlane — пока upstream.

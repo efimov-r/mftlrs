@@ -2,6 +2,11 @@
 
 На чём легко ошибиться и как правильно. Новые записи — сверху. Пока записи — по чтению кода (2026-11-15), не по реальным ошибкам.
 
+## Слияние с upstream: удалённые локали и RTL
+- **Что случится:** конфликт «удалено у нас — изменено у upstream» в 11 папках `values-*` (`strings.xml`, `mime_types.xml`); при выборе версии upstream язык возвращается в настройки без строк mftlrs. Конфликт в `AndroidManifest.xml` по `supportsRtl`; если вернуть `true`, интерфейс в системе с арабским, персидским или ивритом снова зеркалится, а RTL никто не проверяет
+- **Причина:** 2026-11-15 удалены `values-eu`, `-gl`, `-is`, `-lt`, `-ca`, `-nb`, `-da`, `-fi`, `-ar`, `-fa`, `-iw` и выключен RTL ([decisions.md](decisions.md), «Переводы»); upstream продолжает обновлять эти локали через Transifex
+- **Как правильно:** разрешать удалением (`git rm -r app/src/main/res/values-eu` и т. д.); после слияния этих 11 папок быть не должно, а в манифесте — `android:supportsRtl="false"`. Код учёта RTL удалён; после слияния поиск по `isLayoutDirectionRtl`, `AutoMirrorDrawable`, `layoutDirectionCompat`, `LAYOUT_DIRECTION_RTL`, `autoMirrored` должен быть пустым
+
 ## Цвет верхней панели списка файлов не зависит от `colorAppBarSurface`
 - **Что случится:** правка `colorAppBarSurface` в теме не меняет панель главного экрана; при слиянии с upstream возвращается `liftOnScroll` — панель снова того же цвета, что список, и перекрашивается только при прокрутке
 - **Причина:** в `layout/file_list_fragment_app_bar_include.xml` фон `CoordinatorAppBarLayout` и `overlayToolbar` — `?colorSurfaceContainer`, `liftOnScroll="false"`; `file_list_toolbar_scroll_flags` в `values/integers.xml` — `noScroll`, панель не прячется (2026-11-15)
@@ -24,7 +29,7 @@
 
 ## `app_name` в локалях вернётся при слиянии с upstream
 - **Что случится:** на каком-то языке приложение снова называется «Material Files» (или переводом); lint предупреждает о переводе непереводимой строки
-- **Причина:** в форке `app_name` — только в `values/strings.xml` с `translatable="false"`, из 33 локалей строка удалена. У upstream она есть в каждой локали. Если upstream меняет эту строку или соседние (новый перевод названия, файл перегенерирован из Transifex), git даёт конфликт; выбор при разрешении «взять версию upstream» возвращает строку
+- **Причина:** в форке `app_name` — только в `values/strings.xml` с `translatable="false"`, из всех локалей строка удалена. У upstream она есть в каждой локали. Если upstream меняет эту строку или соседние (новый перевод названия, файл перегенерирован из Transifex), git даёт конфликт; выбор при разрешении «взять версию upstream» возвращает строку
 - **Как правильно:** при конфликте в `values-*/strings.xml` оставлять удаление `app_name`; после слияния искать `name="app_name"` — должен остаться один результат, в `values/`
 
 ## Смена `applicationId` задевает не только `build.gradle`

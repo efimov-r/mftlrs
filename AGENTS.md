@@ -7,7 +7,7 @@
 - **Языки:** Kotlin 2.4 — почти весь код; Java — 8 классов в чужих пакетах для доступа к package-private API библиотек; C — JNI (`syscall.c`, `hiddenapi.c`); AIDL — IPC с root-процессом.
 - **Сборка:** Gradle 9.6, Groovy DSL (`build.gradle`, не `.kts`), AGP 9.4.1, один модуль `:app`, NDK + CMake (`app/CMakeLists.txt`). Версии библиотек — прямо в `app/build.gradle`, без version catalog.
 - **Android:** minSdk 26 (у upstream — 23), targetSdk 36, compileSdk 37; Java 11 + core library desugaring.
-- **UI:** Android Views + ViewBinding, Fragments, ViewModel + LiveData, Material Components, только Material 3: две фиксированные темы, светлая и тёмная. Compose подключён (BOM, Material 3, `runtime-livedata`, `coil-compose`) для нового главного экрана, тема — `theme/MftlrsTheme.kt`; экранов на Compose пока нет.
+- **UI:** Android Views + ViewBinding, Fragments, ViewModel + LiveData, Material Components, только Material 3: две фиксированные темы, светлая и тёмная. Compose подключён (BOM, Material 3, `runtime-livedata`, `coil-compose`) для нового главного экрана, тема — `theme/MftlrsTheme.kt`; экранов на Compose пока нет, готовые элементы — [docs/ai/compose.md](docs/ai/compose.md).
 - **Файловый бэкенд:** Java NIO2 через бэкпорт `retrofile` (пакет `java8.nio.*`), свой `FileSystemProvider` на каждый источник.
 - **Библиотеки:** smbj, sshj + BouncyCastle, commons-net, dav4jvm, Apache FtpServer, libarchive, libsu, Shizuku, Coil 2 (Firebase вырезан, будет ACRA) — что за что отвечает: [docs/ai/features.md](docs/ai/features.md).
 - **Хранение:** БД нет, только SharedPreferences.
@@ -51,7 +51,7 @@ app/src/main/
 ├── java/{androidx,at,com,net}/ — классы в пакетах библиотек: доступ к их package-private API
 ├── aidl/                — интерфейсы IPC с root-процессом
 ├── jni/                 — syscall.c (Linux syscalls), hiddenapi.c
-└── res/                 — ресурсы; 33 перевода, включая values-ru
+└── res/                 — ресурсы; 22 перевода, включая values-ru
 ```
 
 Подробно: [docs/ai/architecture.md](docs/ai/architecture.md).
@@ -67,6 +67,7 @@ app/src/main/
 - **Коммиты:** коммитит владелец. Агент сразу добавляет в индекс (`git add`) свои изменения, в том числе новые и удалённые файлы, — кроме файлов из `.gitignore` и тех, по которым владелец ещё не решил. Агент коммитит только по прямой просьбе и **без** строки `Co-Authored-By` и другой атрибуции агента. Push делает только владелец.
 - **Форк под GPLv3:** новые библиотеки — только совместимые (MIT, BSD, Apache-2.0, GPLv3); без GPLv2-only и закрытых SDK. Копирайты в файлах upstream не удалять.
 - **Меньше конфликтов с upstream:** в файлах upstream менять минимум, крупные новые вещи — в новых файлах; Kotlin-пакет не переименовывать (решение — [docs/ai/decisions.md](docs/ai/decisions.md)).
+- **Исключение — UI:** совместимость с upstream в интерфейсе не сохраняем — Activity, Fragment, диалоги, разметка, свои View, адаптеры, стили, drawable. Весь UI рано или поздно переписываем на Compose, поэтому его можно свободно править, упрощать и удалять. Минимум правок — по-прежнему для логики: провайдеры ФС, файловые операции, настройки, модели (решение — [docs/ai/decisions.md](docs/ai/decisions.md), «UI не держим совместимым с upstream»).
 - Этот файл — до 200 строк; подробности — в `docs/ai/`.
 - Файлы памяти — на русском.
 
@@ -76,6 +77,7 @@ app/src/main/
 |---|---|---|
 | [docs/ai/todo.md](docs/ai/todo.md) | что в работе и что дальше | в начале сессии |
 | [docs/ai/architecture.md](docs/ai/architecture.md) | подробная карта кода: где что лежит и как работает | перед правкой незнакомой части кода |
+| [docs/ai/compose.md](docs/ai/compose.md) | готовые элементы на Compose и куда класть новые | перед любым UI на Compose; после — дополнить |
 | [docs/ai/ui-inventory.md](docs/ai/ui-inventory.md) | перечень Activity, Fragment, диалогов, Preference, адаптеров, своих View и разметки | перед изменениями интерфейса и при оценке переделки UI |
 | [docs/ai/file-list-checklist.md](docs/ai/file-list-checklist.md) | ручной чек-лист поведения главного экрана | после изменений в `filelist/` и `navigation/` |
 | [docs/ai/features.md](docs/ai/features.md) | функции: строки кода, библиотеки, убирать ли | перед удалением или добавлением функций и библиотек |

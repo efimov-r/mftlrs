@@ -413,7 +413,8 @@ class PersistentDrawerLayout @JvmOverloads constructor(
     }
 
     private fun findDrawerView(gravity: Int): View? {
-        val horizontalGravity = (Gravity.getAbsoluteGravity(gravity, layoutDirection)
+        // mftlrs: RTL is disabled (supportsRtl="false"), the layout is always LTR.
+        val horizontalGravity = (Gravity.getAbsoluteGravity(gravity, View.LAYOUT_DIRECTION_LTR)
             and Gravity.HORIZONTAL_GRAVITY_MASK)
         for (child in children) {
             val childHorizontalGravity = getChildAbsoluteHorizontalGravity(child)
@@ -447,7 +448,8 @@ class PersistentDrawerLayout @JvmOverloads constructor(
     }
 
     private fun getChildAbsoluteHorizontalGravity(child: View): Int {
-        return (Gravity.getAbsoluteGravity(getChildGravity(child), layoutDirection)
+        // mftlrs: RTL is disabled (supportsRtl="false"), the layout is always LTR.
+        return (Gravity.getAbsoluteGravity(getChildGravity(child), View.LAYOUT_DIRECTION_LTR)
             and Gravity.HORIZONTAL_GRAVITY_MASK)
     }
 

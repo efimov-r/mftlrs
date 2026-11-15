@@ -8,6 +8,10 @@
 
 <resources>
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">%1$s を閉じますか？</string>
+    <string name="file_list_exit_minimize">最小化</string>
+
     <string name="close">閉じる</string>
     <string name="copy">コピー</string>
     <string name="cut">切り取り</string>
@@ -636,4 +640,5 @@
     <string name="about_author_name_title">張海</string>
     <string name="about_author_github_title">GitHub でフォロー</string>
     <string name="about_author_twitter_title">Twitter でフォロー</string>
+    <string name="about_based_on_title">派生元</string>
 </resources>

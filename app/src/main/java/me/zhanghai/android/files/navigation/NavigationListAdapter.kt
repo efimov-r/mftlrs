@@ -29,7 +29,6 @@ import me.zhanghai.android.files.compat.setTextAppearanceCompat
 import me.zhanghai.android.files.compat.use
 import me.zhanghai.android.files.databinding.NavigationDividerItemBinding
 import me.zhanghai.android.files.databinding.NavigationItemBinding
-import me.zhanghai.android.files.ui.AutoMirrorDrawable
 import me.zhanghai.android.files.ui.SimpleAdapter
 import me.zhanghai.android.files.util.getColorStateListByAttr
 import me.zhanghai.android.files.util.layoutInflater
@@ -139,9 +138,8 @@ class NavigationListAdapter(
             ShapeAppearanceModel.builder(context, shapeAppearance, shapeAppearanceOverlay).build()
         val materialShapeDrawable = MaterialShapeDrawable(shapeAppearanceModel)
             .apply { this.fillColor = fillColor }
-        return AutoMirrorDrawable(
-            InsetDrawable(materialShapeDrawable, insetStart, insetTop, insetEnd, insetBottom)
-        )
+        // mftlrs: RTL is disabled (supportsRtl="false"), no mirroring.
+        return InsetDrawable(materialShapeDrawable, insetStart, insetTop, insetEnd, insetBottom)
     }
 
     fun notifyCheckedChanged() {

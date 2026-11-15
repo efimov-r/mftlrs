@@ -8,6 +8,10 @@
 
 <resources>
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">關閉 %1$s？</string>
+    <string name="file_list_exit_minimize">最小化</string>
+
     <string name="close">關閉</string>
     <string name="copy">複製</string>
     <string name="cut">剪下</string>
@@ -637,4 +641,5 @@
     <string name="about_author_name_title">張海</string>
     <string name="about_author_github_title">在 GitHub 上關注</string>
     <string name="about_author_twitter_title">在 Twitter 上關注</string>
+    <string name="about_based_on_title">基於</string>
 </resources>

@@ -261,6 +261,10 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
             true
         }
 
+        // mftlrs: exit confirmation; added first so that it is called last, and not when picking.
+        addExitConfirmation().also { callback ->
+            viewModel.pickOptionsLiveData.observe(viewLifecycleOwner) { callback.isEnabled = it == null }
+        }
         val viewLifecycleOwner = viewLifecycleOwner
         addOnBackPressedCallback(
             object : OnBackPressedCallback(false) {

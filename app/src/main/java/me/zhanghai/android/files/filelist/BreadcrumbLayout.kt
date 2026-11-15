@@ -8,7 +8,6 @@ package me.zhanghai.android.files.filelist
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
-import android.view.View
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import androidx.annotation.AttrRes
@@ -138,11 +137,8 @@ class BreadcrumbLayout : HorizontalScrollView {
             return
         }
         val selectedItemView = itemsLayout.getChildAt(data.selectedIndex)
-        val scrollX = if (layoutDirection == View.LAYOUT_DIRECTION_LTR) {
-            selectedItemView.left - itemsLayout.paddingStart
-        } else {
-            selectedItemView.right - width + itemsLayout.paddingStart
-        }
+        // mftlrs: RTL is disabled (supportsRtl="false"), the layout is always LTR.
+        val scrollX = selectedItemView.left - itemsLayout.paddingStart
         if (!isFirstScroll && isShown) {
             smoothScrollTo(scrollX, 0)
         } else {

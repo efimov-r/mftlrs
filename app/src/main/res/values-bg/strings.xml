@@ -8,6 +8,10 @@
 
 <resources>
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Затваряне на %1$s?</string>
+    <string name="file_list_exit_minimize">Минимизиране</string>
+
     <string name="close">Затваряне</string>
     <string name="copy">Копиране</string>
     <string name="cut">Изрязване</string>
@@ -667,4 +671,5 @@
     <string name="about_author_name_title">Hai Zhang</string>
     <string name="about_author_github_title">Следване в GitHub</string>
     <string name="about_author_twitter_title">Следване в Twitter</string>
+    <string name="about_based_on_title">Базирано на</string>
 </resources>

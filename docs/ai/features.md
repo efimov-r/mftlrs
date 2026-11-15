@@ -43,7 +43,7 @@
 | Терминал | 25 (<0,1%) | 0 | `terminal/` | **Проверить** — зовёт заброшенный Android Terminal Emulator, с Termux, вероятно, не работает |
 | Android TV | — | 0 | — | **Убрано** 2026-11-15: `leanback`, `LEANBACK_LAUNCHER`, баннер, `drawable-television/` |
 | Samsung DeX, оконный режим | — | 0 | манифест: `resizeableActivity`, `touchscreen required=false` | **Оставить** |
-| Переводы (33) | — | 0 | `res/values-*` | **Оставить**; новые строки — минимум en и ru |
+| Переводы (22) | — | 0 | `res/values-*` | **Оставить** 22; 11 локалей и RTL **убраны** 2026-11-15 ([decisions.md](decisions.md), «Переводы»); новые строки — сразу во все локали ([style.md](style.md), «Тексты») |
 
 ## Библиотеки по функциям
 

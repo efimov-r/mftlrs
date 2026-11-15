@@ -211,8 +211,9 @@ class PersistentBarLayout @JvmOverloads constructor(
                 val childHeight = child.measuredHeight
                 val childLayoutParams = child.layoutParams as LayoutParams
                 val childTop = computeBarViewTop(child)
+                // mftlrs: RTL is disabled (supportsRtl="false"), the layout is always LTR.
                 val childHorizontalGravity = Gravity.getAbsoluteGravity(
-                    childLayoutParams.gravity, layoutDirection
+                    childLayoutParams.gravity, View.LAYOUT_DIRECTION_LTR
                 ) and Gravity.HORIZONTAL_GRAVITY_MASK
                 val width = right - left
                 when (childHorizontalGravity) {

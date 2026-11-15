@@ -10,6 +10,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="ImpliedQuantity">
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Закрити %1$s?</string>
+    <string name="file_list_exit_minimize">Згорнути</string>
+
     <string name="close">Закрити</string>
     <string name="copy">Копіювати</string>
     <string name="cut">Вирізати</string>
@@ -731,4 +735,5 @@
     <string name="about_author_name_title">Hai Zhang</string>
     <string name="about_author_github_title">Стежити на GitHub</string>
     <string name="about_author_twitter_title">Стежити у Twitter</string>
+    <string name="about_based_on_title">Засновано на</string>
 </resources>

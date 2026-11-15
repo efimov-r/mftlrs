@@ -8,6 +8,10 @@
 
 <resources>
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Zamknąć %1$s?</string>
+    <string name="file_list_exit_minimize">Minimalizuj</string>
+
     <string name="close">Zamknij</string>
     <string name="copy">Kopiuj</string>
     <string name="cut">Wytnij</string>
@@ -729,4 +733,5 @@
     <string name="about_author_name_title">Hai Zhang</string>
     <string name="about_author_github_title">Obserwuj na GitHubie</string>
     <string name="about_author_twitter_title">Obserwuj na Twitterze</string>
+    <string name="about_based_on_title">Na podstawie</string>
 </resources>

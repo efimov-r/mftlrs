@@ -8,6 +8,10 @@
 
 <resources>
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Đóng %1$s?</string>
+    <string name="file_list_exit_minimize">Thu nhỏ</string>
+
     <string name="close">Đóng</string>
     <string name="copy">Sao chép</string>
     <string name="cut">Cắt</string>
@@ -539,4 +543,5 @@
     <string name="about_author_name_title">Hai Zhang</string>
     <string name="about_author_github_title">Theo dõi trên GitHub</string>
     <string name="about_author_twitter_title">Theo dõi trên Twitter</string>
+    <string name="about_based_on_title">Dựa trên</string>
 </resources>

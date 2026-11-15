@@ -8,6 +8,10 @@
 
 <resources>
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Κλείσιμο του %1$s;</string>
+    <string name="file_list_exit_minimize">Ελαχιστοποίηση</string>
+
     <string name="close">Κλείσιμο</string>
     <string name="copy">Αντιγραφή</string>
     <string name="cut">Αποκοπή</string>
@@ -667,4 +671,5 @@
     <string name="about_author_name_title">Hai Zhang</string>
     <string name="about_author_github_title">Ακολουθήστε στο GitHub</string>
     <string name="about_author_twitter_title">Ακολουθήστε στο Twitter</string>
+    <string name="about_based_on_title">Βασίζεται στο</string>
 </resources>

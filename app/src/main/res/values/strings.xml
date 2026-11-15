@@ -11,6 +11,10 @@
     <!-- mftlrs: brand name, the same in all languages; not in values-*. -->
     <string name="app_name" translatable="false">mftlrs</string>
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Close %1$s?</string>
+    <string name="file_list_exit_minimize">Minimize</string>
+
     <string name="close">Close</string>
     <string name="copy">Copy</string>
     <string name="cut">Cut</string>

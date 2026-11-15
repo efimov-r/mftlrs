@@ -10,6 +10,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="ImpliedQuantity">
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Fechar o %1$s?</string>
+    <string name="file_list_exit_minimize">Minimizar</string>
+
     <string name="close">Fechar</string>
     <string name="copy">Copiar</string>
     <string name="cut">Recortar</string>
@@ -700,4 +704,5 @@
     <string name="about_author_name_title">Hai Zhang</string>
     <string name="about_author_github_title">Seguir no GitHub</string>
     <string name="about_author_twitter_title">Seguir no Twitter</string>
+    <string name="about_based_on_title">Baseado em</string>
 </resources>

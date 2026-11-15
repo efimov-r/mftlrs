@@ -8,6 +8,10 @@
 
 <resources>
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Tutup %1$s?</string>
+    <string name="file_list_exit_minimize">Minimalkan</string>
+
     <string name="close">Tutup</string>
     <string name="copy">Salin</string>
     <string name="cut">Potong</string>
@@ -634,4 +638,5 @@
     <string name="about_author_name_title">Hai Zhang</string>
     <string name="about_author_github_title">Ikuti di GitHub</string>
     <string name="about_author_twitter_title">Ikuti di Twitter</string>
+    <string name="about_based_on_title">Berdasarkan</string>
 </resources>

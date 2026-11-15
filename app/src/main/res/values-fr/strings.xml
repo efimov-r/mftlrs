@@ -10,6 +10,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="ImpliedQuantity,MissingQuantity">
 
+    <!-- mftlrs: exit confirmation on the main screen. -->
+    <string name="file_list_exit_title">Fermer %1$s ?</string>
+    <string name="file_list_exit_minimize">Réduire</string>
+
     <string name="close">Fermer</string>
     <string name="copy">Copier</string>
     <string name="cut">Couper</string>
@@ -700,4 +704,5 @@
     <string name="about_author_name_title">Hai Zhang</string>
     <string name="about_author_github_title">Suivre sur GitHub</string>
     <string name="about_author_twitter_title">Suivre sur Twitter</string>
+    <string name="about_based_on_title">Basé sur</string>
 </resources>
