@@ -34,12 +34,14 @@ android {
         buildConfigField 'String', 'FILE_PROVIDIER_AUTHORITY', 'APPLICATION_ID + ".file_provider"'
         resValue 'string', 'app_provider_authority', applicationId + '.app_provider'
         resValue 'string', 'file_provider_authority', applicationId + '.file_provider'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=none'
             }
         }
     }
+    testBuildType 'uiTest'
     buildFeatures {
         aidl true
         buildConfig true
@@ -72,6 +74,15 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+        }
+        uiTest {
+            initWith debug
+            applicationIdSuffix '.uitest'
+            matchingFallbacks = ['debug']
+            resValue 'string', 'app_provider_authority',
+                    defaultConfig.applicationId + '.uitest.app_provider'
+            resValue 'string', 'file_provider_authority',
+                    defaultConfig.applicationId + '.uitest.file_provider'
         }
     }
     packagingOptions {
@@ -216,6 +227,13 @@ dependencies {
     }
     // Also a dependency of jCIFS-NG.
     implementation 'org.slf4j:slf4j-android:1.7.36'
+
+    // mftlrs: UI tests on a device. UI Automator finds elements through accessibility, so the same
+    // tests work for the Views screen and for its Compose replacement.
+    androidTestImplementation 'androidx.test:core-ktx:1.6.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit-ktx:1.2.1'
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
 
     // mftlrs: Firebase Analytics and Crashlytics removed.
     // TODO(mftlrs): add ACRA (ch.acra:acra-dialog + acra-mail) for crash reports with user consent.

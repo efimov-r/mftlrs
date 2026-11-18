@@ -2,6 +2,21 @@
 
 На чём легко ошибиться и как правильно. Новые записи — сверху. Пока записи — по чтению кода (2026-11-15), не по реальным ошибкам.
 
+## UI-тест с `launchActivityForResult` — белый экран и долгие таймауты
+- **Что случится:** на телефоне висит белый экран (`InstrumentationActivityInvoker$EmptyActivity` пакета `.uitest.test`), экран выбора файла не появляется, каждый тест ждёт таймаута; прогон растягивается на десятки минут
+- **Причина:** не выяснена (обнаружено 2026-11-18): `ActivityScenario.launchActivityForResult` запускает экран через пустую служебную активити, и на устройстве это не сработало
+- **Как правильно:** режимы выбора файла (чек-лист 54–60) проверять руками. Если зависло — остановить Gradle, затем `adb shell am force-stop` и `adb uninstall` для `<applicationId>.uitest` и `<applicationId>.uitest.test`: после прерванного прогона Gradle их не удаляет
+
+## Описание кнопки ⋮ панели — не строка AppCompat
+- **Что случится:** UI-тест не находит меню экрана по `abc_action_menu_overflow_description` («Ещё»)
+- **Причина:** на устройстве у кнопки описание «Другие варианты» — системная строка Android `action_menu_overflow_description`, а не строка AppCompat (обнаружено 2026-11-18)
+- **Как правильно:** искать по обеим строкам — `FileListScreen.openOverflowMenu()`; при переносе на Compose дать кнопке ⋮ это же описание ([testing.md](testing.md), «Контракт для Compose»)
+
+## `connected*AndroidTest` удаляет приложение после прогона
+- **Что случится:** после UI-тестов с устройства пропадает установленное приложение вместе с настройками, закладками и серверами
+- **Причина:** Gradle после прогона удаляет APK, которые ставил для тестов. Если тестовый build type — `debug`, это та же debug-сборка, что стоит на устройстве
+- **Как правильно:** тесты — только в build type `uiTest` с суффиксом `.uitest` (`testBuildType 'uiTest'` в `app/build.gradle`); не переключать `testBuildType` на `debug`. У `uiTest` свои `app_provider_authority` и `file_provider_authority` в `resValue` — без них установка рядом с debug падает с `INSTALL_FAILED_CONFLICTING_PROVIDER` ([testing.md](testing.md))
+
 ## Слияние с upstream: удалённые локали и RTL
 - **Что случится:** конфликт «удалено у нас — изменено у upstream» в 11 папках `values-*` (`strings.xml`, `mime_types.xml`); при выборе версии upstream язык возвращается в настройки без строк mftlrs. Конфликт в `AndroidManifest.xml` по `supportsRtl`; если вернуть `true`, интерфейс в системе с арабским, персидским или ивритом снова зеркалится, а RTL никто не проверяет
 - **Причина:** 2026-11-15 удалены `values-eu`, `-gl`, `-is`, `-lt`, `-ca`, `-nb`, `-da`, `-fi`, `-ar`, `-fa`, `-iw` и выключен RTL ([decisions.md](decisions.md), «Переводы»); upstream продолжает обновлять эти локали через Transifex

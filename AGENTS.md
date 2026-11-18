@@ -11,7 +11,7 @@
 - **Файловый бэкенд:** Java NIO2 через бэкпорт `retrofile` (пакет `java8.nio.*`), свой `FileSystemProvider` на каждый источник.
 - **Библиотеки:** smbj, sshj + BouncyCastle, commons-net, dav4jvm, Apache FtpServer, libarchive, libsu, Shizuku, Coil 2 (Firebase вырезан, будет ACRA) — что за что отвечает: [docs/ai/features.md](docs/ai/features.md).
 - **Хранение:** БД нет, только SharedPreferences.
-- **Тестов нет** — ни unit, ни instrumented.
+- **Тесты:** только UI-тесты главного экрана на устройстве (`src/androidTest/`, UI Automator, отдельный build type `uiTest`) — [docs/ai/testing.md](docs/ai/testing.md). Unit-тестов нет.
 
 ## Сборка, запуск, тесты
 
@@ -20,6 +20,7 @@
 .\gradlew.bat installDebug                     # поставить на подключённое устройство
 .\gradlew.bat assembleDebug lintVitalRelease   # то же, что CI (.github/workflows/android.yml, на каждый push)
 .\gradlew.bat assembleRelease                  # подпись: signing.properties в корне или переменные STORE_FILE, STORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+.\gradlew.bat connectedUiTestAndroidTest       # UI-тесты на подключённом устройстве; экран разблокирован
 ```
 
 - Сборка проверена агентом 2026-11-15: `assembleDebug lintVitalRelease` — успешно, первая сборка ~5,5 мин; `gradlew` требует `JAVA_HOME` (JDK 17+), daemon по `gradle/gradle-daemon-jvm.properties` — JDK 25. Предупреждения компилятора — из кода upstream.
@@ -80,6 +81,7 @@ app/src/main/
 | [docs/ai/compose.md](docs/ai/compose.md) | готовые элементы на Compose и куда класть новые | перед любым UI на Compose; после — дополнить |
 | [docs/ai/ui-inventory.md](docs/ai/ui-inventory.md) | перечень Activity, Fragment, диалогов, Preference, адаптеров, своих View и разметки | перед изменениями интерфейса и при оценке переделки UI |
 | [docs/ai/file-list-checklist.md](docs/ai/file-list-checklist.md) | ручной чек-лист поведения главного экрана | после изменений в `filelist/` и `navigation/` |
+| [docs/ai/testing.md](docs/ai/testing.md) | UI-тесты: как устроены, как запускать, что покрыто, как писать новые | перед запуском и написанием тестов |
 | [docs/ai/features.md](docs/ai/features.md) | функции: строки кода, библиотеки, убирать ли | перед удалением или добавлением функций и библиотек |
 | [docs/ai/upstream.md](docs/ai/upstream.md) | upstream, форки, жалобы пользователей, сравнение с другими менеджерами | при выборе доработок и синхронизации с upstream |
 | [docs/ai/bugs.md](docs/ai/bugs.md) | известные баги и их статус | при ошибке — до того, как чинить |
