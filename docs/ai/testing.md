@@ -25,6 +25,7 @@
 | имена файлов, заголовки, подзаголовок, пункты меню, подписи FAB, тексты диалогов | `By.text` — точный текст |
 | иконки на панелях: поиск, «Вид и сортировка», «Вырезать», «Копировать», «Удалить», «Вставить», крестик | `By.desc` — описание = заголовок пункта меню (`contentDescription`) |
 | кнопка ⋮ экрана | `By.desc` — системная строка Android `action_menu_overflow_description` («Другие варианты» на устройстве 2026-11-18), запасной вариант — `abc_action_menu_overflow_description` AppCompat |
+| иконка файла (тап — выделить) | id `iconLayout` (`FileListScreen.clickFileIcon`). В Compose — `testTag("iconLayout")` и `testTagsAsResourceId = true` |
 | кнопка ⋮ у файла | id `menuButton` внутри самого маленького контейнера, где есть и имя файла, и эта кнопка. В Compose — `Modifier.testTag("menuButton")` и `testTagsAsResourceId = true` |
 | главная кнопка FAB | id `sd_main_fab` (из библиотеки speed-dial). В Compose — `testTag("sd_main_fab")` |
 | поле имени в диалоге, поле поиска | класс `android.widget.EditText` или `android.widget.AutoCompleteTextView` (так называется поле SearchView) — `FileListScreen.editText()` |

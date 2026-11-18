@@ -14,7 +14,8 @@
 | Элемент | Где | Что делает |
 |---|---|---|
 | `MftlrsTheme` | `theme/MftlrsTheme.kt` | тема Material 3 с палитрой `colors_mftlrs.xml`, светлая и тёмная по ночному режиму приложения. Оборачивать каждый `setContent` |
-| `MftlrsBottomSheet` | `ui/compose/MftlrsBottomSheet.kt` | панель снизу в своём окне `Dialog`: выезд и уход с анимацией, затемнение фона, закрытие тапом по фону, свайпом вниз и «Назад»; `fillHeight` — на всю высоту для форм с клавиатурой. Содержимое — `ColumnScope`, ручка для перетаскивания уже есть |
+| `MftlrsFastScrollbar` | `ui/compose/MftlrsFastScrollbar.kt` | обёртка над `LazyVerticalGrid` с полосой быстрой прокрутки справа: всегда видна, пока список длиннее экрана; ручку 8×52 dp тянут, провести по полосе — ручка прыгает под палец; без подсказки и анимаций. Касание забирает только при перетаскивании — тапы по ⋮ под полосой проходят. Отступ снизу — `bottomPadding`. Строки сетки считаются одной высоты |
+| `MftlrsBottomSheet` | `ui/compose/MftlrsBottomSheet.kt` | панель снизу — обёртка над `ModalBottomSheet` Material 3 (своё окно): `visible = false` убирает с анимацией; свайп вниз, «Назад» и тап по фону вызывают `onDismissRequest`. Содержимое — `ColumnScope`, ручка — стандартная |
 | `ExitSheet` (private) | `filelist/ExitConfirmation.kt` | панель «Закрыть mftlrs?»: «Закрыть», «Свернуть», «Отмена» столбцом на `MftlrsBottomSheet` |
 | `Fragment.addExitConfirmation()` | `filelist/ExitConfirmation.kt` | подтверждение выхода по «Назад»; возвращает `OnBackPressedCallback` |
 | `FileListItem`, `FileGridItem` (internal) | `filelist/FileListItems.kt` | элемент списка и сетки главного экрана: иконка, миниатюра (Coil, модель `path to attributes`), значок приложения, бейджи, галочка, имя по `FILE_NAME_ELLIPSIZE`, «дата · размер», меню ⋮ (`testTag("menuButton")`); жесты и пункты меню — как в `FileListAdapter`, действия — через `FileListAdapter.Listener`. Пока не подключены (этап 1 переноса) |

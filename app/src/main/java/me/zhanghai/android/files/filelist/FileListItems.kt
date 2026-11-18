@@ -8,16 +8,12 @@ package me.zhanghai.android.files.filelist
 import android.text.TextUtils
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -36,10 +32,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,15 +51,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.imageLoader
@@ -78,7 +72,7 @@ import me.zhanghai.android.files.provider.common.isEncrypted
 import me.zhanghai.android.files.theme.MftlrsTheme
 
 // Элементы списка и сетки главного экрана — перенос file_item_list.xml, file_item_grid.xml и
-// FileListAdapter.onBindViewHolder один в один (docs/ai/compose-migration.md, этап 1)
+// FileListAdapter.onBindViewHolder; ripple, выделение и приглушение упрощены (docs/ai/compose-migration.md, «Отклонения»)
 
 private const val DISABLED_ALPHA = 0.38f // android:disabledAlpha темы Material 3
 private const val CHECKED_ALPHA = 0.12f // CheckableItemBackground: colorPrimary с alpha 0,12
@@ -296,76 +290,64 @@ private fun FileListItemContent(
     modifier: Modifier = Modifier,
 ) {
     var isThumbnailLoaded by remember(ui.thumbnail) { mutableStateOf(false) }
-    val imageAlpha = if (isEnabled) 1f else DISABLED_ALPHA
 
-    CheckableItem(
-        isChecked = isChecked,
-        isEnabled = isEnabled,
-        inset = 0.dp,
-        cornerSize = 0.dp,
-        onClick = onClick,
-        onLongClick = onLongClick,
+    Row(
         modifier = modifier
+            .fileItemClickable(isChecked, isEnabled, onClick, onLongClick, MaterialTheme.colorScheme.primary)
             .fillMaxWidth()
             .height(dimensionResource(R.dimen.two_line_list_item_height)),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
+        FileItemIcon(
+            ui = ui,
+            isChecked = isChecked,
+            isEnabled = isEnabled,
+            onClick = onIconClick,
+            modifier = Modifier.padding(
+                start = dimensionResource(R.dimen.screen_edge_margin_minus_4dp),
+                end = dimensionResource(R.dimen.content_start_from_screen_edge_margin_minus_44dp),
+            ),
+            isIconVisible = !isThumbnailLoaded, // миниатюра загрузилась — значок типа скрыт
         ) {
-            FileItemIcon(
-                ui = ui,
-                isChecked = isChecked,
-                isEnabled = isEnabled,
-                onClick = onIconClick,
-                modifier = Modifier.padding(
-                    start = dimensionResource(R.dimen.screen_edge_margin_minus_4dp),
-                    end = dimensionResource(R.dimen.content_start_from_screen_edge_margin_minus_44dp),
-                ),
-                isIconVisible = !isThumbnailLoaded, // миниатюра загрузилась — значок типа скрыт
-            ) {
-                if (ui.thumbnail != null) {
-                    AsyncImage(
-                        model = ui.thumbnail,
-                        contentDescription = null,
-                        imageLoader = LocalContext.current.imageLoader,
-                        modifier = Modifier.matchParentSize(),
-                        contentScale = ContentScale.Crop,
-                        alpha = imageAlpha,
-                        onSuccess = { isThumbnailLoaded = true },
-                    )
-                }
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                FileItemName(
-                    name = ui.name,
-                    isEnabled = isEnabled,
-                    ellipsize = nameEllipsize,
-                    style = MaterialTheme.typography.bodyLarge,
+            if (ui.thumbnail != null) {
+                AsyncImage(
+                    model = ui.thumbnail,
+                    contentDescription = null,
+                    imageLoader = LocalContext.current.imageLoader,
+                    modifier = Modifier.matchParentSize(),
+                    contentScale = ContentScale.Crop,
+                    onSuccess = { isThumbnailLoaded = true },
                 )
-                if (ui.description != null) {
-                    Text(
-                        text = ui.description,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.disabledIf(!isEnabled),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
             }
-
-            FileItemMenuButton(
-                isEnabled = isEnabled,
-                menuItems = menuItems,
-                modifier = Modifier.padding(
-                    start = dimensionResource(
-                        R.dimen.content_start_from_screen_edge_margin_minus_36dp_considering_at_least_8dp
-                    ),
-                    end = dimensionResource(R.dimen.screen_edge_margin_minus_12dp_at_least_8dp),
-                ),
-            )
         }
+
+        Column(modifier = Modifier.weight(1f)) {
+            FileItemName(
+                name = ui.name,
+                ellipsize = nameEllipsize,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            if (ui.description != null) {
+                Text(
+                    text = ui.description,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
+
+        FileItemMenuButton(
+            isEnabled = isEnabled,
+            menuItems = menuItems,
+            modifier = Modifier.padding(
+                start = dimensionResource(
+                    R.dimen.content_start_from_screen_edge_margin_minus_36dp_considering_at_least_8dp
+                ),
+                end = dimensionResource(R.dimen.screen_edge_margin_minus_12dp_at_least_8dp),
+            ),
+        )
     }
 }
 
@@ -381,71 +363,78 @@ private fun FileGridItemContent(
     menuItems: List<FileItemMenuItem>,
     modifier: Modifier = Modifier,
 ) {
-    CheckableItem(
-        isChecked = isChecked,
-        isEnabled = isEnabled,
-        inset = 4.dp, // CheckableItemBackground.create(4f, 12f) и file_item_grid_foreground_material3
-        cornerSize = 12.dp,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        modifier = modifier.fillMaxWidth(),
+    Column(
+        modifier = modifier
+            .fileItemClickable(isChecked, isEnabled, onClick, onLongClick, MaterialTheme.colorScheme.primary)
+            .fillMaxWidth(),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            val screenEdgeMargin = dimensionResource(R.dimen.screen_edge_margin)
-            FileGridThumbnail(
+        val screenEdgeMargin = dimensionResource(R.dimen.screen_edge_margin)
+        FileGridThumbnail(
+            ui = ui,
+            modifier = Modifier
+                .padding(start = screenEdgeMargin, top = screenEdgeMargin, end = screenEdgeMargin)
+                .fillMaxWidth()
+                .aspectRatio(GRID_THUMBNAIL_ASPECT_RATIO),
+        )
+
+        Row(
+            modifier = Modifier
+                .padding(bottom = dimensionResource(R.dimen.screen_edge_margin_minus_8dp))
+                .fillMaxWidth()
+                .height(dimensionResource(R.dimen.single_line_list_item_height)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val edgeMargin = dimensionResource(R.dimen.screen_edge_margin_minus_12dp)
+            FileItemIcon(
                 ui = ui,
+                isChecked = isChecked,
                 isEnabled = isEnabled,
-                modifier = Modifier
-                    .padding(start = screenEdgeMargin, top = screenEdgeMargin, end = screenEdgeMargin)
-                    .fillMaxWidth()
-                    .aspectRatio(GRID_THUMBNAIL_ASPECT_RATIO),
+                onClick = onIconClick,
+                modifier = Modifier.padding(start = edgeMargin),
             )
 
-            Row(
-                modifier = Modifier
-                    .padding(bottom = dimensionResource(R.dimen.screen_edge_margin_minus_8dp))
-                    .fillMaxWidth()
-                    .height(dimensionResource(R.dimen.single_line_list_item_height)),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val edgeMargin = dimensionResource(R.dimen.screen_edge_margin_minus_12dp)
-                FileItemIcon(
-                    ui = ui,
-                    isChecked = isChecked,
-                    isEnabled = isEnabled,
-                    onClick = onIconClick,
-                    modifier = Modifier.padding(start = edgeMargin),
-                )
+            Text(
+                text = ui.name,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyMedium,
+            )
 
-                Text(
-                    text = ui.name,
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.onSurface.disabledIf(!isEnabled),
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-
-                FileItemMenuButton(
-                    isEnabled = isEnabled,
-                    menuItems = menuItems,
-                    modifier = Modifier.padding(end = edgeMargin),
-                )
-            }
+            FileItemMenuButton(
+                isEnabled = isEnabled,
+                menuItems = menuItems,
+                modifier = Modifier.padding(end = edgeMargin),
+            )
         }
     }
 }
+
+// Клик и долгое нажатие по всему элементу, фон выделения; недоступный элемент приглушён целиком
+private fun Modifier.fileItemClickable(
+    isChecked: Boolean,
+    isEnabled: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    primaryColor: Color,
+): Modifier =
+    this
+        .alpha(if (isEnabled) 1f else DISABLED_ALPHA)
+        .background(if (isChecked) primaryColor.copy(alpha = CHECKED_ALPHA) else Color.Transparent)
+        .combinedClickable(
+            enabled = isEnabled,
+            onLongClick = onLongClick,
+            onClick = onClick,
+        )
 
 // Превью 1,78 : 1 — значок папки, миниатюра с контуром или значок типа по центру
 @Composable
 private fun FileGridThumbnail(
     ui: FileItemUi,
-    isEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var isThumbnailLoaded by remember(ui.thumbnail) { mutableStateOf(false) }
-    val imageAlpha = if (isEnabled) 1f else DISABLED_ALPHA
     val shape = RoundedCornerShape(8.dp) // shapeAppearanceSmallComponent Material 3
 
     if (ui.isDirectory) {
@@ -454,7 +443,6 @@ private fun FileGridThumbnail(
             contentDescription = null,
             modifier = modifier,
             contentScale = ContentScale.Fit,
-            alpha = imageAlpha,
         )
         return
     }
@@ -474,7 +462,6 @@ private fun FileGridThumbnail(
                 placeholder = iconPainter,
                 error = iconPainter,
                 contentScale = ContentScale.Crop,
-                alpha = imageAlpha,
             )
         } else {
             if (!isThumbnailLoaded) {
@@ -483,7 +470,6 @@ private fun FileGridThumbnail(
                     contentDescription = null,
                     modifier = iconModifier,
                     contentScale = ContentScale.Crop,
-                    alpha = imageAlpha,
                 )
             }
             if (ui.thumbnail != null) {
@@ -495,7 +481,6 @@ private fun FileGridThumbnail(
                         .fillMaxSize()
                         .clip(shape),
                     contentScale = ContentScale.Crop,
-                    alpha = imageAlpha,
                     onSuccess = { isThumbnailLoaded = true },
                 )
             }
@@ -513,52 +498,6 @@ private fun FileGridThumbnail(
     }
 }
 
-// CheckableForegroundLinearLayout + CheckableItemBackground + ripple: клик по всему элементу,
-// фон выделения и ripple — с отступом inset и скруглением cornerSize
-@Composable
-private fun CheckableItem(
-    isChecked: Boolean,
-    isEnabled: Boolean,
-    inset: Dp,
-    cornerSize: Dp,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val animationDuration = integerResource(android.R.integer.config_shortAnimTime)
-    val checkedColor by animateColorAsState(
-        targetValue = if (isChecked) {
-            MaterialTheme.colorScheme.primary.copy(alpha = CHECKED_ALPHA)
-        } else {
-            Color.Transparent
-        },
-        animationSpec = tween(animationDuration),
-        label = "checkedColor",
-    )
-
-    Box(
-        modifier = modifier.combinedClickable(
-            interactionSource = interactionSource,
-            indication = null,
-            enabled = isEnabled,
-            onLongClick = onLongClick,
-            onClick = onClick,
-        ),
-    ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .padding(inset)
-                .clip(RoundedCornerShape(cornerSize))
-                .background(checkedColor)
-                .indication(interactionSource, ripple()),
-        )
-        content()
-    }
-}
-
 // Иконка 48 dp: значок типа, миниатюра (extra), значок приложения, бейдж ссылки или шифрования,
 // галочка выделения. Тап — переключить выделение, без ripple (как iconLayout)
 @Composable
@@ -571,17 +510,11 @@ private fun FileItemIcon(
     isIconVisible: Boolean = true,
     thumbnail: @Composable BoxScope.() -> Unit = {},
 ) {
-    val imageAlpha = if (isEnabled) 1f else DISABLED_ALPHA
-    val animationDuration = integerResource(android.R.integer.config_shortAnimTime)
-    val checkAlpha by animateFloatAsState(
-        targetValue = if (isChecked) 1f else 0f,
-        animationSpec = tween(animationDuration),
-        label = "checkAlpha",
-    )
     val badgeSize = dimensionResource(R.dimen.badge_size)
 
     Box(
         modifier = modifier
+            .testTag("iconLayout") // контракт UI-тестов: тап по иконке
             .size(dimensionResource(R.dimen.touch_target_size))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -599,7 +532,6 @@ private fun FileItemIcon(
                     .align(Alignment.Center)
                     .size(dimensionResource(R.dimen.icon_size)),
                 contentScale = ContentScale.Crop,
-                alpha = imageAlpha,
             )
         }
         thumbnail()
@@ -613,7 +545,6 @@ private fun FileItemIcon(
                     .align(Alignment.BottomEnd)
                     .offset(x = 0.5.dp, y = 0.5.dp)
                     .size(dimensionResource(R.dimen.badge_size_plus_1dp)),
-                alpha = imageAlpha,
             )
         }
         if (ui.badgeRes != null) {
@@ -624,18 +555,17 @@ private fun FileItemIcon(
                     .align(Alignment.BottomEnd)
                     .size(badgeSize)
                     .background(MaterialTheme.colorScheme.surface, CircleShape), // badge_background_18dp
-                alpha = imageAlpha,
             )
         }
-        Image(
-            painter = painterResource(R.drawable.checkable_badge_icon_18dp),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .size(badgeSize)
-                .alpha(checkAlpha),
-            alpha = imageAlpha,
-        )
+        if (isChecked) {
+            Image(
+                painter = painterResource(R.drawable.checkable_badge_icon_18dp),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(badgeSize),
+            )
+        }
     }
 }
 
@@ -643,7 +573,6 @@ private fun FileItemIcon(
 @Composable
 private fun FileItemName(
     name: String,
-    isEnabled: Boolean,
     ellipsize: TextUtils.TruncateAt,
     style: TextStyle,
 ) {
@@ -658,7 +587,6 @@ private fun FileItemName(
     Text(
         text = name,
         modifier = if (isMarquee) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier,
-        color = MaterialTheme.colorScheme.onSurface.disabledIf(!isEnabled),
         overflow = overflow,
         softWrap = false,
         maxLines = 1,
@@ -676,23 +604,19 @@ private fun FileItemMenuButton(
     var isExpanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .testTag("menuButton")
-                .size(dimensionResource(R.dimen.touch_target_size))
-                .clip(CircleShape)
-                .clickable(
-                    enabled = isEnabled,
-                    role = Role.Button,
-                    onClick = { isExpanded = true },
-                ),
-            contentAlignment = Alignment.Center,
+        val color = MaterialTheme.colorScheme.onSurfaceVariant // ?colorControlNormal
+        IconButton(
+            onClick = { isExpanded = true },
+            modifier = Modifier.testTag("menuButton"),
+            enabled = isEnabled,
+            colors = IconButtonDefaults.iconButtonColors( // недоступный элемент уже приглушён целиком
+                contentColor = color,
+                disabledContentColor = color,
+            ),
         ) {
             Icon(
                 painter = painterResource(R.drawable.more_vertical_icon_white_24dp),
                 contentDescription = null,
-                modifier = Modifier.size(dimensionResource(R.dimen.icon_size)),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.disabledIf(!isEnabled), // ?colorControlNormal
             )
         }
 
@@ -712,9 +636,6 @@ private fun FileItemMenuButton(
         }
     }
 }
-
-private fun Color.disabledIf(isDisabled: Boolean): Color =
-    if (isDisabled) copy(alpha = alpha * DISABLED_ALPHA) else this
 
 private val previewFile = FileItemUi(
     name = "Отчёт за ноябрь с длинным названием файла.pdf",

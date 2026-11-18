@@ -18,13 +18,21 @@
 
 ## Главный экран на Compose
 
-Переписывать по частям внутри `FileListFragment`: после каждого этапа приложение собирается и работает, проверка — [file-list-checklist.md](file-list-checklist.md). Фрагмент остаётся хостом: 14 диалогов `filelist` отдают результат через `requireParentFragment() as Listener`. ViewModel на LiveData не переписывать — Compose читает её через `observeAsState()`. Решение и цена — [decisions.md](decisions.md), «Главный экран на Compose».
+Перенос один в один, без редизайна, по этапам внутри `FileListFragment`; после каждого этапа приложение собирается и работает. Подробный план, ловушки и журнал — [compose-migration.md](compose-migration.md); решение — [decisions.md](decisions.md), «Главный экран на Compose».
 
-- [ ] UI-тесты: 37 зелёных ([testing.md](testing.md), «Что покрыто»). Не покрыто: режимы выбора (54–60) — только руками; галочки в меню «Вид и сортировка». Скриншотов не делаем
-- [ ] Пройти [file-list-checklist.md](file-list-checklist.md) на текущей сборке, поправить пункты под реальное поведение
-- [ ] 2. Вынести логику из `FileListFragment` (~1750 строк) в ViewModel и отдельные классы: выделение, видимость пунктов меню, сборка интентов открытия и выбора, режим выбора. Наружу — одно состояние экрана. Unit-тесты на вынесенное и на `TrailData`, `FileItemSet`, `FileSortOptions`, `PasteState`. Позиция прокрутки в `TrailData` сейчас — `Parcelable` от `GridLayoutManager`; для Compose — индекс и смещение
-- [ ] 3. Список: `RecyclerView` + `FileListAdapter` → `LazyColumn` / `LazyVerticalGrid` в `ComposeView`; миниатюры — `AsyncImage` со своими загрузчиками из `coil/`; fast scroller, свайп для обновления, пустое состояние, ошибка, загрузка
-- [ ] 4. Верхняя панель: toolbar, поиск, `BreadcrumbLayout` → `TopAppBar` и `LazyRow`; режим выделения (`OverlayToolbarActionMode`) → контекстная верхняя панель
-- [ ] 5. Нижняя панель вставки и выбора (`PersistentBarLayoutToolbarActionMode`, поле имени файла) и FAB speed-dial
-- [ ] 6. Навигация без боковой панели — сразу новый вид, не копия drawer. Что затронет: [architecture.md](architecture.md), «Боковая панель»
-- [ ] 7. Чистка: `file_list_fragment*.xml`, `FileListAdapter`, `BreadcrumbLayout`, `NavigationFragment`, класс `Binding`. Удаление фрагмента и перевод диалогов на Compose — отдельная задача
+- [ ] 0. Эталон: UI-тесты — 37 зелёных ([testing.md](testing.md), «Что покрыто»; не покрыто: режимы выбора 54–60 и галочки в меню «Вид и сортировка»). Осталось: пройти [file-list-checklist.md](file-list-checklist.md) руками на текущей сборке, поправить пункты под реальное поведение
+- [ ] 1. Элементы списка и сетки `FileListItem` / `FileGridItem` — код готов (`filelist/FileListItems.kt`); осталось: владельцу сверить превью в Android Studio с телефоном
+- [ ] 2. `MftlrsFastScrollbar` — код готов (`ui/compose/MftlrsFastScrollbar.kt`, упрощённая: всегда видна, без подсказки); проверка на устройстве — после подключения на этапе 3
+- [ ] 3. Список подключается: `RecyclerView`, свайп, загрузка, ошибка, «Пусто» → один `ComposeView`
+- [ ] 4. Верхняя панель: тулбар, меню, поиск, хлебные крошки, панель выделения
+- [ ] 5. Нижняя панель вставки и выбора, FAB
+- [ ] 6. Один экран `FileListScreen` в одном `ComposeView`
+- [ ] 7. Чистка старых View и документация
+
+## Отложено
+
+Не делать в рамках переноса главного экрана на Compose — после него.
+
+- [ ] Вынести логику из `FileListFragment` (~1750 строк) в ViewModel и отдельные классы: выделение, видимость пунктов меню, сборка интентов открытия и выбора, режим выбора. Наружу — одно состояние экрана. Unit-тесты на вынесенное и на `TrailData`, `FileItemSet`, `FileSortOptions`, `PasteState`
+- [ ] Навигация без боковой панели — сразу новый вид, не копия drawer. Что затронет: [architecture.md](architecture.md), «Боковая панель»; после — удалить `NavigationFragment`
+- [ ] Удалить `FileListFragment`, перевести 14 диалогов `filelist` на Compose
