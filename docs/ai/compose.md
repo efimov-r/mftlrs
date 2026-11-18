@@ -17,6 +17,8 @@
 | `MftlrsBottomSheet` | `ui/compose/MftlrsBottomSheet.kt` | панель снизу в своём окне `Dialog`: выезд и уход с анимацией, затемнение фона, закрытие тапом по фону, свайпом вниз и «Назад»; `fillHeight` — на всю высоту для форм с клавиатурой. Содержимое — `ColumnScope`, ручка для перетаскивания уже есть |
 | `ExitSheet` (private) | `filelist/ExitConfirmation.kt` | панель «Закрыть mftlrs?»: «Закрыть», «Свернуть», «Отмена» столбцом на `MftlrsBottomSheet` |
 | `Fragment.addExitConfirmation()` | `filelist/ExitConfirmation.kt` | подтверждение выхода по «Назад»; возвращает `OnBackPressedCallback` |
+| `FileListItem`, `FileGridItem` (internal) | `filelist/FileListItems.kt` | элемент списка и сетки главного экрана: иконка, миниатюра (Coil, модель `path to attributes`), значок приложения, бейджи, галочка, имя по `FILE_NAME_ELLIPSIZE`, «дата · размер», меню ⋮ (`testTag("menuButton")`); жесты и пункты меню — как в `FileListAdapter`, действия — через `FileListAdapter.Listener`. Пока не подключены (этап 1 переноса) |
+| `isFileSelectable(file, pickOptions)` (internal) | `filelist/FileListItems.kt` | можно ли выбрать файл в режиме выбора — копия `FileListAdapter.isFileSelectable` до удаления адаптера |
 
 ## Compose внутри экрана на Views
 
