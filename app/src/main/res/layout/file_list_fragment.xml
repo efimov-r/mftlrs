@@ -3,16 +3,22 @@
 <!--
   ~ Copyright (c) 2020 Hai Zhang <dreaming.in.code.zh@gmail.com>
   ~ All Rights Reserved.
+  ~ Modified for mftlrs, 2026.
   -->
 
+<!--
+  ~ mftlrs: the whole screen with the navigation drawer is in Compose. Window insets are taken by a
+  ~ listener in FileListFragment on screenLayout, not on ComposeView: Compose may replace the insets
+  ~ listener of its own view.
+  -->
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/screenLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!--
-      ~ View binding complains about different root view IDs, so we have to wrap them inside a
-      ~ <merge> tag.
-      -->
-    <include layout="@layout/file_list_fragment_include" />
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/composeView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </FrameLayout>

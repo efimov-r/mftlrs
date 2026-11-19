@@ -79,8 +79,7 @@
 
 | Fragment | Пакет | Layout | Примечание |
 |---|---|---|---|
-| `FileListFragment` | `filelist` | `file_list_fragment` + `_include` (drawer и `ComposeView` с `FileListScreen`) | главный экран, ~1580 строк |
-| `NavigationFragment` | `navigation` | `navigation_fragment` | боковая панель внутри `FileListFragment`; уйдёт при редизайне |
+| `FileListFragment` | `filelist` | `file_list_fragment` (`ComposeView` с `FileListNavigation` и `FileListScreen`) | главный экран, ~1560 строк; `NavigationFragment` удалён 2026-11-20 |
 | `TextEditorFragment` | `viewer.text` | `text_editor_fragment` | |
 | `ImageViewerFragment` | `viewer.image` | `image_viewer_fragment` | ViewPager2 + `ImageViewerAdapter` |
 | `SettingsFragment` | `settings` | `settings_fragment` | обёртка над `SettingsPreferenceFragment` |
@@ -222,11 +221,10 @@
 
 ### Экранные (10)
 
-Список и сетка файлов главного экрана — на Compose (`filelist/FileListContent.kt`, `FileListItems.kt`), `FileListAdapter` удалён 2026-11-19.
+Список и сетка файлов главного экрана — на Compose (`filelist/FileListContent.kt`, `FileListItems.kt`), `FileListAdapter` удалён 2026-11-19; боковая панель — `filelist/FileListNavigation.kt`, `NavigationListAdapter` удалён 2026-11-20.
 
 | Адаптер | Пакет | База | Где |
 |---|---|---|---|
-| `NavigationListAdapter` | `navigation` | `SimpleAdapter` | боковая панель |
 | `StorageListAdapter` | `storage` | `SimpleAdapter` + `DraggableItemAdapter` | список хранилищ |
 | `BookmarkDirectoryListAdapter` | `settings` | `SimpleAdapter` + `DraggableItemAdapter` | список закладок |
 | `LanSmbServerListAdapter` | `storage` | `SimpleAdapter` | найденные SMB-серверы |
@@ -243,11 +241,10 @@
 
 ## Свои View и помощники UI
 
-Почти всё — в `ui/`. Отдельно: `navigation/NavigationRecyclerView`. Главный экран, кроме боковой панели, — на Compose (`filelist/FileListScreen.kt` и части, [compose.md](compose.md)); его View удалены: `BreadcrumbLayout`, `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode`, `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode`, `FixQueryChangeSearchView`, `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `PersistentBarLayout`, `BottomBarLayout`, `CheckableItemBackground`, `AspectRatioFrameLayout`, `AppBarLayoutExpandHackListener`.
+Почти всё — в `ui/`. Главный экран с боковой панелью — на Compose (`filelist/FileListNavigation.kt`, `FileListScreen.kt` и части, [compose.md](compose.md)); его View удалены: `NavigationRecyclerView`, `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback`, `BreadcrumbLayout`, `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode`, `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode`, `FixQueryChangeSearchView`, `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `PersistentBarLayout`, `BottomBarLayout`, `CheckableItemBackground`, `AspectRatioFrameLayout`, `AppBarLayoutExpandHackListener`.
 
 | Назначение | Классы в `ui/` |
 |---|---|
-| Боковая панель — уйдут при редизайне | `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback` |
 | Панели и прокрутка других экранов | `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrollingFrameLayout`, `CoordinatorScrollingLinearLayout`, `ScrollingViewOnApplyWindowInsetsListener` |
 | Fast scroll | `ThemedFastScroller` (текстовый редактор) |
 | Элементы списка | `CheckableFrameLayout`, `CheckableForegroundLinearLayout`, `AspectRatioImageView`, `DisabledAlphaImageView`, `AutoGoneTextView` |
@@ -255,7 +252,7 @@
 | Картинки и страницы | `SaveStateSubsamplingScaleImageView`, `WrapFirstPageContentViewPager`, `ViewPagerTransformers` |
 | Лицензии | `LicensesDialogExtensions` |
 
-Библиотеки View, на которых держится UI: Material Components, `fastscroll` (zhanghai), `advrecyclerview` (перетаскивание), `subsampling-scale-image-view` и PhotoView (картинки), `drawer` (drakeet), `preferencex`, `simplemenu-preference`, `licensesdialog`, `insetter`, `swiperefreshlayout`.
+Библиотеки View, на которых держится UI: Material Components, `fastscroll` (zhanghai), `advrecyclerview` (перетаскивание), `subsampling-scale-image-view` и PhotoView (картинки), `preferencex`, `simplemenu-preference`, `licensesdialog`, `insetter`, `swiperefreshlayout`.
 
 ## Прочий UI вне экранов
 
@@ -270,7 +267,6 @@
 
 | Папка | Кол-во | Что |
 |---|---|---|
-| `res/layout/` | 47 | экраны, диалоги, элементы списков; у главного экрана — только `file_list_fragment` и `_include` (drawer и `ComposeView`) |
-| `res/layout-sw600dp-land/` | 1 | `file_list_fragment_include.xml` — постоянная боковая панель на планшете |
+| `res/layout/` | 43 | экраны, диалоги, элементы списков; у главного экрана — только `file_list_fragment` (`ComposeView`); `navigation_*` и `layout-sw600dp-land/` удалены 2026-11-20 |
 | `res/menu/` | 2 | `text_editor`, `image_viewer`; все `file_list*` удалены — меню главного экрана на Compose |
 | `res/xml/` | 2 настроек | `settings.xml`, `ftp_server.xml`; ещё `shortcuts.xml`, `netework_security_config.xml` |

@@ -2,6 +2,16 @@
 
 На чём легко ошибиться и как правильно. Новые записи — сверху. Пока записи — по чтению кода (2026-11-15), не по реальным ошибкам.
 
+## `testTagsAsResourceId` действует только на потомков
+- **Что случится:** UI-тест не находит элемент по id (`By.res("…navigation")`), хотя элемент на экране и `testTag` у него есть; в сообщении о падении кликабельные узлы без id
+- **Причина:** `semantics { testTagsAsResourceId = true }` превращает `testTag` в id только внутри своего поддерева. Боковая панель `FileListNavigation` лежит снаружи `FileListScreen`, у которого флаг стоял на корне (обнаружено 2026-11-20, этап 9: все 12 тестов навигации упали)
+- **Как правильно:** флаг — на самом внешнем composable в `setContent` (сейчас `FileListNavigation`); новый слой над ним — перенести флаг туда
+
+## Размеры старой боковой панели не совпадают с `dimen` и стилем
+- **Что случится:** панель на Compose по `navigation_item_*_material3` и `m3_navigation_item_*` получается сдвинутой: текст на 16 dp правее, чем было
+- **Причина:** не выяснена: `NavigationListAdapter` читал атрибуты стиля `NavigationView`, и на телефоне реально было иконка в 12 dp от края, текст — 12 dp после иконки (замер 2026-11-20 на устройстве: плотность 1,75, пункт 84 px, иконка с x = 21, текст с x = 84)
+- **Как правильно:** размеры `FileListNavigation` — константы по замеру на устройстве, `dimens_material3.xml` удалены. Планшетные значения (`values-sw600dp`: 32 и 24 dp) не проверены — на планшете отступы могли быть другими
+
 ## Неактивная `IconButton` в Compose: тест находит иконку, а не кнопку
 - **Что случится:** `waitFor(By.desc(…)).isEnabled` у неактивной кнопки панели возвращает `true` — тест «Вставить» в архиве (`pasteIntoArchive_isDisabled`) падает, хотя кнопка серая
 - **Причина:** у `IconButton(enabled = false)` описание `Icon(contentDescription = …)` не сливается в узел кнопки: в дереве accessibility остаётся отдельный некликабельный узел иконки 24 dp с этим описанием и `enabled = true` (обнаружено 2026-11-19, этап 5)
@@ -19,7 +29,7 @@
 
 ## Отступы под системные панели на главном экране
 - **Что случится:** последний файл закрыт навигационной панелью, или отступ двойной, или список не уходит под панель (чек-лист 63); панель заезжает под строку состояния
-- **Причина:** `WindowInsets.*` Compose здесь не подходят: родители (`PersistentDrawerLayout`, раньше `CoordinatorScrollingFrameLayout`) пересобирают insets только как `systemWindowInsets`, без типов (обнаружено 2026-11-19). Отступы берутся из `systemWindowInsets` через `OnApplyWindowInsetsListener` на `screenLayout` — `FrameLayout` вокруг `ComposeView` — в `FileListFragment` → параметр `windowInsets` у `FileListScreen`, который раздаёт их частям экрана. Слушатель на самом `ComposeView` не срабатывает, когда в его композиции есть что-то, читающее insets (вероятно, Compose ставит свой слушатель на этот же View): после сборки всего экрана в один `ComposeView` отступы стали нулевыми, панель заехала под строку состояния, тесты не попадали по её кнопкам (обнаружено 2026-11-19, этап 6). Флаг `layoutInNavigation` (список под панелью навигации) ставит фрагмент на `screenLayout` — раньше его ставил `CoordinatorScrollingFrameLayout`
+- **Причина:** `WindowInsets.*` Compose здесь не подходили: родители (`PersistentDrawerLayout`, раньше `CoordinatorScrollingFrameLayout`) пересобирали insets только как `systemWindowInsets`, без типов (обнаружено 2026-11-19; с этапа 9 этих родителей нет, переход на `WindowInsets` Compose — отдельная задача, не проверялся). Флаг `layoutInStatusBar` (экран под строкой состояния) раньше ставили `DrawerLayout` и `PersistentDrawerLayout`, теперь — фрагмент на `screenLayout`. Отступы берутся из `systemWindowInsets` через `OnApplyWindowInsetsListener` на `screenLayout` — `FrameLayout` вокруг `ComposeView` — в `FileListFragment` → параметр `windowInsets` у `FileListScreen`, который раздаёт их частям экрана. Слушатель на самом `ComposeView` не срабатывает, когда в его композиции есть что-то, читающее insets (вероятно, Compose ставит свой слушатель на этот же View): после сборки всего экрана в один `ComposeView` отступы стали нулевыми, панель заехала под строку состояния, тесты не попадали по её кнопкам (обнаружено 2026-11-19, этап 6). Флаг `layoutInNavigation` (список под панелью навигации) ставит фрагмент на `screenLayout` — раньше его ставил `CoordinatorScrollingFrameLayout`
 - **Как правильно:** слушатель insets — на обычном View вокруг `ComposeView`, не на нём самом; в `FileListScreen` и его частях не использовать `WindowInsets.*` Compose; отступы — только из `windowInsets` и параметров, которые раздаёт `FileListScreen` (`bottomInset` списка, отступы FAB)
 
 ## `fileListStateful` бросает, пока нет значения

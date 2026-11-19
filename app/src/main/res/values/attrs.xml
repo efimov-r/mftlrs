@@ -3,6 +3,7 @@
 <!--
   ~ Copyright (c) 2019 Hai Zhang <dreaming.in.code.zh@gmail.com>
   ~ All Rights Reserved.
+  ~ Modified for mftlrs, 2026.
   -->
 
 <resources>
@@ -12,11 +13,5 @@
     <declare-styleable name="AspectRatioFrameLayout">
         <attr name="aspectRatio" format="float" />
     </declare-styleable>
-
-    <declare-styleable name="NavigationViewExtra">
-        <attr name="itemSubtitleTextAppearance" format="reference" />
-        <attr name="itemSubtitleTextColor" format="color" />
-        <attr name="itemSubtitleTextSize" format="dimension" />
-        <attr name="dividerVerticalPadding" format="dimension" />
-    </declare-styleable>
+    <!-- mftlrs: NavigationViewExtra removed with NavigationListAdapter (drawer in Compose). -->
 </resources>

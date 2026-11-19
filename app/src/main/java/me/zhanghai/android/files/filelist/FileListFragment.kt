@@ -30,11 +30,9 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.Insets
-import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
-import androidx.lifecycle.LifecycleOwner
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +47,6 @@ import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.app.clipboardManager
 import me.zhanghai.android.files.compat.checkSelfPermissionCompat
 import me.zhanghai.android.files.databinding.FileListFragmentBinding
-import me.zhanghai.android.files.databinding.FileListFragmentIncludeBinding
 import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.MimeType
 import me.zhanghai.android.files.file.asMimeTypeOrNull
@@ -63,7 +60,8 @@ import me.zhanghai.android.files.filelist.FileSortOptions.Order
 import me.zhanghai.android.files.fileproperties.FilePropertiesDialogFragment
 import me.zhanghai.android.files.navigation.BookmarkDirectories
 import me.zhanghai.android.files.navigation.BookmarkDirectory
-import me.zhanghai.android.files.navigation.NavigationFragment
+import me.zhanghai.android.files.navigation.NavigationItem
+import me.zhanghai.android.files.navigation.NavigationItemListLiveData
 import me.zhanghai.android.files.navigation.NavigationRootMapLiveData
 import me.zhanghai.android.files.provider.archive.createArchiveRootPath
 import me.zhanghai.android.files.provider.archive.isArchivePath
@@ -71,7 +69,6 @@ import me.zhanghai.android.files.provider.linux.isLinuxPath
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.terminal.Terminal
 import me.zhanghai.android.files.theme.MftlrsTheme
-import me.zhanghai.android.files.ui.DrawerLayoutOnBackPressedCallback
 import me.zhanghai.android.files.util.DebouncedRunnable
 import me.zhanghai.android.files.util.Failure
 import me.zhanghai.android.files.util.Loading
@@ -95,6 +92,7 @@ import me.zhanghai.android.files.util.extraPathList
 import me.zhanghai.android.files.util.getParcelableSafe
 import me.zhanghai.android.files.util.getQuantityString
 import me.zhanghai.android.files.util.layoutInNavigation
+import me.zhanghai.android.files.util.layoutInStatusBar
 import me.zhanghai.android.files.util.putArgs
 import me.zhanghai.android.files.util.showToast
 import me.zhanghai.android.files.util.startActivitySafe
@@ -110,7 +108,7 @@ class FileListFragment : Fragment(), FileItemListener,
     ConfirmDeleteFilesDialogFragment.Listener, CreateArchiveDialogFragment.Listener,
     RenameFileDialogFragment.Listener, CreateFileDialogFragment.Listener,
     CreateDirectoryDialogFragment.Listener, NavigateToPathDialogFragment.Listener,
-    NavigationFragment.Listener, ShowRequestAllFilesAccessRationaleDialogFragment.Listener,
+    NavigationItem.Listener, ShowRequestAllFilesAccessRationaleDialogFragment.Listener,
     ShowRequestNotificationPermissionRationaleDialogFragment.Listener,
     ShowRequestNotificationPermissionInSettingsRationaleDialogFragment.Listener,
     ShowRequestStoragePermissionRationaleDialogFragment.Listener,
@@ -140,11 +138,16 @@ class FileListFragment : Fragment(), FileItemListener,
 
     private val viewModel by viewModels { { FileListViewModel() } }
 
-    // mftlrs: the include binding is enough, the other parts of the screen are in Compose; drawerLayout
-    // and persistentDrawerLayout are nullable, each exists in one layout configuration.
-    private lateinit var binding: FileListFragmentIncludeBinding
+    // mftlrs: the whole screen with the navigation drawer is in Compose.
+    private lateinit var binding: FileListFragmentBinding
 
-    private lateinit var navigationFragment: NavigationFragment
+    // mftlrs: NavigationFragment and DrawerLayout are FileListNavigation in Compose.
+    private val navigationState = FileListNavigationState()
+    private val navigationOnBackPressedCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            closeNavigationDrawer()
+        }
+    }
 
     // mftlrs: the file list is FileListContent in Compose.
     private val contentState = FileListContentState()
@@ -183,24 +186,19 @@ class FileListFragment : Fragment(), FileItemListener,
         savedInstanceState: Bundle?
     ): View =
         FileListFragmentBinding.inflate(inflater, container, false)
+            .also { binding = it }
             .root
-            .also { binding = FileListFragmentIncludeBinding.bind(it) }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        if (savedInstanceState == null) {
-            navigationFragment = NavigationFragment()
-            childFragmentManager.commit { add(R.id.navigationFragment, navigationFragment) }
-        } else {
-            navigationFragment = childFragmentManager.findFragmentById(R.id.navigationFragment)
-                as NavigationFragment
-        }
-        navigationFragment.listener = this
         requireActivity().setTitle(R.string.file_list_title)
         topBarState.title = getString(R.string.file_list_title) // pickOptionsLiveData без значения, пока не выбор
         // mftlrs: no support action bar; the whole screen is FileListScreen in Compose.
         binding.screenLayout.apply {
+            // Was set by DrawerLayout and PersistentDrawerLayout with fitsSystemWindows: the screen is drawn
+            // under the status bar.
+            layoutInStatusBar = true
             // Was set by CoordinatorScrollingFrameLayout: the list is drawn under the navigation bar.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                 layoutInNavigation = true
@@ -218,55 +216,18 @@ class FileListFragment : Fragment(), FileItemListener,
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 MftlrsTheme {
-                    FileListScreen(
+                    FileListNavigation(
+                        state = navigationState,
+                        isPersistentOpen = Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN
+                            .observeAsState(Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.valueCompat).value,
                         windowInsets = windowInsets,
-                        isBottomBarVisible = bottomBarState.isVisible,
-                        topBar = {
-                            FileListTopBar(
-                                state = topBarState,
-                                onNavigationClick = { onNavigationClick() },
-                                onSearchExpand = { expandSearchView() },
-                                onSearchCollapse = { collapseSearchView() },
-                                onSearchQueryChange = { onSearchQueryChange(it) },
-                                onSearchSubmit = { onSearchSubmit(it) },
-                                onAction = { onTopBarAction(it) },
-                                onSelectionClose = { clearSelectedFiles() },
-                                onSelectionAction = { onSelectionAction(it) },
-                            )
-                        },
-                        breadcrumbs = {
-                            FileListBreadcrumbs(
-                                data = viewModel.breadcrumbLiveData.observeAsState().value,
-                                onNavigate = { navigateTo(it) },
-                                onCopyPath = { copyPath(it) },
-                                onOpenInNewTask = { openInNewTask(it) },
-                            )
-                        },
-                        content = { bottomInset ->
-                            FileListContent(
-                                state = contentState,
-                                listener = this@FileListFragment,
-                                bottomInset = bottomInset,
-                                onRefresh = { refresh() },
-                            )
-                        },
-                        bottomBar = {
-                            FileListBottomBar(
-                                state = bottomBarState,
-                                onClose = { onBottomBarClose() },
-                                onAction = { onBottomBarAction(it) },
-                            )
-                        },
-                        fab = { bottomPadding, endPadding ->
-                            FileListFab(
-                                state = fabState,
-                                bottomPadding = bottomPadding,
-                                endPadding = endPadding,
-                                onExpandedChange = { setFabExpanded(it) },
-                                onAction = { onFabAction(it) },
-                            )
-                        },
-                    )
+                        items = NavigationItemListLiveData.observeAsState(NavigationItemListLiveData.valueCompat).value,
+                        currentPath = viewModel.currentPathLiveData.observeAsState().value,
+                        listener = this@FileListFragment,
+                        onOpenChange = { setNavigationOpen(it) },
+                    ) { screenInsets ->
+                        Screen(screenInsets)
+                    }
                 }
             }
         }
@@ -321,9 +282,9 @@ class FileListFragment : Fragment(), FileItemListener,
         // mftlrs: was SpeedDialViewOnBackPressedCallback.
         addOnBackPressedCallback(fabOnBackPressedCallback)
         setFabExpanded(savedInstanceState?.getBoolean(STATE_FAB_EXPANDED) == true)
-        binding.drawerLayout?.let {
-            addOnBackPressedCallback(DrawerLayoutOnBackPressedCallback(it))
-        }
+        // mftlrs: was DrawerLayoutOnBackPressedCallback; added last so that it is called first.
+        addOnBackPressedCallback(navigationOnBackPressedCallback)
+        setNavigationOpen(savedInstanceState?.getBoolean(STATE_NAVIGATION_OPEN) == true)
 
         if (!viewModel.hasTrail) {
             var path = argsPath
@@ -394,11 +355,7 @@ class FileListFragment : Fragment(), FileItemListener,
         // Live data only calls observeForever() on its sources when it is active, so we have to
         // make view type live data active first (so that it can load its initial value) before we
         // register another observer that needs to get the view type.
-        if (binding.persistentDrawerLayout != null) {
-            Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.observe(viewLifecycleOwner) {
-                onPersistentDrawerOpenChanged(it)
-            }
-        }
+        // mftlrs: FILE_LIST_PERSISTENT_DRAWER_OPEN is observed by FileListNavigation in Compose.
         viewModel.sortOptionsLiveData.observe(viewLifecycleOwner) { onSortOptionsChanged(it) }
         viewModel.viewSortPathSpecificLiveData.observe(viewLifecycleOwner) {
             onViewSortPathSpecificChanged(it)
@@ -421,7 +378,63 @@ class FileListFragment : Fragment(), FileItemListener,
             // mftlrs: the EditText and the speed dial saved these themselves.
             outState.putString(STATE_CREATE_FILE_NAME, bottomBarState.fileName.text.toString())
             outState.putBoolean(STATE_FAB_EXPANDED, fabState.isExpanded)
+            // mftlrs: DrawerLayout saved this itself.
+            outState.putBoolean(STATE_NAVIGATION_OPEN, navigationState.isOpen)
         }
+    }
+
+    // mftlrs: was in onActivityCreated(); FileListScreen in the navigation drawer of FileListNavigation.
+    @Composable
+    private fun Screen(windowInsets: Insets) {
+        FileListScreen(
+            windowInsets = windowInsets,
+            isBottomBarVisible = bottomBarState.isVisible,
+            topBar = {
+                FileListTopBar(
+                    state = topBarState,
+                    onNavigationClick = { onNavigationClick() },
+                    onSearchExpand = { expandSearchView() },
+                    onSearchCollapse = { collapseSearchView() },
+                    onSearchQueryChange = { onSearchQueryChange(it) },
+                    onSearchSubmit = { onSearchSubmit(it) },
+                    onAction = { onTopBarAction(it) },
+                    onSelectionClose = { clearSelectedFiles() },
+                    onSelectionAction = { onSelectionAction(it) },
+                )
+            },
+            breadcrumbs = {
+                FileListBreadcrumbs(
+                    data = viewModel.breadcrumbLiveData.observeAsState().value,
+                    onNavigate = { navigateTo(it) },
+                    onCopyPath = { copyPath(it) },
+                    onOpenInNewTask = { openInNewTask(it) },
+                )
+            },
+            content = { bottomInset ->
+                FileListContent(
+                    state = contentState,
+                    listener = this@FileListFragment,
+                    bottomInset = bottomInset,
+                    onRefresh = { refresh() },
+                )
+            },
+            bottomBar = {
+                FileListBottomBar(
+                    state = bottomBarState,
+                    onClose = { onBottomBarClose() },
+                    onAction = { onBottomBarAction(it) },
+                )
+            },
+            fab = { bottomPadding, endPadding ->
+                FileListFab(
+                    state = fabState,
+                    bottomPadding = bottomPadding,
+                    endPadding = endPadding,
+                    onExpandedChange = { setFabExpanded(it) },
+                    onAction = { onFabAction(it) },
+                )
+            },
+        )
     }
 
     override fun onResume() {
@@ -461,12 +474,20 @@ class FileListFragment : Fragment(), FileItemListener,
     }
 
     private fun onNavigationClick() {
-        binding.drawerLayout?.openDrawer(GravityCompat.START)
-        if (binding.persistentDrawerLayout != null) {
+        if (resources.configuration.isPersistentNavigation) {
             Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.putValue(
                 !Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.valueCompat
             )
+        } else {
+            setNavigationOpen(true)
         }
+    }
+
+    // mftlrs: the modal navigation drawer; the persistent one is FILE_LIST_PERSISTENT_DRAWER_OPEN.
+    private fun setNavigationOpen(open: Boolean) {
+        val isOpen = open && !resources.configuration.isPersistentNavigation
+        navigationState.isOpen = isOpen
+        navigationOnBackPressedCallback.isEnabled = isOpen
     }
 
     // mftlrs: was onOptionsItemSelected().
@@ -541,16 +562,6 @@ class FileListFragment : Fragment(), FileItemListener,
         } ?: return false
         onTopBarAction(action)
         return true
-    }
-
-    private fun onPersistentDrawerOpenChanged(open: Boolean) {
-        binding.persistentDrawerLayout?.let {
-            if (open) {
-                it.openDrawer(GravityCompat.START)
-            } else {
-                it.closeDrawer(GravityCompat.START)
-            }
-        }
     }
 
     private fun onCurrentPathChanged(path: Path) {
@@ -1328,16 +1339,13 @@ class FileListFragment : Fragment(), FileItemListener,
         viewModel.resetTo(path)
     }
 
-    override fun navigateToDefaultRoot() {
-        navigateToRoot(Settings.FILE_LIST_DEFAULT_DIRECTORY.valueCompat)
-    }
-
-    override fun observeCurrentPath(owner: LifecycleOwner, observer: (Path) -> Unit) {
-        viewModel.currentPathLiveData.observe(owner, observer)
+    // mftlrs: was in NavigationFragment.
+    override fun launchIntent(intent: Intent) {
+        startActivitySafe(intent)
     }
 
     override fun closeNavigationDrawer() {
-        binding.drawerLayout?.closeDrawer(GravityCompat.START)
+        setNavigationOpen(false)
     }
 
     private fun ensureStorageAccess() {
@@ -1508,6 +1516,7 @@ class FileListFragment : Fragment(), FileItemListener,
         private const val STATE_SCROLL_POSITION = "scrollPosition"
         private const val STATE_CREATE_FILE_NAME = "createFileName"
         private const val STATE_FAB_EXPANDED = "fabExpanded"
+        private const val STATE_NAVIGATION_OPEN = "navigationOpen"
     }
 
     private class RequestAllFilesAccessContract : ActivityResultContract<Unit, Boolean>() {

@@ -30,11 +30,11 @@
 | кнопка ⋮ экрана | `By.desc` — системная строка Android `action_menu_overflow_description` («Другие варианты» на устройстве 2026-11-18) или `abc_action_menu_overflow_description` AppCompat («Ещё»). В Compose (`FileListTopBar`) — строка AppCompat |
 | иконка файла (тап — выделить) | id `iconLayout` (`FileListScreen.clickFileIcon`). В Compose — `testTag("iconLayout")` и `testTagsAsResourceId = true` |
 | кнопка ⋮ у файла | id `menuButton` внутри самого маленького контейнера, где есть и имя файла, и эта кнопка. В Compose — `Modifier.testTag("menuButton")` и `testTagsAsResourceId = true` |
-| главная кнопка FAB | id `sd_main_fab` (было из библиотеки speed-dial). В Compose (`FileListFab`) — `testTag("sd_main_fab")`; `testTagsAsResourceId = true` — один раз на корне `FileListScreen`, действует на все части экрана |
+| главная кнопка FAB | id `sd_main_fab` (было из библиотеки speed-dial). В Compose (`FileListFab`) — `testTag("sd_main_fab")`; `testTagsAsResourceId = true` — на корне `FileListNavigation` и `FileListScreen`: действует только на потомков, панель — вне `FileListScreen` |
 | значок ☰ | `By.desc` — строка `open_navigation_drawer` |
-| контейнер навигации | id `navigationFragment` (`NavigationFrameLayout`) или `navigation`. В Compose — `testTag("navigation")` на панели; закрытая панель не должна быть видна accessibility |
+| контейнер навигации | id `navigation` — `testTag("navigation")` на панели `FileListNavigation` (на Views был `navigationFragment`). Закрытая панель за краем экрана в accessibility не попадает |
 | пункт навигации | самый маленький кликабельный объект внутри контейнера, у которого текст или текст потомка — заголовок пункта; если не виден — прокрутка `By.scrollable(true)` внутри контейнера |
-| подсветка текущей папки | `isChecked` (Views: `CheckableForegroundLinearLayout` сообщает его accessibility с 2026-11-19) или `isSelected` (Compose `NavigationDrawerItem`) |
+| подсветка текущей папки | `isChecked` или `isSelected`: пункт `FileListNavigation` ставит `semantics { selected }` — без роли `Tab` это `checked` |
 | поле имени в диалоге, поле поиска | класс `android.widget.EditText` или `android.widget.AutoCompleteTextView` (так называется поле SearchView) — `FileListScreen.editText()` |
 | элемент списка, когда то же имя есть в другом месте (поле поиска) | `clickFile` — контейнер с именем и кнопкой ⋮, как у меню файла |
 | сетка или список | по координатам: в сетке два файла в одном ряду, в списке — друг под другом |

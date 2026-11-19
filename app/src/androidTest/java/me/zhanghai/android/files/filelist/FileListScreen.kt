@@ -361,7 +361,7 @@ class FileListScreen : ExternalResource() {
         private val ICON: BySelector = By.res(Pattern.compile("(.+:id/)?iconLayout"))
         private val FAB: BySelector = By.res(Pattern.compile("(.+:id/)?sd_main_fab"))
 
-        // Контейнер навигации: на Views — NavigationFrameLayout боковой панели, в Compose — testTag("navigation")
+        // Контейнер навигации: testTag("navigation") панели в Compose (на Views был id navigationFragment)
         private val NAVIGATION: BySelector = By.res(Pattern.compile("(.+:id/)?navigation(Fragment)?"))
     }
 }

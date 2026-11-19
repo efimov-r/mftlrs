@@ -22,7 +22,7 @@
 | WebDAV | 2210 (4,1%) | 1 | `provider/webdav/`, `storage/*WebDavServer*`, `java/at/bitfire/` | **Оставить** — Nextcloud и облака без закрытых SDK; минус — JitPack |
 | Архивы | 1870 (3,4%) | 1 | `provider/archive/`, `fileaction/`, `filelist/CreateArchive*` | **Оставить** |
 | Настройки | 1660 (3,1%) | 3 | `settings/` | **Оставить**; при редизайне проверить библиотеки настроек |
-| Боковая панель | 1660 (3,0%) | 2 | `navigation/`, `ui/*Drawer*`, `ui/NavigationFrameLayout.kt` | **Убрать** по цели проекта; пункты перенести в новый интерфейс |
+| Боковая панель | 1660 (3,0%) | 1 | `navigation/`, `filelist/FileListNavigation.kt` | **Убрать** по цели проекта; пункты перенести в новый интерфейс. 2026-11-20 перенесена на Compose один в один, View drawer и `com.drakeet:drawer` удалены |
 | SFTP | 1580 (2,9%) | 3 | `provider/sftp/`, `storage/*SftpServer*`, `java/net/schmizz/` | **Оставить** — доступ к серверам по SSH |
 | FTP-сервер | 930 (1,7%) | 3 | `ftpserver/`, `res/xml/ftp_server.xml` | **По желанию** — если не нужен: минус 3 либы, сервис `specialUse` и плитка |
 | Права и SELinux | 910 (1,7%) | 0 | `fileproperties/permission/` | **Оставить** — ниша, но уникально |
@@ -47,7 +47,7 @@
 
 ## Библиотеки по функциям
 
-Всего 58 прямых зависимостей (BoM не считаются). `bcprov`, `slf4j-android` и `material` нужны двум функциям и посчитаны в обеих.
+Всего 57 прямых зависимостей (BoM не считаются). `bcprov`, `slf4j-android` и `material` нужны двум функциям и посчитаны в обеих.
 
 - **Инфраструктура (15):** `kotlin-stdlib-jdk8`, `kotlinx-coroutines-android`, `kotlinx-coroutines-core`, `activity-ktx`, `appcompat`, `core-ktx`, `fragment-ktx`, `lifecycle-common-java8`, `lifecycle-livedata-ktx`, `lifecycle-process`, `lifecycle-runtime-ktx`, `lifecycle-viewmodel-ktx`, `recyclerview`, `material`, `foregroundcompat`.
 - **Ядро ФС (2):** `retrofile` (бэкпорт `java.nio.file`), `desugar_jdk_libs`.
@@ -59,7 +59,7 @@
 - **WebDAV (1):** `dav4jvm` (коммит через JitPack); транзитивно — OkHttp, общий клиент в `app/SystemServices.kt`.
 - **Архивы (1):** `libarchive` (нативная).
 - **Настройки (3):** `preference-ktx`, `preferencex` (takisoft), `simplemenu-preference` (rikka).
-- **Боковая панель (2):** `drawerlayout`, `com.drakeet:drawer`.
+- **Боковая панель (1):** `drawerlayout` — напрямую в коде больше не используется (панель на Compose), `com.drakeet:drawer` удалён 2026-11-20.
 - **SFTP (3):** `sshj`, BouncyCastle `bcprov`, `bcpkix`.
 - **FTP-сервер (3):** `ftpserver-core`, `mina-core` 2.1.3, `slf4j-android`.
 - **EXIF, аудио, видео (2):** `exifinterface`, `androidsvg`.
