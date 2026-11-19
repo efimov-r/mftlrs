@@ -17,9 +17,10 @@
 
 ```
 .\gradlew.bat assembleDebug                    # APK: app/build/outputs/apk/debug/app-debug.apk
-.\gradlew.bat installDebug                     # поставить на подключённое устройство
+.\gradlew.bat installDebug                     # поставить на подключённое устройство; название «mftlrs debug» (src/debug/res)
+.\gradlew.bat installRelease                   # release (R8) поверх debug, тот же пакет, данные сохраняются
 .\gradlew.bat assembleDebug lintVitalRelease   # то же, что CI (.github/workflows/android.yml, на каждый push)
-.\gradlew.bat assembleRelease                  # подпись: signing.properties в корне или переменные STORE_FILE, STORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+.\gradlew.bat assembleRelease                  # подпись: signing.properties в корне или переменные STORE_FILE, STORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD; без них — debug-ключ
 .\gradlew.bat connectedUiTestAndroidTest       # UI-тесты на подключённом устройстве; экран разблокирован
 ```
 

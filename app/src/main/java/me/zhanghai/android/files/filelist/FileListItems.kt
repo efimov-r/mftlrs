@@ -71,8 +71,8 @@ import me.zhanghai.android.files.provider.archive.isArchivePath
 import me.zhanghai.android.files.provider.common.isEncrypted
 import me.zhanghai.android.files.theme.MftlrsTheme
 
-// Элементы списка и сетки главного экрана — перенос file_item_list.xml, file_item_grid.xml и
-// FileListAdapter.onBindViewHolder; ripple, выделение и приглушение упрощены (docs/ai/compose-migration.md, «Отклонения»)
+// Элементы списка и сетки главного экрана — перенос удалённых file_item_list.xml, file_item_grid.xml и
+// FileListAdapter; ripple, выделение и приглушение упрощены (docs/ai/compose-migration.md, «Отклонения»)
 
 private const val DISABLED_ALPHA = 0.38f // android:disabledAlpha темы Material 3
 private const val CHECKED_ALPHA = 0.12f // CheckableItemBackground: colorPrimary с alpha 0,12
@@ -86,7 +86,7 @@ internal fun FileListItem(
     hasSelection: Boolean,
     pickOptions: PickOptions?,
     nameEllipsize: TextUtils.TruncateAt,
-    listener: FileListAdapter.Listener,
+    listener: FileItemListener,
     modifier: Modifier = Modifier,
 ) {
     val ui = rememberFileItemUi(file)
@@ -111,7 +111,7 @@ internal fun FileGridItem(
     isChecked: Boolean,
     hasSelection: Boolean,
     pickOptions: PickOptions?,
-    listener: FileListAdapter.Listener,
+    listener: FileItemListener,
     modifier: Modifier = Modifier,
 ) {
     val ui = rememberFileItemUi(file)
@@ -129,7 +129,7 @@ internal fun FileGridItem(
     )
 }
 
-// Как FileListAdapter.isFileSelectable
+// Можно ли выбрать файл в режиме выбора (из удалённого FileListAdapter)
 internal fun isFileSelectable(file: FileItem, pickOptions: PickOptions?): Boolean {
     pickOptions ?: return true
     return when (pickOptions.mode) {
@@ -139,12 +139,12 @@ internal fun isFileSelectable(file: FileItem, pickOptions: PickOptions?): Boolea
     }
 }
 
-// Как FileListAdapter.selectFile
+// Переключить выделение; при !allowMultiple сначала снять прежнее (из удалённого FileListAdapter)
 private fun selectFile(
     file: FileItem,
     isChecked: Boolean,
     pickOptions: PickOptions?,
-    listener: FileListAdapter.Listener,
+    listener: FileItemListener,
 ) {
     if (!isFileSelectable(file, pickOptions)) return
     if (!isChecked && pickOptions != null && !pickOptions.allowMultiple) {
@@ -223,7 +223,7 @@ private fun rememberFileItemActions(
     isChecked: Boolean,
     hasSelection: Boolean,
     pickOptions: PickOptions?,
-    listener: FileListAdapter.Listener,
+    listener: FileItemListener,
 ): FileItemActions = remember(file, isChecked, hasSelection, pickOptions, listener) {
     val select = { selectFile(file, isChecked, pickOptions, listener) }
     val open = { listener.openFile(file) }
@@ -237,11 +237,11 @@ private fun rememberFileItemActions(
     )
 }
 
-// Пункты и условия — menu/file_item.xml и FileListAdapter.onBindViewHolder
+// Пункты меню ⋮ и условия их видимости (из удалённых menu/file_item.xml и FileListAdapter)
 private fun fileItemMenuItems(
     file: FileItem,
     hasPickOptions: Boolean,
-    listener: FileListAdapter.Listener,
+    listener: FileItemListener,
 ): List<FileItemMenuItem> {
     val path = file.path
     val isReadOnly = path.fileSystem.isReadOnly
@@ -276,7 +276,7 @@ private fun fileItemMenuItems(
     }
 }
 
-// file_item_list.xml
+// Строка списка
 @Composable
 private fun FileListItemContent(
     ui: FileItemUi,
@@ -351,7 +351,7 @@ private fun FileListItemContent(
     }
 }
 
-// file_item_grid.xml
+// Плитка сетки
 @Composable
 private fun FileGridItemContent(
     ui: FileItemUi,

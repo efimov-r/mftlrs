@@ -12,9 +12,9 @@
 | Вкладки свойств файла | 7 + база |
 | DialogFragment | 34 + 5 баз |
 | Свои Preference | 15 |
-| Адаптеры | 11 + 6 баз в `ui/` |
+| Адаптеры | 10 + 6 баз в `ui/` |
 | Свои View и помощники в `ui/` | ~40 |
-| Разметка `res/` | layout 55, menu 10, XML настроек 2 |
+| Разметка `res/` | layout 53, menu 9, XML настроек 2 |
 
 Объём: Kotlin в пакете приложения — ~59 тыс. строк; пакеты с экранами (`filelist`, `storage`, `fileproperties`, `viewer`, `settings`, `navigation`, `ftpserver`, `about`) — ~17,5 тыс. вместе с ViewModel и моделями; `ui/` — ~4,3 тыс.; `layout`, `menu`, `xml` — ~4,6 тыс.
 
@@ -220,11 +220,12 @@
 
 ## Адаптеры
 
-### Экранные (11)
+### Экранные (10)
+
+Список и сетка файлов главного экрана — на Compose (`filelist/FileListContent.kt`, `FileListItems.kt`), `FileListAdapter` удалён 2026-11-19.
 
 | Адаптер | Пакет | База | Где |
 |---|---|---|---|
-| `FileListAdapter` | `filelist` | `ListAdapter` | список и сетка файлов; подписи для fast scroll |
 | `NavigationListAdapter` | `navigation` | `SimpleAdapter` | боковая панель |
 | `StorageListAdapter` | `storage` | `SimpleAdapter` + `DraggableItemAdapter` | список хранилищ |
 | `BookmarkDirectoryListAdapter` | `settings` | `SimpleAdapter` + `DraggableItemAdapter` | список закладок |
@@ -248,9 +249,9 @@
 |---|---|
 | Боковая панель — уйдут при редизайне | `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback` |
 | Тулбары и режим выделения | `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `ToolbarActionMode`, `OverlayToolbarActionMode`, `PersistentBarLayoutToolbarActionMode` |
-| Панели и прокрутка | `BottomBarLayout`, `PersistentBarLayout`, `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrollingFrameLayout`, `CoordinatorScrollingLinearLayout`, `AppBarLayoutExpandHackListener`, `ScrollingViewOnApplyWindowInsetsListener` |
+| Панели и прокрутка | `BottomBarLayout`, `PersistentBarLayout`, `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrollingFrameLayout`, `CoordinatorScrollingLinearLayout`, `ScrollingViewOnApplyWindowInsetsListener` |
 | FAB и fast scroll | `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `ThemedFastScroller` |
-| Элементы списка | `CheckableFrameLayout`, `CheckableForegroundLinearLayout`, `CheckableItemBackground`, `AspectRatioFrameLayout`, `AspectRatioImageView`, `DisabledAlphaImageView`, `AutoGoneTextView`, `AutoMirrorDrawable` |
+| Элементы списка | `CheckableFrameLayout`, `CheckableForegroundLinearLayout`, `AspectRatioImageView`, `DisabledAlphaImageView`, `AutoGoneTextView`, `AutoMirrorDrawable` |
 | Поля ввода и поиск | `ReadOnlyTextInputLayout`, `ReadOnlyTextInputEditText`, `ScrollingChildEditText`, `DropDownView`, `FixLayoutSearchView`, `FixQueryChangeSearchView`, `AllowSoftInputHackAlertDialogCustomView` |
 | Картинки и страницы | `SaveStateSubsamplingScaleImageView`, `WrapFirstPageContentViewPager`, `ViewPagerTransformers` |
 | Лицензии | `LicensesDialogExtensions` |
@@ -270,7 +271,7 @@
 
 | Папка | Кол-во | Что |
 |---|---|---|
-| `res/layout/` | 54 | экраны, диалоги, элементы списков |
+| `res/layout/` | 52 | экраны, диалоги, элементы списков |
 | `res/layout-sw600dp-land/` | 1 | `file_list_fragment_include.xml` — постоянная боковая панель на планшете |
-| `res/menu/` | 10 | `file_list*` (7), `file_item`, `text_editor`, `image_viewer` |
+| `res/menu/` | 9 | `file_list*` (7), `text_editor`, `image_viewer` |
 | `res/xml/` | 2 настроек | `settings.xml`, `ftp_server.xml`; ещё `shortcuts.xml`, `netework_security_config.xml` |

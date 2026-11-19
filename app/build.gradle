@@ -73,7 +73,10 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            // mftlrs: without a release key (signing.properties or STORE_FILE etc.), sign with the
+            // debug key so that a local release build can still be installed over the debug one.
+            signingConfig signingConfigs.release.storeFile != null ? signingConfigs.release
+                    : signingConfigs.debug
         }
         uiTest {
             initWith debug

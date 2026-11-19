@@ -2,6 +2,21 @@
 
 На чём легко ошибиться и как правильно. Новые записи — сверху. Пока записи — по чтению кода (2026-11-15), не по реальным ошибкам.
 
+## Compose в debug-сборке лагает — плавность проверять со сборкой R8
+- **Что случится:** прокрутка списка в debug-сборке заметно дёргается, кажется регрессией после перевода на Compose
+- **Причина:** Compose в debuggable-сборке без R8 в разы медленнее; RecyclerView этого почти не замечает. Замер 2026-11-19, папка из 400 файлов, 20 свайпов, `dumpsys gfxinfo`, телефон 60 Гц: Views debug — 0% рваных кадров, 90-й перцентиль 10 мс; Compose debug — 7%, 44 мс; Compose с R8 и без debuggable — 0,4%, 17 мс. Убрать `nestedScroll`-interop — не влияет
+- **Как правильно:** плавность и производительность судить только по release-сборке: `installRelease` ставит её поверх debug с сохранением данных. Для замера на отдельной установке (другой пакет) выдать доступ: `adb shell appops set <пакет> MANAGE_EXTERNAL_STORAGE allow`, `adb shell pm grant <пакет> android.permission.POST_NOTIFICATIONS`
+
+## Отступ снизу у Compose-списка главного экрана
+- **Что случится:** последний файл закрыт навигационной панелью, или отступ двойной, или список не уходит под панель (чек-лист 63)
+- **Причина:** `CoordinatorScrollingFrameLayout` ставит дочерним View `bottomMargin` под системную панель, кроме `ScrollingView` (`RecyclerView`). `ComposeView` — не `ScrollingView`, поэтому у него `fitsSystemWindows="true"` — такой дочерний View margin не получает (правка mftlrs). Отступ берётся из `systemWindowInsetBottom` через `OnApplyWindowInsetsListener` в `FileListFragment` → `FileListContentState.bottomInset`. `WindowInsets.navigationBars` Compose здесь не подходит: родители пересобирают insets только как `systemWindowInsets`, без типов (обнаружено 2026-11-19)
+- **Как правильно:** в этом `ComposeView` не использовать `WindowInsets.*` Compose — они заменят слушатель insets; отступы — только из `bottomInset`
+
+## `fileListStateful` бросает, пока нет значения
+- **Что случится:** `NullPointerException: <get-valueCompat>(...) must not be null` при открытии экрана
+- **Причина:** `sortOptionsLiveData` присылает значение раньше `fileListLiveData`; `FileListViewModel.fileListStateful` — `valueCompat`, бросает на `null` (обнаружено UI-тестом 2026-11-19)
+- **Как правильно:** в обработчиках, которые могут прийти раньше списка, читать `viewModel.fileListLiveData.value?.value`
+
 ## UI-тест с `launchActivityForResult` — белый экран и долгие таймауты
 - **Что случится:** на телефоне висит белый экран (`InstrumentationActivityInvoker$EmptyActivity` пакета `.uitest.test`), экран выбора файла не появляется, каждый тест ждёт таймаута; прогон растягивается на десятки минут
 - **Причина:** не выяснена (обнаружено 2026-11-18): `ActivityScenario.launchActivityForResult` запускает экран через пустую служебную активити, и на устройстве это не сработало
@@ -34,8 +49,8 @@
 
 ## Слияние с upstream: удалённые темы и настройки
 - **Что случится:** конфликты «удалено у нас — изменено у upstream» в `themes.xml`, `themes_custom.xml`, `theme/custom/`, `colorpicker/`, `ui/AnimatedListAdapter.kt`, `anim/list_item.xml`; при неаккуратном разрешении возвращаются Material Design 2, выбор цвета, цвета из обоев, анимация списка файлов или строки удалённых настроек
-- **Причина:** в mftlrs только Material 3 с фиксированной палитрой ([decisions.md](decisions.md), «Две фиксированные темы»), а upstream продолжает развивать MD2, выбор цвета и Material You. Анимация списка файлов и её настройка удалены (2026-11-15): `FileListAdapter` наследует `ListAdapter` напрямую
-- **Как правильно:** удалённые файлы оставлять удалёнными; правки upstream в общих файлах (`themes_material3.xml`, `styles*.xml`, `FileListAdapter` и др.) переносить, но без веток MD2, `isMaterial3Theme` и `bindViewHolderAnimation`; новые строки `settings_theme_color*`, `settings_material_design_3_title`, `settings_black_night_mode`, `settings_file_list_animation_title` в локалях не принимать. После слияния — поиск по `ThemeColor`, `MATERIAL_DESIGN_3`, `isMaterial3Theme`, `DynamicColors`, `FILE_LIST_ANIMATION`, `AnimatedListAdapter` должен быть пустым
+- **Причина:** в mftlrs только Material 3 с фиксированной палитрой ([decisions.md](decisions.md), «Две фиксированные темы»), а upstream продолжает развивать MD2, выбор цвета и Material You. Анимация списка файлов и её настройка удалены (2026-11-15). `FileListAdapter`, `file_item_list.xml`, `file_item_grid.xml`, `menu/file_item.xml` удалены (2026-11-19) — список на Compose (`FileListContent.kt`, `FileListItems.kt`)
+- **Как правильно:** удалённые файлы оставлять удалёнными; правки upstream в общих файлах (`themes_material3.xml`, `styles*.xml` и др.) переносить, но без веток MD2, `isMaterial3Theme` и `bindViewHolderAnimation`; правки upstream в `FileListAdapter` и разметке элементов — переносить по смыслу в `FileListItems.kt`; новые строки `settings_theme_color*`, `settings_material_design_3_title`, `settings_black_night_mode`, `settings_file_list_animation_title` в локалях не принимать. После слияния — поиск по `ThemeColor`, `MATERIAL_DESIGN_3`, `isMaterial3Theme`, `DynamicColors`, `FILE_LIST_ANIMATION`, `AnimatedListAdapter` должен быть пустым
 
 ## Смена цвета иконки — в нескольких местах
 - **Что случится:** иконка в приложении одного цвета, а иконка в магазине или исходники `art/` — другого
@@ -72,10 +87,10 @@
 - **Причина:** эти классы лежат в чужих пакетах, чтобы достучаться до package-private API библиотек
 - **Как правильно:** при обновлении такой библиотеки проверять её accessor-класс
 
-## Release-подпись спрашивает пароли в консоли
-- **Что случится:** `assembleRelease` без настроек подписи падает или ждёт ввода
-- **Причина:** `signing.gradle` берёт значения из `signing.properties`, затем из переменных `STORE_FILE`, `STORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`, затем спрашивает в консоли (у Gradle daemon консоли нет)
-- **Как правильно:** `signing.properties` и `signing.jks` в корне — они в `.gitignore`; в git и документацию не класть. Debug-сборке подпись не нужна
+## Release без ключа подписывается debug-ключом
+- **Что случится:** release-APK собран и ставится, но подписан debug-ключом — такой нельзя публиковать: обновление поверх него с настоящим ключом не встанет
+- **Причина:** `signing.gradle` берёт значения из `signing.properties`, затем из переменных `STORE_FILE`, `STORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`, затем спрашивает в консоли (у Gradle daemon консоли нет — получается `null`). Если `storeFile` не нашёлся, `release` в `app/build.gradle` берёт `signingConfigs.debug` (mftlrs, 2026-11-19) — чтобы локальная release-сборка ставилась поверх debug: пакет и подпись те же, данные сохраняются
+- **Как правильно:** для публикации — `signing.properties` и `signing.jks` в корне (они в `.gitignore`; в git и документацию не класть) и проверить подпись APK (`apksigner verify --print-certs`). Для проверки на телефоне — `installRelease` и `installDebug`; debug называется «mftlrs debug» (`app/src/debug/res/values/strings.xml`)
 
 ## `gradle/gradle-daemon-jvm.properties` не в git
 - **Что случится:** у разных людей и в CI Gradle daemon работает на разных JDK

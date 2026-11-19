@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ Copyright (c) 2026 mftlrs contributors
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  -->
+
+<resources>
+    <!-- Название debug-сборки — чтобы на телефоне отличать её от release -->
+    <string name="app_name" translatable="false">mftlrs debug</string>
+</resources>
