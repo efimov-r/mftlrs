@@ -7,8 +7,12 @@ package me.zhanghai.android.files.filelist
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,10 +47,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,8 +63,8 @@ import me.zhanghai.android.files.R
 import me.zhanghai.android.files.filelist.FileSortOptions.By
 import me.zhanghai.android.files.filelist.FileSortOptions.Order
 
-// Основная верхняя панель главного экрана — перенос CrossfadeSubtitleToolbar и menu/file_list.xml.
-// Панель выделения пока на Views (docs/ai/compose-migration.md, этап 4c)
+// Верхняя панель главного экрана — перенос CrossfadeSubtitleToolbar и menu/file_list.xml; поверх неё —
+// панель выделения, перенос OverlayToolbarActionMode с menu/file_list_select.xml и file_list_pick.xml
 
 private val TITLE_START = 72.dp // contentInsetStartWithNavigation тулбара
 private val SUBTITLE_SIZE = 12.sp // TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Small, там 12dp
@@ -74,6 +80,28 @@ internal class FileListTopBarState {
     var isViewSortPathSpecific by mutableStateOf(false)
     var isSelectAllVisible by mutableStateOf(true)
     var showHiddenFiles by mutableStateOf(false)
+
+    // Панель выделения. При скрытии заголовок и пункты не сбрасываются: панель гаснет с ними
+    var isSelectionMode by mutableStateOf(false)
+    var selectionTitle by mutableStateOf("")
+    var selectionActions by mutableStateOf(emptyList<FileListSelectionAction>())
+}
+
+// Пункты панели выделения: с иконкой — кнопка на панели, без — пункт меню ⋮
+internal enum class FileListSelectionAction(
+    @StringRes val titleRes: Int,
+    @DrawableRes val iconRes: Int?,
+) {
+    OPEN(R.string.select, R.drawable.check_icon_control_normal_24dp),
+    CREATE(R.string.save, R.drawable.save_icon_control_normal_24dp),
+    CUT(R.string.cut, R.drawable.cut_icon_control_normal_24dp),
+    COPY(R.string.copy, R.drawable.copy_icon_control_normal_24dp),
+    COPY_EXTRACT(R.string.file_list_select_action_extract, R.drawable.extract_icon_control_normal_24dp), // «Копировать» для файлов в архиве
+    DELETE(R.string.delete, R.drawable.delete_icon_control_normal_24dp),
+    EXTRACT(R.string.file_list_select_action_extract, null),
+    ARCHIVE(R.string.file_list_select_action_archive, null),
+    SHARE(R.string.share, null),
+    SELECT_ALL(R.string.select_all, null),
 }
 
 // Пункты меню панели, вместо id из menu/file_list.xml
@@ -109,9 +137,51 @@ internal fun FileListTopBar(
     onSearchQueryChange: (String) -> Unit,
     onSearchSubmit: (String) -> Unit,
     onAction: (FileListTopBarAction) -> Unit,
+    onSelectionClose: () -> Unit,
+    onSelectionAction: (FileListSelectionAction) -> Unit,
+) {
+    val fadeDuration = integerResource(android.R.integer.config_shortAnimTime)
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        MainBar(
+            state = state,
+            onNavigationClick = onNavigationClick,
+            onSearchExpand = onSearchExpand,
+            onSearchCollapse = onSearchCollapse,
+            onSearchQueryChange = onSearchQueryChange,
+            onSearchSubmit = onSearchSubmit,
+            onAction = onAction,
+            // Под панелью выделения основная остаётся (поиск не теряет текст), но скрыта от TalkBack и тестов
+            modifier = if (state.isSelectionMode) Modifier.clearAndSetSemantics {} else Modifier,
+        )
+        AnimatedVisibility(
+            visible = state.isSelectionMode,
+            enter = fadeIn(tween(fadeDuration)),
+            exit = fadeOut(tween(fadeDuration)),
+        ) {
+            SelectionBar(
+                title = state.selectionTitle,
+                actions = state.selectionActions,
+                onClose = onSelectionClose,
+                onAction = onSelectionAction,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MainBar(
+    state: FileListTopBarState,
+    onNavigationClick: () -> Unit,
+    onSearchExpand: () -> Unit,
+    onSearchCollapse: () -> Unit,
+    onSearchQueryChange: (String) -> Unit,
+    onSearchSubmit: (String) -> Unit,
+    onAction: (FileListTopBarAction) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(
                 start = dimensionResource(R.dimen.file_list_toolbar_padding_start),
@@ -151,6 +221,83 @@ internal fun FileListTopBar(
             ViewSortMenu(state, onAction)
         }
         OverflowMenu(state, onAction)
+    }
+}
+
+// Панель выделения: крестик, «Выбрано: N», кнопки и меню ⋮. Непрозрачная, касания до основной не пропускает
+@Composable
+private fun SelectionBar(
+    title: String,
+    actions: List<FileListSelectionAction>,
+    onClose: () -> Unit,
+    onAction: (FileListSelectionAction) -> Unit,
+) {
+    val menuActions = actions.filter { it.iconRes == null }
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .pointerInput(Unit) {}
+            .padding(
+                start = dimensionResource(R.dimen.file_list_toolbar_padding_start),
+                end = dimensionResource(R.dimen.file_list_toolbar_padding_end_with_overflow),
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BarIcon(
+            iconRes = R.drawable.close_icon_control_normal_24dp,
+            descriptionRes = R.string.close,
+            onClick = onClose,
+        )
+        Spacer(modifier = Modifier.width(TITLE_START - 48.dp - dimensionResource(R.dimen.file_list_toolbar_padding_start)))
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.titleLarge,
+        )
+        actions.forEach { action ->
+            action.iconRes?.let { iconRes ->
+                BarIcon(
+                    iconRes = iconRes,
+                    descriptionRes = action.titleRes,
+                    onClick = { onAction(action) },
+                )
+            }
+        }
+        if (menuActions.isNotEmpty()) {
+            SelectionOverflowMenu(menuActions, onAction)
+        }
+    }
+}
+
+@Composable
+private fun SelectionOverflowMenu(
+    actions: List<FileListSelectionAction>,
+    onAction: (FileListSelectionAction) -> Unit,
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Box {
+        BarIcon(
+            iconRes = R.drawable.more_vertical_icon_white_24dp,
+            descriptionRes = androidx.appcompat.R.string.abc_action_menu_overflow_description,
+            onClick = { isExpanded = true },
+        )
+        DropdownMenu(
+            expanded = isExpanded,
+            onDismissRequest = { isExpanded = false },
+        ) {
+            actions.forEach { action ->
+                TextItem(action.titleRes) {
+                    isExpanded = false
+                    onAction(action)
+                }
+            }
+        }
     }
 }
 

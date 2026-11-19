@@ -20,28 +20,12 @@
         android:theme="?actionBarTheme"
         app:liftOnScroll="false">
 
-        <FrameLayout
+        <!-- mftlrs: основная панель и панель выделения поверх неё — FileListTopBar в Compose. -->
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/toolbarComposeView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_scrollFlags="@integer/file_list_toolbar_scroll_flags">
-
-            <!-- mftlrs: основная панель — FileListTopBar в Compose. -->
-            <androidx.compose.ui.platform.ComposeView
-                android:id="@+id/toolbarComposeView"
-                android:layout_width="match_parent"
-                android:layout_height="?actionBarSize" />
-
-            <me.zhanghai.android.files.ui.OverlayToolbar
-                android:id="@+id/overlayToolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?actionBarSize"
-                android:paddingStart="@dimen/file_list_toolbar_padding_start"
-                android:paddingEnd="@dimen/file_list_toolbar_padding_end_with_overflow"
-                android:background="?colorSurfaceContainer"
-                android:visibility="gone"
-                app:navigationIcon="@drawable/close_icon_control_normal_24dp"
-                app:popupTheme="?actionBarPopupTheme" />
-        </FrameLayout>
+            android:layout_height="?actionBarSize"
+            app:layout_scrollFlags="@integer/file_list_toolbar_scroll_flags" />
 
         <!-- mftlrs: хлебные крошки — FileListBreadcrumbs в Compose. -->
         <androidx.compose.ui.platform.ComposeView

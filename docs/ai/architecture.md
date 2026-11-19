@@ -97,7 +97,7 @@ FileJobService (копирование, удаление, архивы…) и Ft
 - `FileListFragment` (~1750 строк) — почти весь UI экрана:
   - верхняя панель с поиском — `FileListTopBar`, хлебные крошки — `FileListBreadcrumbs` (Compose, каждая в своём `ComposeView` внутри `AppBarLayout`);
   - список и сетка — `ComposeView` с `FileListContent` (`filelist/FileListContent.kt`, этап 3 переноса на Compose — [compose-migration.md](compose-migration.md)): фрагмент заполняет `FileListContentState` из своих наблюдателей LiveData (файлы уже отфильтрованы и отсортированы в `updateAdapterFileList`), действия над файлами — через `FileItemListener`; позиция прокрутки в `TrailData` — `ScrollPosition` (индекс и смещение). `FileListAdapter` удалён;
-  - режимы панелей: `OverlayToolbarActionMode` — выделение, `PersistentBarLayoutToolbarActionMode` — нижняя панель вставки и выбора;
+  - панель выделения — в `FileListTopBar` поверх основной (`isSelectionMode`, пункты `FileListSelectionAction` считает `updateSelectionBar`); нижняя панель вставки и выбора — `PersistentBarLayoutToolbarActionMode`;
   - FAB speed-dial: новый файл и новая папка;
   - drawer: дочерний `NavigationFragment`, фрагмент реализует его `Listener`;
   - запрос разрешений в `onResume`: доступ ко всем файлам, хранилище, уведомления;

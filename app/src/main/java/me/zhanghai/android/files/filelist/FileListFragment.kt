@@ -80,7 +80,6 @@ import me.zhanghai.android.files.terminal.Terminal
 import me.zhanghai.android.files.theme.MftlrsTheme
 import me.zhanghai.android.files.ui.CoordinatorAppBarLayout
 import me.zhanghai.android.files.ui.DrawerLayoutOnBackPressedCallback
-import me.zhanghai.android.files.ui.OverlayToolbarActionMode
 import me.zhanghai.android.files.ui.PersistentBarLayout
 import me.zhanghai.android.files.ui.PersistentBarLayoutToolbarActionMode
 import me.zhanghai.android.files.ui.PersistentDrawerLayout
@@ -158,8 +157,6 @@ class FileListFragment : Fragment(), FileItemListener,
 
     private lateinit var navigationFragment: NavigationFragment
 
-    private lateinit var overlayActionMode: ToolbarActionMode
-
     private lateinit var bottomActionMode: ToolbarActionMode
 
     // mftlrs: the file list is FileListContent in Compose.
@@ -214,11 +211,12 @@ class FileListFragment : Fragment(), FileItemListener,
                         onSearchQueryChange = { onSearchQueryChange(it) },
                         onSearchSubmit = { onSearchSubmit(it) },
                         onAction = { onTopBarAction(it) },
+                        onSelectionClose = { clearSelectedFiles() },
+                        onSelectionAction = { onSelectionAction(it) },
                     )
                 }
             }
         }
-        overlayActionMode = OverlayToolbarActionMode(binding.overlayToolbar, binding.toolbarComposeView)
         bottomActionMode = PersistentBarLayoutToolbarActionMode(
             binding.persistentBarLayout, binding.bottomBarLayout, binding.bottomToolbar
         )
@@ -229,7 +227,6 @@ class FileListFragment : Fragment(), FileItemListener,
                     binding.appBarLayout.totalScrollRange + verticalOffset
             )
         }
-        binding.appBarLayout.syncBackgroundColorTo(binding.overlayToolbar)
         // mftlrs: the breadcrumbs are FileListBreadcrumbs in Compose.
         binding.breadcrumbComposeView.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -300,7 +297,19 @@ class FileListFragment : Fragment(), FileItemListener,
                     }
                 }
         )
-        addOnBackPressedCallback(overlayActionMode.onBackPressedCallback)
+        // mftlrs: was the back callback of the overlay toolbar action mode.
+        addOnBackPressedCallback(
+            object : OnBackPressedCallback(false) {
+                override fun handleOnBackPressed() {
+                    clearSelectedFiles()
+                }
+            }
+                .also { callback ->
+                    viewModel.selectedFilesLiveData.observe(viewLifecycleOwner) {
+                        callback.isEnabled = it.isNotEmpty()
+                    }
+                }
+        )
         addOnBackPressedCallback(SpeedDialViewOnBackPressedCallback(binding.speedDialView))
         binding.drawerLayout?.let {
             addOnBackPressedCallback(DrawerLayoutOnBackPressedCallback(it))
@@ -493,12 +502,19 @@ class FileListFragment : Fragment(), FileItemListener,
                 return true
             }
         }
-        if (overlayActionMode.isActive) {
-            val menu = overlayActionMode.menu
-            menu.setQwertyMode(
-                KeyCharacterMap.load(event.deviceId).keyboardType != KeyCharacterMap.NUMERIC
-            )
-            if (menu.performShortcut(keyCode, event, 0)) {
+        // mftlrs: alphabetic shortcuts of menu/file_list_select.xml and file_list_pick.xml.
+        if (topBarState.isSelectionMode) {
+            val selectionAction = topBarState.selectionActions.firstOrNull {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_X -> it == FileListSelectionAction.CUT
+                    KeyEvent.KEYCODE_C ->
+                        it == FileListSelectionAction.COPY || it == FileListSelectionAction.COPY_EXTRACT
+                    KeyEvent.KEYCODE_A -> it == FileListSelectionAction.SELECT_ALL
+                    else -> false
+                }
+            }
+            if (selectionAction != null) {
+                onSelectionAction(selectionAction)
                 return true
             }
         }
@@ -526,7 +542,7 @@ class FileListFragment : Fragment(), FileItemListener,
     }
 
     private fun onCurrentPathChanged(path: Path) {
-        updateOverlayToolbar()
+        updateSelectionBar()
         updateBottomToolbar()
     }
 
@@ -709,7 +725,7 @@ class FileListFragment : Fragment(), FileItemListener,
         requireActivity().title = title
         topBarState.title = title
         topBarState.isSelectAllVisible = pickOptions == null || pickOptions.allowMultiple
-        updateOverlayToolbar()
+        updateSelectionBar()
         updateBottomToolbar()
         contentState.pickOptions = pickOptions
     }
@@ -749,116 +765,80 @@ class FileListFragment : Fragment(), FileItemListener,
     }
 
     private fun onSelectedFilesChanged(files: FileItemSet) {
-        updateOverlayToolbar()
+        updateSelectionBar()
         contentState.selectedPaths = files.mapTo(mutableSetOf()) { it.path }
     }
 
-    private fun updateOverlayToolbar() {
+    // mftlrs: the selection bar is in FileListTopBar; was updateOverlayToolbar() with
+    // menu/file_list_select.xml and file_list_pick.xml.
+    private fun updateSelectionBar() {
         val files = viewModel.selectedFiles
         if (files.isEmpty()) {
-            if (overlayActionMode.isActive) {
-                overlayActionMode.finish()
-            }
+            topBarState.isSelectionMode = false
             return
         }
+        topBarState.selectionTitle = getString(R.string.file_list_select_title_format, files.size)
         val pickOptions = viewModel.pickOptions
-        if (pickOptions != null) {
-            overlayActionMode.title = getString(R.string.file_list_select_title_format, files.size)
-            overlayActionMode.setMenuResource(R.menu.file_list_pick)
-            val menu = overlayActionMode.menu
+        topBarState.selectionActions = if (pickOptions != null) {
             val isOpen = when (pickOptions.mode) {
                 PickOptions.Mode.OPEN_FILE, PickOptions.Mode.OPEN_DIRECTORY -> true
                 PickOptions.Mode.CREATE_FILE -> false
             }
-            menu.findItem(R.id.action_open).isVisible = isOpen
-            menu.findItem(R.id.action_create).isVisible = !isOpen
-            menu.findItem(R.id.action_select_all).isVisible = pickOptions.allowMultiple
-        } else {
-            overlayActionMode.title = getString(R.string.file_list_select_title_format, files.size)
-            overlayActionMode.setMenuResource(R.menu.file_list_select)
-            val menu = overlayActionMode.menu
-            val isAnyFileReadOnly = files.any { it.path.fileSystem.isReadOnly }
-            menu.findItem(R.id.action_cut).isVisible = !isAnyFileReadOnly
-            val areAllFilesArchivePaths = files.all { it.path.isArchivePath }
-            menu.findItem(R.id.action_copy)
-                .setIcon(
-                    if (areAllFilesArchivePaths) {
-                        R.drawable.extract_icon_control_normal_24dp
-                    } else {
-                        R.drawable.copy_icon_control_normal_24dp
-                    }
-                )
-                .setTitle(
-                    if (areAllFilesArchivePaths) {
-                        R.string.file_list_select_action_extract
-                    } else {
-                        R.string.copy
-                    }
-                )
-            menu.findItem(R.id.action_delete).isVisible = !isAnyFileReadOnly
-            val areAllFilesArchiveFiles = files.all { it.isArchiveFile }
-            menu.findItem(R.id.action_extract).isVisible = areAllFilesArchiveFiles
-            val isCurrentPathReadOnly = viewModel.currentPath.fileSystem.isReadOnly
-            menu.findItem(R.id.action_archive).isVisible = !isCurrentPathReadOnly
-        }
-        if (!overlayActionMode.isActive) {
-            binding.appBarLayout.setExpanded(true)
-            overlayActionMode.start(object : ToolbarActionMode.Callback {
-                override fun onToolbarActionModeMenuItemClicked(
-                    toolbarActionMode: ToolbarActionMode,
-                    item: MenuItem
-                ): Boolean = onOverlayActionModeMenuItemClicked(item)
-
-                override fun onToolbarActionModeFinished(toolbarActionMode: ToolbarActionMode) {
-                    onOverlayActionModeFinished()
+            buildList {
+                add(if (isOpen) FileListSelectionAction.OPEN else FileListSelectionAction.CREATE)
+                if (pickOptions.allowMultiple) {
+                    add(FileListSelectionAction.SELECT_ALL)
                 }
-            })
+            }
+        } else {
+            val isAnyFileReadOnly = files.any { it.path.fileSystem.isReadOnly }
+            val areAllFilesArchivePaths = files.all { it.path.isArchivePath }
+            val areAllFilesArchiveFiles = files.all { it.isArchiveFile }
+            val isCurrentPathReadOnly = viewModel.currentPath.fileSystem.isReadOnly
+            buildList {
+                if (!isAnyFileReadOnly) {
+                    add(FileListSelectionAction.CUT)
+                }
+                add(
+                    if (areAllFilesArchivePaths) {
+                        FileListSelectionAction.COPY_EXTRACT
+                    } else {
+                        FileListSelectionAction.COPY
+                    }
+                )
+                if (!isAnyFileReadOnly) {
+                    add(FileListSelectionAction.DELETE)
+                }
+                if (areAllFilesArchiveFiles) {
+                    add(FileListSelectionAction.EXTRACT)
+                }
+                if (!isCurrentPathReadOnly) {
+                    add(FileListSelectionAction.ARCHIVE)
+                }
+                add(FileListSelectionAction.SHARE)
+                add(FileListSelectionAction.SELECT_ALL)
+            }
+        }
+        if (!topBarState.isSelectionMode) {
+            binding.appBarLayout.setExpanded(true)
+            topBarState.isSelectionMode = true
         }
     }
 
-    private fun onOverlayActionModeMenuItemClicked(item: MenuItem): Boolean =
-        when (item.itemId) {
-            R.id.action_open -> {
-                pickFiles(viewModel.selectedFiles)
-                true
-            }
-            R.id.action_create -> {
-                confirmReplaceFile(viewModel.selectedFiles.single())
-                true
-            }
-            R.id.action_cut -> {
-                cutFiles(viewModel.selectedFiles)
-                true
-            }
-            R.id.action_copy -> {
-                copyFiles(viewModel.selectedFiles)
-                true
-            }
-            R.id.action_delete -> {
-                confirmDeleteFiles(viewModel.selectedFiles)
-                true
-            }
-            R.id.action_extract -> {
-                extractFiles(viewModel.selectedFiles)
-                true
-            }
-            R.id.action_archive -> {
-                showCreateArchiveDialog(viewModel.selectedFiles)
-                true
-            }
-            R.id.action_share -> {
-                shareFiles(viewModel.selectedFiles)
-                true
-            }
-            R.id.action_select_all -> {
-                selectAllFiles()
-                true
-            }
-            else -> false
+    // mftlrs: was onOverlayActionModeMenuItemClicked().
+    private fun onSelectionAction(action: FileListSelectionAction) {
+        val files = viewModel.selectedFiles
+        when (action) {
+            FileListSelectionAction.OPEN -> pickFiles(files)
+            FileListSelectionAction.CREATE -> confirmReplaceFile(files.single())
+            FileListSelectionAction.CUT -> cutFiles(files)
+            FileListSelectionAction.COPY, FileListSelectionAction.COPY_EXTRACT -> copyFiles(files)
+            FileListSelectionAction.DELETE -> confirmDeleteFiles(files)
+            FileListSelectionAction.EXTRACT -> extractFiles(files)
+            FileListSelectionAction.ARCHIVE -> showCreateArchiveDialog(files)
+            FileListSelectionAction.SHARE -> shareFiles(files)
+            FileListSelectionAction.SELECT_ALL -> selectAllFiles()
         }
-
-    private fun onOverlayActionModeFinished() {
-        viewModel.clearSelectedFiles()
     }
 
     private fun confirmReplaceFile(file: FileItem, setFileName: Boolean = true) {
@@ -1567,7 +1547,6 @@ class FileListFragment : Fragment(), FileItemListener,
         val persistentBarLayout: PersistentBarLayout,
         val appBarLayout: CoordinatorAppBarLayout,
         val toolbarComposeView: ComposeView,
-        val overlayToolbar: Toolbar,
         val breadcrumbComposeView: ComposeView,
         val contentLayout: ViewGroup,
         val composeView: ComposeView,
@@ -1592,8 +1571,7 @@ class FileListFragment : Fragment(), FileItemListener,
                 return Binding(
                     bindingRoot, includeBinding.drawerLayout, includeBinding.persistentDrawerLayout,
                     includeBinding.persistentBarLayout, appBarBinding.appBarLayout,
-                    appBarBinding.toolbarComposeView, appBarBinding.overlayToolbar,
-                    appBarBinding.breadcrumbComposeView, contentBinding.contentLayout,
+                    appBarBinding.toolbarComposeView, appBarBinding.breadcrumbComposeView, contentBinding.contentLayout,
                     contentBinding.composeView, bottomBarBinding.bottomBarLayout, bottomBarBinding.bottomToolbar,
                     bottomBarBinding.bottomCreateFileNameEdit, speedDialBinding.speedDialView
                 )

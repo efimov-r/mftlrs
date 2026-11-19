@@ -248,7 +248,7 @@
 | Назначение | Классы в `ui/` |
 |---|---|
 | Боковая панель — уйдут при редизайне | `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback` |
-| Тулбары и режим выделения | `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `ToolbarActionMode`, `OverlayToolbarActionMode`, `PersistentBarLayoutToolbarActionMode` |
+| Режимы панелей | `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode` (нижняя панель). `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode` удалены — верхняя панель и панель выделения на Compose (`FileListTopBar`) |
 | Панели и прокрутка | `BottomBarLayout`, `PersistentBarLayout`, `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrollingFrameLayout`, `CoordinatorScrollingLinearLayout`, `ScrollingViewOnApplyWindowInsetsListener` |
 | FAB и fast scroll | `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `ThemedFastScroller` |
 | Элементы списка | `CheckableFrameLayout`, `CheckableForegroundLinearLayout`, `AspectRatioImageView`, `DisabledAlphaImageView`, `AutoGoneTextView`, `AutoMirrorDrawable` |
