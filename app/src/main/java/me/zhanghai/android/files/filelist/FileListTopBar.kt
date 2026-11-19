@@ -53,6 +53,8 @@ import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -66,7 +68,7 @@ import me.zhanghai.android.files.filelist.FileSortOptions.Order
 // Верхняя панель главного экрана — перенос CrossfadeSubtitleToolbar и menu/file_list.xml; поверх неё —
 // панель выделения, перенос OverlayToolbarActionMode с menu/file_list_select.xml и file_list_pick.xml
 
-private val TITLE_START = 72.dp // contentInsetStartWithNavigation тулбара
+internal val TITLE_START = 72.dp // contentInsetStartWithNavigation тулбара; нужен и нижней панели
 private val SUBTITLE_SIZE = 12.sp // TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Small, там 12dp
 
 // Состояние панели. Заполняет FileListFragment из своих наблюдателей LiveData, Compose только рисует
@@ -530,18 +532,28 @@ private fun CheckItem(
     )
 }
 
-// Иконка панели: цвет — ?colorControlNormal темы панели (textColorPrimary, то есть onSurface)
+// Иконка панели: цвет — ?colorControlNormal темы панели (textColorPrimary, то есть onSurface); недоступная —
+// с прозрачностью 0,38, как неактивный пункт меню. Нужна и нижней панели. Описание — на самой кнопке:
+// у неактивной описание иконки не сливается в узел кнопки, и тест видит иконку активной
 @Composable
-private fun BarIcon(
+internal fun BarIcon(
     @DrawableRes iconRes: Int,
     @StringRes descriptionRes: Int,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick) {
+    val color = MaterialTheme.colorScheme.onSurface
+    val description = stringResource(descriptionRes)
+
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.semantics { contentDescription = description },
+        enabled = enabled,
+    ) {
         Icon(
             painter = painterResource(iconRes),
-            contentDescription = stringResource(descriptionRes),
-            tint = MaterialTheme.colorScheme.onSurface,
+            contentDescription = null,
+            tint = if (enabled) color else color.copy(alpha = 0.38f),
         )
     }
 }

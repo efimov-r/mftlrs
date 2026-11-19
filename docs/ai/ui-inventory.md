@@ -14,7 +14,7 @@
 | Свои Preference | 15 |
 | Адаптеры | 10 + 6 баз в `ui/` |
 | Свои View и помощники в `ui/` | ~40 |
-| Разметка `res/` | layout 53, menu 9, XML настроек 2 |
+| Разметка `res/` | layout 53, menu 2, XML настроек 2 |
 
 Объём: Kotlin в пакете приложения — ~59 тыс. строк; пакеты с экранами (`filelist`, `storage`, `fileproperties`, `viewer`, `settings`, `navigation`, `ftpserver`, `about`) — ~17,5 тыс. вместе с ViewModel и моделями; `ui/` — ~4,3 тыс.; `layout`, `menu`, `xml` — ~4,6 тыс.
 
@@ -248,15 +248,15 @@
 | Назначение | Классы в `ui/` |
 |---|---|
 | Боковая панель — уйдут при редизайне | `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback` |
-| Режимы панелей | `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode` (нижняя панель). `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode` удалены — верхняя панель и панель выделения на Compose (`FileListTopBar`) |
+| Режимы панелей | нет: `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode`, `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode` удалены — панели главного экрана на Compose (`FileListTopBar`, `FileListBottomBar`) |
 | Панели и прокрутка | `BottomBarLayout`, `PersistentBarLayout`, `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrollingFrameLayout`, `CoordinatorScrollingLinearLayout`, `ScrollingViewOnApplyWindowInsetsListener` |
-| FAB и fast scroll | `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `ThemedFastScroller` |
+| Fast scroll | `ThemedFastScroller` (текстовый редактор). `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback` удалены — FAB на Compose (`FileListFab`) |
 | Элементы списка | `CheckableFrameLayout`, `CheckableForegroundLinearLayout`, `AspectRatioImageView`, `DisabledAlphaImageView`, `AutoGoneTextView`, `AutoMirrorDrawable` |
 | Поля ввода и поиск | `ReadOnlyTextInputLayout`, `ReadOnlyTextInputEditText`, `ScrollingChildEditText`, `DropDownView`, `FixLayoutSearchView`, `FixQueryChangeSearchView`, `AllowSoftInputHackAlertDialogCustomView` |
 | Картинки и страницы | `SaveStateSubsamplingScaleImageView`, `WrapFirstPageContentViewPager`, `ViewPagerTransformers` |
 | Лицензии | `LicensesDialogExtensions` |
 
-Библиотеки View, на которых держится UI: Material Components, `speed-dial` (leinardi), `fastscroll` (zhanghai), `advrecyclerview` (перетаскивание), `subsampling-scale-image-view` и PhotoView (картинки), `drawer` (drakeet), `preferencex`, `simplemenu-preference`, `licensesdialog`, `insetter`, `swiperefreshlayout`.
+Библиотеки View, на которых держится UI: Material Components, `fastscroll` (zhanghai), `advrecyclerview` (перетаскивание), `subsampling-scale-image-view` и PhotoView (картинки), `drawer` (drakeet), `preferencex`, `simplemenu-preference`, `licensesdialog`, `insetter`, `swiperefreshlayout`.
 
 ## Прочий UI вне экранов
 
@@ -273,5 +273,5 @@
 |---|---|---|
 | `res/layout/` | 52 | экраны, диалоги, элементы списков |
 | `res/layout-sw600dp-land/` | 1 | `file_list_fragment_include.xml` — постоянная боковая панель на планшете |
-| `res/menu/` | 9 | `file_list*` (7), `text_editor`, `image_viewer` |
+| `res/menu/` | 2 | `text_editor`, `image_viewer`; все `file_list*` удалены — меню главного экрана на Compose |
 | `res/xml/` | 2 настроек | `settings.xml`, `ftp_server.xml`; ещё `shortcuts.xml`, `netework_security_config.xml` |

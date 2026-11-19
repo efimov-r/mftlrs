@@ -47,11 +47,11 @@
 
 ## Библиотеки по функциям
 
-Всего 59 прямых зависимостей (BoM не считаются). `bcprov`, `slf4j-android` и `material` нужны двум функциям и посчитаны в обеих.
+Всего 58 прямых зависимостей (BoM не считаются). `bcprov`, `slf4j-android` и `material` нужны двум функциям и посчитаны в обеих.
 
 - **Инфраструктура (15):** `kotlin-stdlib-jdk8`, `kotlinx-coroutines-android`, `kotlinx-coroutines-core`, `activity-ktx`, `appcompat`, `core-ktx`, `fragment-ktx`, `lifecycle-common-java8`, `lifecycle-livedata-ktx`, `lifecycle-process`, `lifecycle-runtime-ktx`, `lifecycle-viewmodel-ktx`, `recyclerview`, `material`, `foregroundcompat`.
 - **Ядро ФС (2):** `retrofile` (бэкпорт `java.nio.file`), `desugar_jdk_libs`.
-- **Главный экран (3):** `speed-dial`, `fastscroll`, `swiperefreshlayout`.
+- **Главный экран (2):** `fastscroll`, `swiperefreshlayout` (оба уже только для других экранов). `speed-dial` удалён 2026-11-19 — FAB на Compose.
 - **Локальные файлы (1):** `libselinux`.
 - **SMB (7):** `smbj` 0.11.5, `dcerpc`, `guava-android`, `listenablefuture` (заглушка от конфликта Guava с AndroidX), `jcifs-ng` (имена NetBIOS, поиск в сети; инициализируется при старте приложения), `slf4j-android`, BouncyCastle `bcprov`.
 - **Root и Shizuku (3):** `libsu:service`, Shizuku `api`, Shizuku `provider`.

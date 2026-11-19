@@ -18,32 +18,28 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
-import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.appcompat.widget.Toolbar
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.view.GravityCompat
-import androidx.core.view.isVisible
 import androidx.core.view.updatePaddingRelative
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.LifecycleOwner
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import com.leinardi.android.speeddial.SpeedDialView
+import androidx.compose.ui.text.TextRange
 import java8.nio.file.Path
 import java8.nio.file.Paths
 import kotlinx.parcelize.Parcelize
@@ -81,10 +77,7 @@ import me.zhanghai.android.files.theme.MftlrsTheme
 import me.zhanghai.android.files.ui.CoordinatorAppBarLayout
 import me.zhanghai.android.files.ui.DrawerLayoutOnBackPressedCallback
 import me.zhanghai.android.files.ui.PersistentBarLayout
-import me.zhanghai.android.files.ui.PersistentBarLayoutToolbarActionMode
 import me.zhanghai.android.files.ui.PersistentDrawerLayout
-import me.zhanghai.android.files.ui.SpeedDialViewOnBackPressedCallback
-import me.zhanghai.android.files.ui.ToolbarActionMode
 import me.zhanghai.android.files.util.DebouncedRunnable
 import me.zhanghai.android.files.util.Failure
 import me.zhanghai.android.files.util.Loading
@@ -108,7 +101,6 @@ import me.zhanghai.android.files.util.extraPathList
 import me.zhanghai.android.files.util.getParcelableSafe
 import me.zhanghai.android.files.util.getQuantityString
 import me.zhanghai.android.files.util.putArgs
-import me.zhanghai.android.files.util.setOnEditorConfirmActionListener
 import me.zhanghai.android.files.util.showToast
 import me.zhanghai.android.files.util.startActivitySafe
 import me.zhanghai.android.files.util.supportsExternalStorageManager
@@ -157,13 +149,23 @@ class FileListFragment : Fragment(), FileItemListener,
 
     private lateinit var navigationFragment: NavigationFragment
 
-    private lateinit var bottomActionMode: ToolbarActionMode
-
     // mftlrs: the file list is FileListContent in Compose.
     private val contentState = FileListContentState()
 
     // mftlrs: the toolbar with its menu and search is FileListTopBar in Compose.
     private val topBarState = FileListTopBarState()
+
+    // mftlrs: the bottom bar was a toolbar action mode; it is FileListBottomBar in Compose.
+    private val bottomBarState = FileListBottomBarState()
+    private var isBottomBarShown = false
+
+    // mftlrs: the speed dial is FileListFab in Compose.
+    private val fabState = FileListFabState()
+    private val fabOnBackPressedCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            setFabExpanded(false)
+        }
+    }
 
     private val debouncedSearchRunnable = DebouncedRunnable(Handler(Looper.getMainLooper()), 1000) {
         if (!isResumed || !viewModel.isSearchViewExpanded) {
@@ -217,9 +219,20 @@ class FileListFragment : Fragment(), FileItemListener,
                 }
             }
         }
-        bottomActionMode = PersistentBarLayoutToolbarActionMode(
-            binding.persistentBarLayout, binding.bottomBarLayout, binding.bottomToolbar
-        )
+        binding.bottomBarComposeView.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MftlrsTheme {
+                    FileListBottomBar(
+                        state = bottomBarState,
+                        onClose = { onBottomBarClose() },
+                        onAction = { onBottomBarAction(it) },
+                    )
+                }
+            }
+        }
+        savedInstanceState?.getString(STATE_CREATE_FILE_NAME)
+            ?.let { bottomBarState.fileName.setTextAndPlaceCursorAtEnd(it) }
         val contentLayoutInitialPaddingBottom = binding.contentLayout.paddingBottom
         binding.appBarLayout.addOnOffsetChangedListener { _, verticalOffset ->
             binding.contentLayout.updatePaddingRelative(
@@ -255,16 +268,22 @@ class FileListFragment : Fragment(), FileItemListener,
         }
         savedInstanceState?.getParcelableSafe<ScrollPosition>(STATE_SCROLL_POSITION)
             ?.let { contentState.scrollTo(it) }
-        binding.speedDialView.inflate(R.menu.file_list_speed_dial)
-        binding.speedDialView.setOnActionSelectedListener {
-            when (it.id) {
-                R.id.action_create_file -> showCreateFileDialog()
-                R.id.action_create_directory -> showCreateDirectoryDialog()
+        binding.fabComposeView.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setOnApplyWindowInsetsListener { _, insets ->
+                fabState.bottomInset = insets.systemWindowInsetBottom
+                fabState.endInset = insets.systemWindowInsetRight
+                insets
             }
-            // Returning false causes the speed dial to close without animation.
-            //return false
-            binding.speedDialView.close()
-            true
+            setContent {
+                MftlrsTheme {
+                    FileListFab(
+                        state = fabState,
+                        onExpandedChange = { setFabExpanded(it) },
+                        onAction = { onFabAction(it) },
+                    )
+                }
+            }
         }
 
         // mftlrs: exit confirmation; added first so that it is called last, and not when picking.
@@ -310,7 +329,9 @@ class FileListFragment : Fragment(), FileItemListener,
                     }
                 }
         )
-        addOnBackPressedCallback(SpeedDialViewOnBackPressedCallback(binding.speedDialView))
+        // mftlrs: was SpeedDialViewOnBackPressedCallback.
+        addOnBackPressedCallback(fabOnBackPressedCallback)
+        setFabExpanded(savedInstanceState?.getBoolean(STATE_FAB_EXPANDED) == true)
         binding.drawerLayout?.let {
             addOnBackPressedCallback(DrawerLayoutOnBackPressedCallback(it))
         }
@@ -408,6 +429,9 @@ class FileListFragment : Fragment(), FileItemListener,
 
         if (view != null) {
             outState.putParcelable(STATE_SCROLL_POSITION, contentState.scrollPosition)
+            // mftlrs: the EditText and the speed dial saved these themselves.
+            outState.putString(STATE_CREATE_FILE_NAME, bottomBarState.fileName.text.toString())
+            outState.putBoolean(STATE_FAB_EXPANDED, fabState.isExpanded)
         }
     }
 
@@ -493,12 +517,11 @@ class FileListFragment : Fragment(), FileItemListener,
     }
 
     fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean {
-        if (bottomActionMode.isActive) {
-            val menu = bottomActionMode.menu
-            menu.setQwertyMode(
-                KeyCharacterMap.load(event.deviceId).keyboardType != KeyCharacterMap.NUMERIC
-            )
-            if (menu.performShortcut(keyCode, event, 0)) {
+        // mftlrs: alphabetic shortcut of menu/file_list_paste.xml; a disabled item did not react.
+        if (isBottomBarShown && keyCode == KeyEvent.KEYCODE_V && bottomBarState.isActionEnabled) {
+            val action = bottomBarState.action
+            if (action == FileListBottomBarAction.PASTE || action == FileListBottomBarAction.EXTRACT_HERE) {
+                onBottomBarAction(action)
                 return true
             }
         }
@@ -543,7 +566,7 @@ class FileListFragment : Fragment(), FileItemListener,
 
     private fun onCurrentPathChanged(path: Path) {
         updateSelectionBar()
-        updateBottomToolbar()
+        updateBottomBar()
     }
 
     private fun onSearchViewExpandedChanged(expanded: Boolean) {
@@ -726,7 +749,7 @@ class FileListFragment : Fragment(), FileItemListener,
         topBarState.title = title
         topBarState.isSelectAllVisible = pickOptions == null || pickOptions.allowMultiple
         updateSelectionBar()
-        updateBottomToolbar()
+        updateBottomBar()
         contentState.pickOptions = pickOptions
     }
 
@@ -843,13 +866,17 @@ class FileListFragment : Fragment(), FileItemListener,
 
     private fun confirmReplaceFile(file: FileItem, setFileName: Boolean = true) {
         if (setFileName) {
-            val fileName = file.name
-            binding.bottomCreateFileNameEdit.setText(fileName)
-            binding.bottomCreateFileNameEdit.setSelection(
-                0, fileName.asFileName().baseName.length
-            )
+            setCreateFileName(file.name)
         }
         ConfirmReplaceFileDialogFragment.show(file, this)
+    }
+
+    // mftlrs: was setText() and setSelection() on the EditText; the base name is selected.
+    private fun setCreateFileName(fileName: String) {
+        bottomBarState.fileName.edit {
+            replace(0, length, fileName)
+            selection = TextRange(0, fileName.asFileName().baseName.length)
+        }
     }
 
     override fun replaceFile(file: FileItem) {
@@ -910,62 +937,47 @@ class FileListFragment : Fragment(), FileItemListener,
     }
 
     private fun onPasteStateChanged(pasteState: PasteState) {
-        updateBottomToolbar()
+        updateBottomBar()
     }
 
-    private fun updateBottomToolbar() {
+    // mftlrs: was updateBottomToolbar() with menu/file_list_paste.xml and file_list_pick_bottom.xml.
+    private fun updateBottomBar() {
         val pickOptions = viewModel.pickOptions
         if (pickOptions != null) {
-            bottomActionMode.setMenuResource(R.menu.file_list_pick_bottom)
-            val menu = bottomActionMode.menu
             when (pickOptions.mode) {
                 PickOptions.Mode.CREATE_FILE -> {
-                    bottomActionMode.title = null
-                    binding.bottomCreateFileNameEdit.isVisible = true
-                    val createMenuItem = menu.findItem(R.id.action_create)
-                    binding.bottomCreateFileNameEdit.setOnEditorConfirmActionListener {
-                        onBottomActionModeMenuItemClicked(createMenuItem)
-                    }
+                    bottomBarState.isCreateFileMode = true
+                    bottomBarState.action = FileListBottomBarAction.CREATE
                     if (!viewModel.isCreateFileNameEditInitialized) {
-                        val fileName = pickOptions.fileName!!
-                        binding.bottomCreateFileNameEdit.setText(fileName)
-                        binding.bottomCreateFileNameEdit.setSelection(
-                            0, fileName.asFileName().baseName.length
-                        )
-                        binding.bottomCreateFileNameEdit.requestFocus()
+                        setCreateFileName(pickOptions.fileName!!)
+                        bottomBarState.isFileNameFocusRequested = true
                         viewModel.isCreateFileNameEditInitialized = true
                     }
-                    menu.findItem(R.id.action_open).isVisible = false
-                    createMenuItem.isVisible = true
                 }
                 PickOptions.Mode.OPEN_DIRECTORY -> {
                     val path = viewModel.currentPath
                     val navigationRoot = NavigationRootMapLiveData.valueCompat[path]
                     val name = navigationRoot?.getName(requireContext()) ?: path.name
-                    bottomActionMode.title =
+                    bottomBarState.title =
                         getString(R.string.file_list_open_current_directory_format, name)
-                    binding.bottomCreateFileNameEdit.isVisible = false
-                    menu.findItem(R.id.action_open).isVisible = true
-                    menu.findItem(R.id.action_create).isVisible = false
+                    bottomBarState.isCreateFileMode = false
+                    bottomBarState.action = FileListBottomBarAction.OPEN
                 }
                 else -> {
-                    if (bottomActionMode.isActive) {
-                        bottomActionMode.finish()
-                    }
+                    hideBottomBar()
                     return
                 }
             }
+            bottomBarState.isActionEnabled = true
         } else {
             val pasteState = viewModel.pasteState
             val files = pasteState.files
             if (files.isEmpty()) {
-                if (bottomActionMode.isActive) {
-                    bottomActionMode.finish()
-                }
+                hideBottomBar()
                 return
             }
             val areAllFilesArchivePaths = files.all { it.path.isArchivePath }
-            bottomActionMode.title = getString(
+            bottomBarState.title = getString(
                 if (pasteState.copy) {
                     if (areAllFilesArchivePaths) {
                         R.string.file_list_paste_extract_title_format
@@ -976,50 +988,46 @@ class FileListFragment : Fragment(), FileItemListener,
                     R.string.file_list_paste_move_title_format
                 }, files.size
             )
-            binding.bottomCreateFileNameEdit.isVisible = false
-            bottomActionMode.setMenuResource(R.menu.file_list_paste)
-            val isCurrentPathReadOnly = viewModel.currentPath.fileSystem.isReadOnly
-            bottomActionMode.menu.findItem(R.id.action_paste)
-                .setTitle(
-                    if (areAllFilesArchivePaths) R.string.file_list_paste_action_extract_here else R.string.paste
-                )
-                .isEnabled = !isCurrentPathReadOnly
+            bottomBarState.isCreateFileMode = false
+            bottomBarState.action = if (areAllFilesArchivePaths) {
+                FileListBottomBarAction.EXTRACT_HERE
+            } else {
+                FileListBottomBarAction.PASTE
+            }
+            bottomBarState.isActionEnabled = !viewModel.currentPath.fileSystem.isReadOnly
         }
-        if (!bottomActionMode.isActive) {
-            bottomActionMode.start(object : ToolbarActionMode.Callback {
-                override fun onToolbarNavigationIconClicked(toolbarActionMode: ToolbarActionMode) {
-                    onBottomToolbarNavigationIconClicked()
-                }
-
-                override fun onToolbarActionModeMenuItemClicked(
-                    toolbarActionMode: ToolbarActionMode,
-                    item: MenuItem
-                ): Boolean = onBottomActionModeMenuItemClicked(item)
-
-                override fun onToolbarActionModeFinished(toolbarActionMode: ToolbarActionMode) {
-                    onBottomActionModeFinished()
-                }
-            })
+        if (!isBottomBarShown) {
+            isBottomBarShown = true
+            binding.persistentBarLayout.showBar(binding.bottomBarLayout)
         }
     }
 
-    private fun onBottomToolbarNavigationIconClicked() {
+    // mftlrs: was finishing the bottom action mode.
+    private fun hideBottomBar() {
+        if (!isBottomBarShown) {
+            return
+        }
+        isBottomBarShown = false
+        binding.persistentBarLayout.hideBar(binding.bottomBarLayout)
+        if (viewModel.pickOptions == null) {
+            viewModel.clearPasteState()
+        }
+    }
+
+    private fun onBottomBarClose() {
         val pickOptions = viewModel.pickOptions
         if (pickOptions != null) {
             requireActivity().finish()
         } else {
-            bottomActionMode.finish()
+            hideBottomBar()
         }
     }
 
-    private fun onBottomActionModeMenuItemClicked(item: MenuItem): Boolean =
-        when (item.itemId) {
-            R.id.action_open -> {
-                pickPaths(linkedSetOf(viewModel.currentPath))
-                true
-            }
-            R.id.action_create -> {
-                val fileName = binding.bottomCreateFileNameEdit.text.toString()
+    private fun onBottomBarAction(action: FileListBottomBarAction) {
+        when (action) {
+            FileListBottomBarAction.OPEN -> pickPaths(linkedSetOf(viewModel.currentPath))
+            FileListBottomBarAction.CREATE -> {
+                val fileName = bottomBarState.fileName.text.toString()
                 if (fileName.isEmpty()) {
                     showToast(R.string.file_list_create_file_name_error_empty)
                 } else if (fileName.asFileNameOrNull() == null) {
@@ -1033,20 +1041,24 @@ class FileListFragment : Fragment(), FileItemListener,
                         pickPaths(linkedSetOf(path))
                     }
                 }
-                true
             }
-            R.id.action_paste -> {
+            FileListBottomBarAction.PASTE, FileListBottomBarAction.EXTRACT_HERE ->
                 pasteFiles(currentPath)
-                true
-            }
-            else -> false
         }
+    }
 
-    private fun onBottomActionModeFinished() {
-        val pickOptions = viewModel.pickOptions
-        if (pickOptions == null) {
-            viewModel.clearPasteState()
+    private fun setFabExpanded(expanded: Boolean) {
+        fabState.isExpanded = expanded
+        fabOnBackPressedCallback.isEnabled = expanded
+    }
+
+    // mftlrs: was the speed dial action listener with menu/file_list_speed_dial.xml.
+    private fun onFabAction(action: FileListFabAction) {
+        when (action) {
+            FileListFabAction.CREATE_FILE -> showCreateFileDialog()
+            FileListFabAction.CREATE_DIRECTORY -> showCreateDirectoryDialog()
         }
+        setFabExpanded(false)
     }
 
     private fun pasteFiles(targetDirectory: Path) {
@@ -1512,6 +1524,8 @@ class FileListFragment : Fragment(), FileItemListener,
 
         // mftlrs: scroll position of the Compose list across recreation.
         private const val STATE_SCROLL_POSITION = "scrollPosition"
+        private const val STATE_CREATE_FILE_NAME = "createFileName"
+        private const val STATE_FAB_EXPANDED = "fabExpanded"
     }
 
     private class RequestAllFilesAccessContract : ActivityResultContract<Unit, Boolean>() {
@@ -1551,9 +1565,8 @@ class FileListFragment : Fragment(), FileItemListener,
         val contentLayout: ViewGroup,
         val composeView: ComposeView,
         val bottomBarLayout: ViewGroup,
-        val bottomToolbar: Toolbar,
-        val bottomCreateFileNameEdit: EditText,
-        val speedDialView: SpeedDialView
+        val bottomBarComposeView: ComposeView,
+        val fabComposeView: ComposeView
     ) {
         companion object {
             fun inflate(
@@ -1572,8 +1585,8 @@ class FileListFragment : Fragment(), FileItemListener,
                     bindingRoot, includeBinding.drawerLayout, includeBinding.persistentDrawerLayout,
                     includeBinding.persistentBarLayout, appBarBinding.appBarLayout,
                     appBarBinding.toolbarComposeView, appBarBinding.breadcrumbComposeView, contentBinding.contentLayout,
-                    contentBinding.composeView, bottomBarBinding.bottomBarLayout, bottomBarBinding.bottomToolbar,
-                    bottomBarBinding.bottomCreateFileNameEdit, speedDialBinding.speedDialView
+                    contentBinding.composeView, bottomBarBinding.bottomBarLayout,
+                    bottomBarBinding.bottomBarComposeView, speedDialBinding.fabComposeView
                 )
             }
         }
