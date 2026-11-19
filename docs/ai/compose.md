@@ -22,6 +22,7 @@
 | `ScrollPosition` | `filelist/FileListContent.kt` | `Parcelable` позиция прокрутки (индекс, смещение) для `TrailData` и сохранения при повороте |
 | `FileListItem`, `FileGridItem` (internal) | `filelist/FileListItems.kt` | элемент списка и сетки главного экрана: иконка, миниатюра (Coil, модель `path to attributes`), значок приложения, бейджи, галочка, имя по `FILE_NAME_ELLIPSIZE`, «дата · размер», меню ⋮ (`testTag("menuButton")`); жесты и пункты меню — как в удалённом `FileListAdapter`, действия — через `FileItemListener` |
 | `FileListTopBar`, `FileListTopBarState`, `FileListTopBarAction` (internal) | `filelist/FileListTopBar.kt` | основная верхняя панель главного экрана в `ComposeView` внутри `AppBarLayout`: значок drawer, заголовок и подзаголовок (смена через `Crossfade`), поиск (поле на `TextFieldState` с фокусом при раскрытии, крестик очистки, Enter — поиск), меню «Вид и сортировка» с переключателями и флажками, меню ⋮. Действия — enum `FileListTopBarAction`, их выполняет фрагмент; состояние поиска — в `FileListViewModel` |
+| `FileListBreadcrumbs` (internal) | `filelist/FileListBreadcrumbs.kt` | хлебные крошки главного экрана в `ComposeView` под `FileListTopBar`: `LazyRow` из `BreadcrumbData`, выбранная крошка — к левому краю, тап — переход, долгое нажатие — меню «Копировать путь», «Открыть в новом окне» |
 | `isFileSelectable(file, pickOptions)` (internal) | `filelist/FileListItems.kt` | можно ли выбрать файл в режиме выбора; нужен и фрагменту («Выбрать все») |
 
 ## Compose внутри экрана на Views

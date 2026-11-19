@@ -40,6 +40,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.LifecycleOwner
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.leinardi.android.speeddial.SpeedDialView
@@ -118,7 +119,7 @@ import me.zhanghai.android.files.util.viewModels
 import me.zhanghai.android.files.util.withChooser
 import me.zhanghai.android.files.viewer.image.ImageViewerActivity
 
-class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener,
+class FileListFragment : Fragment(), FileItemListener,
     ConfirmReplaceFileDialogFragment.Listener, OpenApkDialogFragment.Listener,
     ConfirmDeleteFilesDialogFragment.Listener, CreateArchiveDialogFragment.Listener,
     RenameFileDialogFragment.Listener, CreateFileDialogFragment.Listener,
@@ -229,7 +230,20 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
             )
         }
         binding.appBarLayout.syncBackgroundColorTo(binding.overlayToolbar)
-        binding.breadcrumbLayout.setListener(this)
+        // mftlrs: the breadcrumbs are FileListBreadcrumbs in Compose.
+        binding.breadcrumbComposeView.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MftlrsTheme {
+                    FileListBreadcrumbs(
+                        data = viewModel.breadcrumbLiveData.observeAsState().value,
+                        onNavigate = { navigateTo(it) },
+                        onCopyPath = { copyPath(it) },
+                        onOpenInNewTask = { openInNewTask(it) },
+                    )
+                }
+            }
+        }
         binding.composeView.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setOnApplyWindowInsetsListener { _, insets ->
@@ -356,9 +370,6 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
         viewModel.currentPathLiveData.observe(viewLifecycleOwner) { onCurrentPathChanged(it) }
         viewModel.searchViewExpandedLiveData.observe(viewLifecycleOwner) {
             onSearchViewExpandedChanged(it)
-        }
-        viewModel.breadcrumbLiveData.observe(viewLifecycleOwner) {
-            binding.breadcrumbLayout.setData(it)
         }
         viewModel.viewTypeLiveData.observe(viewLifecycleOwner) { onViewTypeChanged(it) }
         // Live data only calls observeForever() on its sources when it is active, so we have to
@@ -672,11 +683,11 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
         viewModel.navigateTo(contentState.scrollPosition, path)
     }
 
-    override fun copyPath(path: Path) {
+    private fun copyPath(path: Path) {
         clipboardManager.copyText(path.toUserFriendlyString(), requireContext())
     }
 
-    override fun openInNewTask(path: Path) {
+    private fun openInNewTask(path: Path) {
         val intent = FileListActivity.createViewIntent(path)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         startActivitySafe(intent)
@@ -1557,7 +1568,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
         val appBarLayout: CoordinatorAppBarLayout,
         val toolbarComposeView: ComposeView,
         val overlayToolbar: Toolbar,
-        val breadcrumbLayout: BreadcrumbLayout,
+        val breadcrumbComposeView: ComposeView,
         val contentLayout: ViewGroup,
         val composeView: ComposeView,
         val bottomBarLayout: ViewGroup,
@@ -1582,7 +1593,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
                     bindingRoot, includeBinding.drawerLayout, includeBinding.persistentDrawerLayout,
                     includeBinding.persistentBarLayout, appBarBinding.appBarLayout,
                     appBarBinding.toolbarComposeView, appBarBinding.overlayToolbar,
-                    appBarBinding.breadcrumbLayout, contentBinding.contentLayout,
+                    appBarBinding.breadcrumbComposeView, contentBinding.contentLayout,
                     contentBinding.composeView, bottomBarBinding.bottomBarLayout, bottomBarBinding.bottomToolbar,
                     bottomBarBinding.bottomCreateFileNameEdit, speedDialBinding.speedDialView
                 )

@@ -95,7 +95,7 @@ FileJobService (копирование, удаление, архивы…) и Ft
 
 - `FileListActivity` — только хост для `FileListFragment` в `android.R.id.content`; плюс контракты выбора файла и папки внутри приложения (`OpenFileContract`, `CreateFileContract`, `OpenDirectoryContract`).
 - `FileListFragment` (~1750 строк) — почти весь UI экрана:
-  - toolbar с поиском, `BreadcrumbLayout` (хлебные крошки);
+  - верхняя панель с поиском — `FileListTopBar`, хлебные крошки — `FileListBreadcrumbs` (Compose, каждая в своём `ComposeView` внутри `AppBarLayout`);
   - список и сетка — `ComposeView` с `FileListContent` (`filelist/FileListContent.kt`, этап 3 переноса на Compose — [compose-migration.md](compose-migration.md)): фрагмент заполняет `FileListContentState` из своих наблюдателей LiveData (файлы уже отфильтрованы и отсортированы в `updateAdapterFileList`), действия над файлами — через `FileItemListener`; позиция прокрутки в `TrailData` — `ScrollPosition` (индекс и смещение). `FileListAdapter` удалён;
   - режимы панелей: `OverlayToolbarActionMode` — выделение, `PersistentBarLayoutToolbarActionMode` — нижняя панель вставки и выбора;
   - FAB speed-dial: новый файл и новая папка;

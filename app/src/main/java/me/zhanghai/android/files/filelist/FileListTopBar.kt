@@ -58,7 +58,7 @@ import me.zhanghai.android.files.filelist.FileSortOptions.By
 import me.zhanghai.android.files.filelist.FileSortOptions.Order
 
 // Основная верхняя панель главного экрана — перенос CrossfadeSubtitleToolbar и menu/file_list.xml.
-// Панель выделения и хлебные крошки пока на Views (docs/ai/compose-migration.md, этап 4)
+// Панель выделения пока на Views (docs/ai/compose-migration.md, этап 4c)
 
 private val TITLE_START = 72.dp // contentInsetStartWithNavigation тулбара
 private val SUBTITLE_SIZE = 12.sp // TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Small, там 12dp

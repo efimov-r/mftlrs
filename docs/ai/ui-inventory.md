@@ -243,7 +243,7 @@
 
 ## Свои View и помощники UI
 
-Почти всё — в `ui/`. Отдельно: `filelist/BreadcrumbLayout` (хлебные крошки), `navigation/NavigationRecyclerView`.
+Почти всё — в `ui/`. Отдельно: `navigation/NavigationRecyclerView`. `filelist/BreadcrumbLayout` (хлебные крошки) удалён — теперь `FileListBreadcrumbs` на Compose.
 
 | Назначение | Классы в `ui/` |
 |---|---|
