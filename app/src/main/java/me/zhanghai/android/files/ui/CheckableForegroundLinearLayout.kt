@@ -1,12 +1,14 @@
 /*
  * Copyright (c) 2018 Hai Zhang <dreaming.in.code.zh@gmail.com>
  * All Rights Reserved.
+ * Modified for mftlrs, 2026.
  */
 
 package me.zhanghai.android.files.ui
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Checkable
 import androidx.annotation.AttrRes
 import androidx.annotation.StyleRes
@@ -47,6 +49,13 @@ class CheckableForegroundLinearLayout : ForegroundLinearLayout, Checkable {
     override fun toggle() {
         _isChecked = !_isChecked
         refreshDrawableState()
+    }
+
+    // mftlrs: report the checked state to accessibility (TalkBack, UI tests).
+    override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
+        super.onInitializeAccessibilityNodeInfo(info)
+        info.isCheckable = true
+        info.isChecked = _isChecked
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray =

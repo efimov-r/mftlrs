@@ -9,6 +9,7 @@ import android.Manifest
 import android.app.Instrumentation
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Rect
 import android.os.Build
 import android.os.SystemClock
 import androidx.annotation.PluralsRes
@@ -17,6 +18,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
@@ -175,6 +177,12 @@ class FileListScreen : ExternalResource() {
         device.pressBack()
     }
 
+    /** «Назад» с другого экрана (настройки, «О программе») на главный: при возврате он снова спрашивает доступ. */
+    fun pressBackToFileList() {
+        device.pressBack()
+        dismissAllFilesAccessRationale()
+    }
+
     /**
      * «Назад» при открытом поиске. Поле поиска при раскрытии получает фокус и открывает клавиатуру, и первое
      * нажатие может только спрятать её, как у SearchView; тогда нужно второе.
@@ -252,6 +260,66 @@ class FileListScreen : ExternalResource() {
             .filter { it.text == text || it.hasObject(By.text(text)) }
             .minByOrNull { it.visibleBounds.width() * it.visibleBounds.height() }
 
+    // ---- Навигация ----
+
+    /**
+     * Открыть навигацию (сейчас — боковую панель по ☰) и дождаться, пока она встанет на место. Как открывается
+     * навигация и где её пункты, знают только эта функция и [navigationItem]: при новой навигации меняются они.
+     */
+    fun openNavigation() {
+        clickDescription(string(R.string.open_navigation_drawer))
+        waitForNavigationSettled()
+    }
+
+    /** Открыть навигацию свайпом вправо из середины экрана (на списке файлов). */
+    fun swipeOpenNavigation() {
+        val y = device.displayHeight / 2
+        device.swipe(device.displayWidth * 3 / 10, y, device.displayWidth * 9 / 10, y, SWIPE_STEPS)
+        waitForNavigationSettled()
+    }
+
+    // Панель выезжает с анимацией: ждём, пока её границы перестанут меняться
+    private fun waitForNavigationSettled() {
+        var last: Rect? = null
+        val settled = pollUntil {
+            val bounds = device.findObject(NAVIGATION)?.visibleBounds
+            (bounds != null && bounds == last).also { last = bounds }
+        }
+        assertTrue("Навигация не открылась. Кликабельное на экране: ${describeClickable()}", settled)
+    }
+
+    fun assertNavigationClosed() {
+        assertGone(NAVIGATION, "навигация")
+    }
+
+    /**
+     * Пункт навигации — самый маленький кликабельный объект с текстом [title] внутри навигации; если его не видно,
+     * список навигации прокручивается.
+     */
+    fun navigationItem(title: String): UiObject2 {
+        var item: UiObject2? = null
+        var direction = Direction.DOWN
+        pollUntil {
+            item = findNavigationItem(title)
+            if (item == null) {
+                val list = device.findObject(NAVIGATION)?.findObject(By.scrollable(true))
+                if (list != null && !list.scroll(direction, SCROLL_PERCENT)) direction = Direction.UP
+            }
+            item != null
+        }
+        assertNotNull("Нет пункта навигации «$title». Кликабельное на экране: ${describeClickable()}", item)
+        return item!!
+    }
+
+    /** Подсвечен ли пункт: на Views — `checked`, в Compose (`NavigationDrawerItem`) — `selected`. */
+    fun isNavigationItemChecked(title: String): Boolean = navigationItem(title).let { it.isChecked || it.isSelected }
+
+    private fun findNavigationItem(title: String): UiObject2? =
+        device.findObject(NAVIGATION)
+            ?.findObjects(By.clickable(true))
+            ?.filter { it.text == title || it.hasObject(By.text(title)) }
+            ?.minByOrNull { it.visibleBounds.width() * it.visibleBounds.height() }
+
     // ---- Раскладка ----
 
     /** Элементы идут сверху вниз в этом порядке; ждёт, пока список перестроится. */
@@ -284,11 +352,16 @@ class FileListScreen : ExternalResource() {
         const val TIMEOUT = 5_000L
         private const val POLL_INTERVAL = 200L
         private const val KEYBOARD_TIMEOUT = 1_000L // за это время поиск закрывается, если клавиатуры не было
+        private const val SWIPE_STEPS = 20 // ~100 мс: быстрый свайп, а не перетаскивание
+        private const val SCROLL_PERCENT = 0.5f
 
         /** Поле ввода; у поля поиска в SearchView класс — AutoCompleteTextView. Новый объект: BySelector изменяемый. */
         fun editText(): BySelector = By.clazz(Pattern.compile("android\\.widget\\.(EditText|AutoCompleteTextView)"))
         private val MENU_BUTTON: BySelector = By.res(Pattern.compile("(.+:id/)?menuButton"))
         private val ICON: BySelector = By.res(Pattern.compile("(.+:id/)?iconLayout"))
         private val FAB: BySelector = By.res(Pattern.compile("(.+:id/)?sd_main_fab"))
+
+        // Контейнер навигации: на Views — NavigationFrameLayout боковой панели, в Compose — testTag("navigation")
+        private val NAVIGATION: BySelector = By.res(Pattern.compile("(.+:id/)?navigation(Fragment)?"))
     }
 }

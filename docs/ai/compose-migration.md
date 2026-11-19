@@ -1,6 +1,6 @@
 # Перенос главного экрана на Compose
 
-Подробный план переноса `FileListFragment` на Compose **один в один**: тот же внешний вид и поведение, без редизайна. Краткий список этапов и их статус — [todo.md](todo.md); решение — [decisions.md](decisions.md), «Главный экран на Compose»; готовые элементы — [compose.md](compose.md). Агенту: прочитать этот файл целиком до начала работы, после каждого этапа обновить статус и «Журнал».
+Подробный план переноса `FileListFragment` на Compose **один в один**: тот же внешний вид и поведение, без редизайна. Часть 1 (этапы 0–7) — экран, кроме боковой панели, внутри фрагмента. Часть 2 — вся `FileListActivity`: боковая панель, логика во ViewModel (MVVM), диалоги, без фрагментов. Краткий список этапов и их статус — [todo.md](todo.md); решения — [decisions.md](decisions.md), «Главный экран на Compose» и «Вся `FileListActivity` на Compose, MVVM»; готовые элементы — [compose.md](compose.md). Агенту: прочитать этот файл целиком до начала работы, после каждого этапа обновить статус и «Журнал».
 
 ## Принцип «как есть»
 
@@ -111,6 +111,55 @@
 - Удалить то, чем больше никто не пользуется (проверять поиском перед удалением). Сделано 2026-11-19: `file_list_fragment_{app_bar,content,bottom_bar,speed_dial}_include.xml`, `PersistentBarLayout`, `BottomBarLayout`, `values-sw600dp/integers.xml`, `file_list_toolbar_scroll_flags` и `scrollFlags_*`; правка mftlrs в `CoordinatorScrollingFrameLayout` откачена до upstream. Не удалены — нужны другим экранам (настройки, о программе, серверы, закладки, редактор): `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrollingFrameLayout`, `…LinearLayout`. Класс `Binding` во фрагменте заменён прямым `FileListFragmentIncludeBinding`; по `lintDebug` (`UnusedResources`) удалён `drawable/selectable_item_background_oval` — остальные неиспользуемые ресурсы из отчёта не использовались и до переноса (палитра `m3_ref_palette_*`, строки `about_author_*` и др.), их не трогали. Уже удалено после этапа 3: `FileListAdapter`, `file_item_list.xml`, `file_item_grid.xml`, `menu/file_item.xml`, `CheckableItemBackground`, `AspectRatioFrameLayout`, `AppBarLayoutExpandHackListener`; после этапа 4: `CrossfadeSubtitleToolbar`, `FixQueryChangeSearchView`, `menu/file_list.xml`, `BreadcrumbLayout`, `breadcrumb_item.xml`, `breadcrumb_item_foreground.xml`, `menu/file_list_breadcrumb.xml`, `OverlayToolbar`, `OverlayToolbarActionMode`, `menu/file_list_select.xml`, `menu/file_list_pick.xml`; после этапа 5: `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode`, `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `menu/file_list_paste.xml`, `file_list_pick_bottom.xml`, `file_list_speed_dial.xml`, библиотека `speed-dial`. Остаются, потому что нужны другим экранам: `ThemedFastScroller` (текстовый редактор), `ScrollingViewOnApplyWindowInsetsListener` (закладки, хранилища), `ThemedSwipeRefreshLayout` (поиск SMB, свойства), `DisabledAlphaImageView` (диалог конфликта), `CheckableForegroundLinearLayout` и `AutoGoneTextView` (боковая панель, права), библиотеки `fastscroll` и `swiperefreshlayout`. `lintVitalRelease` и правила R8 (`proguard-rules.pro`) проверить.
 - Обновить: [compose.md](compose.md) (таблица элементов), [architecture.md](architecture.md) («Главный экран»), [ui-inventory.md](ui-inventory.md) (адаптеры, свои View, разметка), [file-list-checklist.md](file-list-checklist.md), этот файл (статусы, «Журнал»), [decisions.md](decisions.md) (статус), README «Состояние» — только то, что заметно пользователю (если внешний вид изменился — отметить).
 
+## Часть 2. Вся `FileListActivity` на Compose, MVVM
+
+Цель: `FileListActivity` без фрагментов и View — `setContent { FileListScreen(...) }`, логика и состояние экрана — в `FileListViewModel`. Редизайна нет: вид и поведение — как после части 1; новая навигация без боковой панели — отдельная задача после части 2 ([todo.md](todo.md), «Отложено»). Принцип «как есть», правила новых файлов и правок upstream — те же, что в части 1; запрет на перенос логики во ViewModel, удаление drawer и перевод диалогов к части 2 не относится.
+
+### Архитектура
+
+- **MVVM с однонаправленным потоком данных.** ViewModel отдаёт одно состояние экрана `StateFlow<FileListUiState>` и принимает вызовы `onXxx()`; разовые события (тост, запуск интента, запрос разрешения, закрыть экран с результатом) — через `Channel`, Activity собирает их как `Flow`. Полный MVI (reducer, sealed-интенты) не делаем — много шаблонного кода, результат наружу тот же.
+- **LiveData** внутри (`FileListLiveData`, `TrailLiveData`, настройки `SettingLiveData`) переводится постепенно; на границе — `asFlow()`.
+- **Открытый диалог** — поле состояния (sealed-класс диалогов), переживает поворот вместе с ViewModel; что сохранять на смерть процесса (`SavedStateHandle`) — решить на этапе 11.
+- **Тесты — чёрный ящик, как в части 1** ([testing.md](testing.md)). Unit-тесты — только на логику без ФС: JNI-библиотека `syscall` в JVM-тестах не загружается ([decisions.md](decisions.md), «Главный экран на Compose»).
+
+### Что остаётся на Views
+
+- `TextEditorActivity` и `ImageViewerActivity` — отдельные Activity, в план не входят. Редактор при будущем переносе — оставить `EditText` (через `AndroidView`): `BasicTextField` раскладывает весь текст целиком и тормозит на файлах от сотен КБ. Картинки — `SubsamplingScaleImageView` и PhotoView, замены на Compose для больших картинок нет.
+- Activity-хосты диалогов (`OpenFileAsDialogActivity`, `FileJobConflictDialogActivity`, `AddStorageDialogActivity`, `EditBookmarkDirectoryDialogActivity` и др., [ui-inventory.md](ui-inventory.md)) — вызываются из сервиса, уведомлений и drawer как отдельные Activity, в план не входят.
+- Настройки, хранилища, FTP-сервер, «О программе» — отдельные Activity, вне плана.
+
+### Этап 8. Тесты боковой панели
+
+- `FileListNavigationTest`: пункты 66–69, 71, 73 [чек-листа](file-list-checklist.md); 72 (планшет) — руками.
+- Тестируется, куда можно попасть, а не механика drawer: как открыть навигацию и где её пункты, знают только `FileListScreen.openNavigation()` и `navigationItem()`. При новой навигации меняются они, а не тесты.
+- Отладка — запуском одного класса (`class=...FileListNavigationTest`), в конце этапа — весь набор ([testing.md](testing.md), «Запуск»). `@Ignore` на старые тесты не ставить: drawer живёт внутри `FileListFragment`, и правки этапов 9–12 задевают весь экран.
+
+### Этап 9. Боковая панель на Compose один в один
+
+- Телефон — `ModalNavigationDrawer`; планшет в ландшафте — постоянная панель рядом с экраном, видимость — `FILE_LIST_PERSISTENT_DRAWER_OPEN`, ☰ прячет и показывает (сейчас `PersistentDrawerLayout`).
+- Данные — как есть: `NavigationItemListLiveData`, `NavigationItem` (заголовок, подзаголовок, иконка, `isChecked`, `onClick`, `onLongClick`), разделители — `null` в списке. `NavigationItem.Listener` пока реализует фрагмент.
+- Не потерять: свайп открытия с любого места экрана (сейчас `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`; в Compose следить за конфликтом с горизонтальной прокруткой крошек); «Назад» закрывает панель первым; подсветка текущей папки; долгое нажатие — правка хранилища, стандартных папок, закладки; отступы под системные панели.
+- Удалить: `NavigationFragment`, `NavigationListAdapter`, `NavigationRecyclerView`, `navigation_fragment.xml`, `navigation_item.xml`, `navigation_divider_item.xml`, `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback`, `file_list_fragment_include.xml` (обе версии), библиотеку `drawer` (drakeet), неиспользуемые атрибуты `NavigationViewExtra` — проверять поиском перед удалением.
+
+### Этап 10. Логика — во ViewModel
+
+- Из `FileListFragment` (~1540 строк) — во ViewModel и отдельные классы: выделение, видимость пунктов меню и панелей (`updateSelectionBar`, `updateBottomBar`, подзаголовок), сортировка списка (`updateAdapterFileList`), режим выбора, вставка, сборка интентов открытия и выбора.
+- Состояния `FileListContentState`, `FileListTopBarState`, `FileListBottomBarState`, `FileListFabState` сводятся в `FileListUiState`.
+- Фрагмент остаётся тонким: собирает состояние, передаёт события, выполняет разовые события.
+- Unit-тесты на вынесенное без ФС: `FileSortOptions`, `PasteState`, `FileItemSet`, `TrailData`, расчёт видимости пунктов.
+
+### Этап 11. Диалоги на Compose
+
+- 13 диалогов `filelist` (кроме `OpenFileAsDialogFragment` — у него своя Activity) → `AlertDialog` Compose; результат — во ViewModel, а не через `requireParentFragment() as Listener`.
+- Поля имени и пути: проверки (пусто, недопустимо, уже есть) и кнопка ОК — как в `FileNameDialogFragment`, `PathDialogFragment`; поле в фокусе с клавиатурой.
+- «Свойства» (`FilePropertiesDialogFragment`: 7 вкладок-фрагментов и 6 своих диалогов) — оценить в начале этапа: перевести или оставить `DialogFragment` на `supportFragmentManager` Activity.
+
+### Этап 12. Без `FileListFragment`
+
+- `FileListActivity.setContent`; разрешения — `rememberLauncherForActivityResult`; «Назад» — `BackHandler` в прежнем порядке (этап 5); сочетания клавиш — `Activity.onKeyShortcut` или `onKeyEvent`; панель выхода (`ExitConfirmation.kt`) — без фрагмента; результат режима выбора — `Activity.setResult`.
+- Удалить `FileListFragment`, `file_list_fragment.xml`, класс `Binding`, `FileItemListener` (если не нужен).
+- В конце: release-сборка на телефоне (`installRelease`), весь набор UI-тестов, весь ручной [чек-лист](file-list-checklist.md) владельцем — один раз.
+
 ## Ловушки (известны заранее)
 
 - **Изменяемые коллекции с тем же экземпляром.** `FileItemSet` (выделение) и `PasteState` меняются на месте и публикуются в LiveData тем же объектом. `observeAsState` / `State` сравнивают по `equals`, поэтому изменение может не вызвать перерисовку. Перед передачей в Compose делать снимок (`toSet()`, копия `PasteState`).
@@ -159,3 +208,5 @@
 - 2026-11-19 — этап 6: весь экран, кроме drawer, — `filelist/FileListScreen.kt` в одном `ComposeView`: раскладка из слотов (панель и крошки на `surfaceContainer` до строки состояния, список, нижняя панель — `AnimatedVisibility` + `Surface` с тенью, слой FAB поверх всего), отступы — `windowInsets` из слушателя insets. `file_list_fragment_include.xml` (обе версии) — `DrawerLayout` / `PersistentDrawerLayout` с `screenLayout` (`FrameLayout`) → `ComposeView` и `NavigationFrameLayout`; `Binding` во фрагменте — 5 полей вместо 12. Отступы из состояний `FileListContentState` и `FileListFabState` перенесены в параметры, `FileListBottomBarState.isVisible` вместо `PersistentBarLayout.showBar`/`hideBar`, флаг `layoutInNavigation` — на `screenLayout`. Первый прогон UI-тестов — 17 падений: слушатель insets на самом `ComposeView` не срабатывал, отступы были нулевыми, панель заехала под строку состояния ([gotchas.md](gotchas.md), «Отступы под системные панели») — перенесён на `screenLayout`; проверено на телефоне: панель, FAB, нижняя панель вставки и затемнение FAB на своих местах. Второй прогон — 37 падений `UiAutomationService … already registered` (процесс mobile-mcp), после его остановки — 37 из 37. Сборка и `lintVitalRelease` проходят. Старые `_app_bar`, `_content`, `_bottom_bar`, `_speed_dial_include.xml` и View-контейнеры больше не используются — удалить на этапе 7. Ручной чек-лист — по решению владельца один раз в конце, когда весь экран на Compose
 - 2026-11-19 — этап 7, чистка: удалены `file_list_fragment_{app_bar,content,bottom_bar,speed_dial}_include.xml`, `PersistentBarLayout`, `BottomBarLayout`, `values-sw600dp/integers.xml`, `file_list_toolbar_scroll_flags` и `scrollFlags_*` из `values/integers.xml`; `CoordinatorScrollingFrameLayout` снова совпадает с upstream (правка для Compose-списка больше не нужна). `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrolling*Layout` оставлены — ими пользуются 12 других экранов. Сборка и `lintVitalRelease` проходят; UI-тесты после чистки не гонялись
 - 2026-11-19 — этап 7, продолжение: `Binding` во фрагменте → `FileListFragmentIncludeBinding`; `lintDebug` целиком: удалён `selectable_item_background_oval` (был только у удалённых `file_item_*.xml`), исправлена ошибка `LocalContextGetResourceValueCall` в `FileListItems.kt` (разделитель «дата · размер» — через `stringResource`). Документация: [ui-inventory.md](ui-inventory.md) (свои View, разметка, сводка), [file-list-checklist.md](file-list-checklist.md) (пункты под Compose: 15, 22, 29, 45, 56, 57, 63–65; новые 70–72 — темы, drawer на телефоне и планшете), [decisions.md](decisions.md) (уточнение и статус). `lintDebug` и `lintVitalRelease` проходят. Осталось: release-сборка на телефоне, UI-тесты, ручной чек-лист владельца
+- 2026-11-19 — часть 2 записана (решение владельца: drawer на Compose один в один, MVVM, диалоги, без фрагмента); release-сборка и ручной чек-лист перенесены в этап 12. В [чек-лист](file-list-checklist.md) добавлены пункт 73 (долгое нажатие в панели) и раздел «Диалоги» (74–85).
+- 2026-11-19 — этап 8: `FileListNavigationTest` — 12 тестов, пункты 53, 66–69, 71, 73; навигацию открывают и ищут только помощники `FileListScreen` (`openNavigation`, `navigationItem` и др.). Для подсветки (69) `CheckableForegroundLinearLayout` сообщает `checked` в accessibility. Ловушки тестов (меню забирает «Назад», `fileRow` по имени текущей папки, повторный запрос доступа при возврате) — [testing.md](testing.md), «Как писать новые». Весь набор — 49 из 49, ~7,5 мин; этап 7 закрыт. Следующий — этап 9
