@@ -95,16 +95,17 @@ FileJobService (копирование, удаление, архивы…) и Ft
 
 - `FileListActivity` — только хост для `FileListFragment` в `android.R.id.content`; плюс контракты выбора файла и папки внутри приложения (`OpenFileContract`, `CreateFileContract`, `OpenDirectoryContract`).
 - `FileListFragment` (~1750 строк) — почти весь UI экрана:
-  - верхняя панель с поиском — `FileListTopBar`, хлебные крошки — `FileListBreadcrumbs` (Compose, каждая в своём `ComposeView` внутри `AppBarLayout`);
-  - список и сетка — `ComposeView` с `FileListContent` (`filelist/FileListContent.kt`, этап 3 переноса на Compose — [compose-migration.md](compose-migration.md)): фрагмент заполняет `FileListContentState` из своих наблюдателей LiveData (файлы уже отфильтрованы и отсортированы в `updateAdapterFileList`), действия над файлами — через `FileItemListener`; позиция прокрутки в `TrailData` — `ScrollPosition` (индекс и смещение). `FileListAdapter` удалён;
-  - панель выделения — в `FileListTopBar` поверх основной (`isSelectionMode`, пункты `FileListSelectionAction` считает `updateSelectionBar`); нижняя панель вставки и выбора — `FileListBottomBar` (Compose в `BottomBarLayout`, выезжает через `PersistentBarLayout.showBar`/`hideBar`; набор — `updateBottomBar`, поле имени файла — `TextFieldState` в `FileListBottomBarState`);
-  - FAB — `FileListFab` (Compose в своём `ComposeView` поверх списка, с затемнением): новый файл и новая папка;
+  - весь экран, кроме drawer, — `FileListScreen` в одном `ComposeView` (`filelist/FileListScreen.kt`): раскладка из слотов и отступы под системные панели (`windowInsets` из слушателя insets во фрагменте);
+  - верхняя панель с поиском — `FileListTopBar`, хлебные крошки — `FileListBreadcrumbs`;
+  - список и сетка — `FileListContent` (`filelist/FileListContent.kt`, этап 3 переноса на Compose — [compose-migration.md](compose-migration.md)): фрагмент заполняет `FileListContentState` из своих наблюдателей LiveData (файлы уже отфильтрованы и отсортированы в `updateAdapterFileList`), действия над файлами — через `FileItemListener`; позиция прокрутки в `TrailData` — `ScrollPosition` (индекс и смещение). `FileListAdapter` удалён;
+  - панель выделения — в `FileListTopBar` поверх основной (`isSelectionMode`, пункты `FileListSelectionAction` считает `updateSelectionBar`); нижняя панель вставки и выбора — `FileListBottomBar` (выезжает по `FileListBottomBarState.isVisible`; набор — `updateBottomBar`, поле имени файла — `TextFieldState` в `FileListBottomBarState`);
+  - FAB — `FileListFab` (слой поверх всего экрана, с затемнением): новый файл и новая папка;
   - drawer: дочерний `NavigationFragment`, фрагмент реализует его `Listener`;
   - запрос разрешений в `onResume`: доступ ко всем файлам, хранилище, уведомления;
   - открытие файлов: интент с chooser, экстры для просмотрщика картинок (до 1000 путей соседних картинок), APK; ярлыки, закладки, терминал.
 - `FileListViewModel` — состояние: история (`TrailLiveData`), текущий путь, список (`FileListLiveData`) или поиск (`SearchFileListLiveData`), выделение (`FileItemSet`), буфер вырезать/копировать (`PasteState`), режим выбора (`PickOptions`), вид и сортировка — общие или для конкретной папки (`FileViewSortPathSpecificLiveData`, `settings/PathSettings.kt`).
 - `FileListLiveData` читает папку в `AsyncTask.THREAD_POOL_EXECUTOR` (`loadFileItem` на каждый файл) и перечитывает её по сигналу `PathObserver`.
-- Разметка: `res/layout/file_list_fragment.xml` + `_include`. `file_list_fragment_include.xml` — `DrawerLayout` (телефон); `layout-sw600dp-land/` — `PersistentDrawerLayout`, панель всегда видна. Остальные части: `_app_bar_include`, `_content_include`, `_bottom_bar_include`, `_speed_dial_include`. Класс `Binding` во фрагменте собирает их в одно; `drawerLayout` и `persistentDrawerLayout` в нём nullable.
+- Разметка: `res/layout/file_list_fragment.xml` + `file_list_fragment_include.xml`: `DrawerLayout` (телефон) или в `layout-sw600dp-land/` `PersistentDrawerLayout` (панель всегда видна, во всю высоту рядом с экраном) — в нём `screenLayout` (`FrameLayout` со слушателем insets) с `ComposeView` и `NavigationFrameLayout` для `NavigationFragment`. Класс `Binding` во фрагменте; `drawerLayout` и `persistentDrawerLayout` в нём nullable.
 - Режим выбора (`PickOptions.Mode`: `OPEN_FILE`, `CREATE_FILE`, `OPEN_DIRECTORY`) — приложение работает как системный выбор файла для других приложений.
 
 ## Боковая панель — `navigation/`

@@ -29,21 +29,17 @@ import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import me.zhanghai.android.files.R
 
@@ -56,8 +52,6 @@ private const val EXPANDED_ROTATION = 135f // sdMainFabAnimationRotateAngle
 // Состояние FAB. Заполняет FileListFragment, Compose только рисует
 internal class FileListFabState {
     var isExpanded by mutableStateOf(false)
-    var bottomInset by mutableIntStateOf(0) // px, системная панель снизу; при нижней панели — 0
-    var endInset by mutableIntStateOf(0) // px, системная панель справа (ландшафт)
 }
 
 internal enum class FileListFabAction(
@@ -68,23 +62,19 @@ internal enum class FileListFabAction(
     CREATE_DIRECTORY(R.string.file_list_action_create_directory, R.drawable.directory_icon_white_24dp),
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun FileListFab(
     state: FileListFabState,
+    bottomPadding: Dp, // над нижней панелью или панелью навигации
+    endPadding: Dp, // панель навигации справа (ландшафт)
     onExpandedChange: (Boolean) -> Unit,
     onAction: (FileListFabAction) -> Unit,
 ) {
     val duration = integerResource(android.R.integer.config_shortAnimTime)
     val margin = dimensionResource(R.dimen.screen_edge_margin)
-    val (bottomInset, endInset) = with(LocalDensity.current) { state.bottomInset.toDp() to state.endInset.toDp() }
 
-    // Пустое место не забирает касания: список под этим ComposeView работает, пока FAB закрыт
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .semantics { testTagsAsResourceId = true }, // testTag виден UI-тестам как id
-    ) {
+    // Пустое место не забирает касания: экран под слоем FAB работает, пока FAB закрыт
+    Box(modifier = Modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = state.isExpanded,
             enter = fadeIn(tween(duration)),
@@ -100,7 +90,7 @@ internal fun FileListFab(
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = margin + endInset, bottom = margin + bottomInset),
+                .padding(end = margin + endPadding, bottom = margin + bottomPadding),
             horizontalAlignment = Alignment.End,
         ) {
             AnimatedVisibility(

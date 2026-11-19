@@ -29,14 +29,17 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
+import androidx.core.graphics.Insets
 import androidx.core.view.GravityCompat
-import androidx.core.view.updatePaddingRelative
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.LifecycleOwner
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.TextRange
@@ -47,12 +50,8 @@ import me.zhanghai.android.files.R
 import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.app.clipboardManager
 import me.zhanghai.android.files.compat.checkSelfPermissionCompat
-import me.zhanghai.android.files.databinding.FileListFragmentAppBarIncludeBinding
 import me.zhanghai.android.files.databinding.FileListFragmentBinding
-import me.zhanghai.android.files.databinding.FileListFragmentBottomBarIncludeBinding
-import me.zhanghai.android.files.databinding.FileListFragmentContentIncludeBinding
 import me.zhanghai.android.files.databinding.FileListFragmentIncludeBinding
-import me.zhanghai.android.files.databinding.FileListFragmentSpeedDialIncludeBinding
 import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.MimeType
 import me.zhanghai.android.files.file.asMimeTypeOrNull
@@ -74,9 +73,7 @@ import me.zhanghai.android.files.provider.linux.isLinuxPath
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.terminal.Terminal
 import me.zhanghai.android.files.theme.MftlrsTheme
-import me.zhanghai.android.files.ui.CoordinatorAppBarLayout
 import me.zhanghai.android.files.ui.DrawerLayoutOnBackPressedCallback
-import me.zhanghai.android.files.ui.PersistentBarLayout
 import me.zhanghai.android.files.ui.PersistentDrawerLayout
 import me.zhanghai.android.files.util.DebouncedRunnable
 import me.zhanghai.android.files.util.Failure
@@ -100,6 +97,7 @@ import me.zhanghai.android.files.util.extraPath
 import me.zhanghai.android.files.util.extraPathList
 import me.zhanghai.android.files.util.getParcelableSafe
 import me.zhanghai.android.files.util.getQuantityString
+import me.zhanghai.android.files.util.layoutInNavigation
 import me.zhanghai.android.files.util.putArgs
 import me.zhanghai.android.files.util.showToast
 import me.zhanghai.android.files.util.startActivitySafe
@@ -157,7 +155,9 @@ class FileListFragment : Fragment(), FileItemListener,
 
     // mftlrs: the bottom bar was a toolbar action mode; it is FileListBottomBar in Compose.
     private val bottomBarState = FileListBottomBarState()
-    private var isBottomBarShown = false
+
+    // mftlrs: system window insets for FileListScreen, which was done by fitsSystemWindows views.
+    private var windowInsets by mutableStateOf(Insets.NONE)
 
     // mftlrs: the speed dial is FileListFab in Compose.
     private val fabState = FileListFabState()
@@ -200,91 +200,81 @@ class FileListFragment : Fragment(), FileItemListener,
         navigationFragment.listener = this
         requireActivity().setTitle(R.string.file_list_title)
         topBarState.title = getString(R.string.file_list_title) // pickOptionsLiveData без значения, пока не выбор
-        // mftlrs: no support action bar, the toolbar is in Compose.
-        binding.toolbarComposeView.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                MftlrsTheme {
-                    FileListTopBar(
-                        state = topBarState,
-                        onNavigationClick = { onNavigationClick() },
-                        onSearchExpand = { expandSearchView() },
-                        onSearchCollapse = { collapseSearchView() },
-                        onSearchQueryChange = { onSearchQueryChange(it) },
-                        onSearchSubmit = { onSearchSubmit(it) },
-                        onAction = { onTopBarAction(it) },
-                        onSelectionClose = { clearSelectedFiles() },
-                        onSelectionAction = { onSelectionAction(it) },
-                    )
-                }
+        // mftlrs: no support action bar; the whole screen is FileListScreen in Compose.
+        binding.screenLayout.apply {
+            // Was set by CoordinatorScrollingFrameLayout: the list is drawn under the navigation bar.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                layoutInNavigation = true
+            }
+            // Not on the ComposeView: Compose may replace its insets listener.
+            setOnApplyWindowInsetsListener { _, insets ->
+                windowInsets = Insets.of(
+                    insets.systemWindowInsetLeft, insets.systemWindowInsetTop,
+                    insets.systemWindowInsetRight, insets.systemWindowInsetBottom
+                )
+                insets
             }
         }
-        binding.bottomBarComposeView.apply {
+        binding.composeView.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 MftlrsTheme {
-                    FileListBottomBar(
-                        state = bottomBarState,
-                        onClose = { onBottomBarClose() },
-                        onAction = { onBottomBarAction(it) },
+                    FileListScreen(
+                        windowInsets = windowInsets,
+                        isBottomBarVisible = bottomBarState.isVisible,
+                        topBar = {
+                            FileListTopBar(
+                                state = topBarState,
+                                onNavigationClick = { onNavigationClick() },
+                                onSearchExpand = { expandSearchView() },
+                                onSearchCollapse = { collapseSearchView() },
+                                onSearchQueryChange = { onSearchQueryChange(it) },
+                                onSearchSubmit = { onSearchSubmit(it) },
+                                onAction = { onTopBarAction(it) },
+                                onSelectionClose = { clearSelectedFiles() },
+                                onSelectionAction = { onSelectionAction(it) },
+                            )
+                        },
+                        breadcrumbs = {
+                            FileListBreadcrumbs(
+                                data = viewModel.breadcrumbLiveData.observeAsState().value,
+                                onNavigate = { navigateTo(it) },
+                                onCopyPath = { copyPath(it) },
+                                onOpenInNewTask = { openInNewTask(it) },
+                            )
+                        },
+                        content = { bottomInset ->
+                            FileListContent(
+                                state = contentState,
+                                listener = this@FileListFragment,
+                                bottomInset = bottomInset,
+                                onRefresh = { refresh() },
+                            )
+                        },
+                        bottomBar = {
+                            FileListBottomBar(
+                                state = bottomBarState,
+                                onClose = { onBottomBarClose() },
+                                onAction = { onBottomBarAction(it) },
+                            )
+                        },
+                        fab = { bottomPadding, endPadding ->
+                            FileListFab(
+                                state = fabState,
+                                bottomPadding = bottomPadding,
+                                endPadding = endPadding,
+                                onExpandedChange = { setFabExpanded(it) },
+                                onAction = { onFabAction(it) },
+                            )
+                        },
                     )
                 }
             }
         }
         savedInstanceState?.getString(STATE_CREATE_FILE_NAME)
             ?.let { bottomBarState.fileName.setTextAndPlaceCursorAtEnd(it) }
-        val contentLayoutInitialPaddingBottom = binding.contentLayout.paddingBottom
-        binding.appBarLayout.addOnOffsetChangedListener { _, verticalOffset ->
-            binding.contentLayout.updatePaddingRelative(
-                bottom = contentLayoutInitialPaddingBottom +
-                    binding.appBarLayout.totalScrollRange + verticalOffset
-            )
-        }
-        // mftlrs: the breadcrumbs are FileListBreadcrumbs in Compose.
-        binding.breadcrumbComposeView.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                MftlrsTheme {
-                    FileListBreadcrumbs(
-                        data = viewModel.breadcrumbLiveData.observeAsState().value,
-                        onNavigate = { navigateTo(it) },
-                        onCopyPath = { copyPath(it) },
-                        onOpenInNewTask = { openInNewTask(it) },
-                    )
-                }
-            }
-        }
-        binding.composeView.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setOnApplyWindowInsetsListener { _, insets ->
-                contentState.bottomInset = insets.systemWindowInsetBottom
-                insets
-            }
-            setContent {
-                MftlrsTheme {
-                    FileListContent(contentState, this@FileListFragment, onRefresh = { refresh() })
-                }
-            }
-        }
         savedInstanceState?.getParcelableSafe<ScrollPosition>(STATE_SCROLL_POSITION)
             ?.let { contentState.scrollTo(it) }
-        binding.fabComposeView.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setOnApplyWindowInsetsListener { _, insets ->
-                fabState.bottomInset = insets.systemWindowInsetBottom
-                fabState.endInset = insets.systemWindowInsetRight
-                insets
-            }
-            setContent {
-                MftlrsTheme {
-                    FileListFab(
-                        state = fabState,
-                        onExpandedChange = { setFabExpanded(it) },
-                        onAction = { onFabAction(it) },
-                    )
-                }
-            }
-        }
 
         // mftlrs: exit confirmation; added first so that it is called last, and not when picking.
         addExitConfirmation().also { callback ->
@@ -518,7 +508,7 @@ class FileListFragment : Fragment(), FileItemListener,
 
     fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean {
         // mftlrs: alphabetic shortcut of menu/file_list_paste.xml; a disabled item did not react.
-        if (isBottomBarShown && keyCode == KeyEvent.KEYCODE_V && bottomBarState.isActionEnabled) {
+        if (bottomBarState.isVisible && keyCode == KeyEvent.KEYCODE_V && bottomBarState.isActionEnabled) {
             val action = bottomBarState.action
             if (action == FileListBottomBarAction.PASTE || action == FileListBottomBarAction.EXTRACT_HERE) {
                 onBottomBarAction(action)
@@ -842,10 +832,7 @@ class FileListFragment : Fragment(), FileItemListener,
                 add(FileListSelectionAction.SELECT_ALL)
             }
         }
-        if (!topBarState.isSelectionMode) {
-            binding.appBarLayout.setExpanded(true)
-            topBarState.isSelectionMode = true
-        }
+        topBarState.isSelectionMode = true
     }
 
     // mftlrs: was onOverlayActionModeMenuItemClicked().
@@ -996,19 +983,15 @@ class FileListFragment : Fragment(), FileItemListener,
             }
             bottomBarState.isActionEnabled = !viewModel.currentPath.fileSystem.isReadOnly
         }
-        if (!isBottomBarShown) {
-            isBottomBarShown = true
-            binding.persistentBarLayout.showBar(binding.bottomBarLayout)
-        }
+        bottomBarState.isVisible = true
     }
 
     // mftlrs: was finishing the bottom action mode.
     private fun hideBottomBar() {
-        if (!isBottomBarShown) {
+        if (!bottomBarState.isVisible) {
             return
         }
-        isBottomBarShown = false
-        binding.persistentBarLayout.hideBar(binding.bottomBarLayout)
+        bottomBarState.isVisible = false
         if (viewModel.pickOptions == null) {
             viewModel.clearPasteState()
         }
@@ -1558,15 +1541,8 @@ class FileListFragment : Fragment(), FileItemListener,
         val root: View,
         val drawerLayout: DrawerLayout? = null,
         val persistentDrawerLayout: PersistentDrawerLayout? = null,
-        val persistentBarLayout: PersistentBarLayout,
-        val appBarLayout: CoordinatorAppBarLayout,
-        val toolbarComposeView: ComposeView,
-        val breadcrumbComposeView: ComposeView,
-        val contentLayout: ViewGroup,
-        val composeView: ComposeView,
-        val bottomBarLayout: ViewGroup,
-        val bottomBarComposeView: ComposeView,
-        val fabComposeView: ComposeView
+        val screenLayout: ViewGroup,
+        val composeView: ComposeView
     ) {
         companion object {
             fun inflate(
@@ -1577,16 +1553,9 @@ class FileListFragment : Fragment(), FileItemListener,
                 val binding = FileListFragmentBinding.inflate(inflater, root, attachToRoot)
                 val bindingRoot = binding.root
                 val includeBinding = FileListFragmentIncludeBinding.bind(bindingRoot)
-                val appBarBinding = FileListFragmentAppBarIncludeBinding.bind(bindingRoot)
-                val contentBinding = FileListFragmentContentIncludeBinding.bind(bindingRoot)
-                val bottomBarBinding = FileListFragmentBottomBarIncludeBinding.bind(bindingRoot)
-                val speedDialBinding = FileListFragmentSpeedDialIncludeBinding.bind(bindingRoot)
                 return Binding(
                     bindingRoot, includeBinding.drawerLayout, includeBinding.persistentDrawerLayout,
-                    includeBinding.persistentBarLayout, appBarBinding.appBarLayout,
-                    appBarBinding.toolbarComposeView, appBarBinding.breadcrumbComposeView, contentBinding.contentLayout,
-                    contentBinding.composeView, bottomBarBinding.bottomBarLayout,
-                    bottomBarBinding.bottomBarComposeView, speedDialBinding.fabComposeView
+                    includeBinding.screenLayout, includeBinding.composeView
                 )
             }
         }

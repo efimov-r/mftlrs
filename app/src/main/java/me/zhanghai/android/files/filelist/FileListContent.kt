@@ -27,18 +27,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -61,7 +56,6 @@ internal class FileListContentState {
     var selectedPaths by mutableStateOf<Set<Path>>(emptySet()) // снимок: FileItemSet меняется на месте
     var pickOptions by mutableStateOf<PickOptions?>(null)
     var nameEllipsize by mutableStateOf(TextUtils.TruncateAt.END)
-    var bottomInset by mutableIntStateOf(0) // px, системная панель снизу
     val gridState = LazyGridState()
 
     val scrollPosition: ScrollPosition
@@ -76,20 +70,15 @@ internal class FileListContentState {
 @Parcelize
 data class ScrollPosition(val index: Int, val offset: Int) : Parcelable
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun FileListContent(
     state: FileListContentState,
     listener: FileItemListener,
+    bottomInset: Dp, // под панелью навигации: список уходит под неё, последний элемент — над ней
     onRefresh: () -> Unit,
 ) {
-    val bottomInset = with(LocalDensity.current) { state.bottomInset.toDp() }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .semantics { testTagsAsResourceId = true }, // testTag виден UI-тестам как id
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         PullToRefreshBox(
             isRefreshing = state.isRefreshing,
             onRefresh = onRefresh,

@@ -38,10 +38,11 @@ import androidx.compose.ui.unit.dp
 import me.zhanghai.android.files.R
 
 // Нижняя панель главного экрана — перенос тулбара с menu/file_list_paste.xml и file_list_pick_bottom.xml:
-// крестик, заголовок или поле имени файла, кнопка действия. Фон, тень и выезд снизу — у BottomBarLayout вокруг
+// крестик, заголовок или поле имени файла, кнопка действия. Фон, тень и выезд снизу — у FileListScreen
 
 // Состояние панели. Заполняет FileListFragment, Compose только рисует
 internal class FileListBottomBarState {
+    var isVisible by mutableStateOf(false) // при скрытии остальное не сбрасывается: панель уезжает с ним
     var title by mutableStateOf("")
     var isCreateFileMode by mutableStateOf(false) // поле имени вместо заголовка
     var action by mutableStateOf(FileListBottomBarAction.PASTE)

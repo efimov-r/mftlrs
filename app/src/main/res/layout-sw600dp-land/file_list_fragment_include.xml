@@ -3,43 +3,38 @@
 <!--
   ~ Copyright (c) 2019 Hai Zhang <dreaming.in.code.zh@gmail.com>
   ~ All Rights Reserved.
+  ~ Modified for mftlrs, 2026.
   -->
 
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <me.zhanghai.android.files.ui.PersistentBarLayout
-        android:id="@+id/persistentBarLayout"
-        android:layout_height="match_parent"
+    <!--
+      ~ mftlrs: the whole screen is FileListScreen in Compose, so the drawer is beside the toolbar
+      ~ instead of under it.
+      -->
+    <me.zhanghai.android.files.ui.PersistentDrawerLayout
+        android:id="@+id/persistentDrawerLayout"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:fitsSystemWindows="true">
 
-        <LinearLayout
+        <me.zhanghai.android.files.ui.NavigationFrameLayout
+            android:id="@+id/navigationFragment"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:background="?colorSurface" />
+
+        <!-- mftlrs: window insets are taken on screenLayout, see layout/file_list_fragment_include.xml. -->
+        <FrameLayout
+            android:id="@+id/screenLayout"
             android:layout_width="match_parent"
-            android:fitsSystemWindows="true"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
-            <include layout="@layout/file_list_fragment_app_bar_include" />
-
-            <me.zhanghai.android.files.ui.PersistentDrawerLayout
-                android:id="@+id/persistentDrawerLayout"
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/composeView"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1">
-
-                <me.zhanghai.android.files.ui.NavigationFrameLayout
-                    android:id="@+id/navigationFragment"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="start"
-                    android:background="?colorSurface" />
-
-                <include layout="@layout/file_list_fragment_content_include" />
-            </me.zhanghai.android.files.ui.PersistentDrawerLayout>
-        </LinearLayout>
-
-        <include layout="@layout/file_list_fragment_bottom_bar_include" />
-
-        <include layout="@layout/file_list_fragment_speed_dial_include" />
-    </me.zhanghai.android.files.ui.PersistentBarLayout>
+                android:layout_height="match_parent" />
+        </FrameLayout>
+    </me.zhanghai.android.files.ui.PersistentDrawerLayout>
 </merge>
