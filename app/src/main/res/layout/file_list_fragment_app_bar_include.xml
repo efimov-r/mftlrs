@@ -3,6 +3,7 @@
 <!--
   ~ Copyright (c) 2018 Hai Zhang <dreaming.in.code.zh@gmail.com>
   ~ All Rights Reserved.
+  ~ Modified for mftlrs, 2026.
   -->
 
 <merge
@@ -24,16 +25,11 @@
             android:layout_height="wrap_content"
             app:layout_scrollFlags="@integer/file_list_toolbar_scroll_flags">
 
-            <me.zhanghai.android.files.ui.CrossfadeSubtitleToolbar
-                android:id="@+id/toolbar"
+            <!-- mftlrs: основная панель — FileListTopBar в Compose. -->
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/toolbarComposeView"
                 android:layout_width="match_parent"
-                android:layout_height="?actionBarSize"
-                android:paddingStart="@dimen/file_list_toolbar_padding_start"
-                android:paddingEnd="@dimen/file_list_toolbar_padding_end_with_overflow"
-                app:navigationIcon="@drawable/menu_icon_control_normal_24dp"
-                app:navigationContentDescription="@string/open_navigation_drawer"
-                app:popupTheme="?actionBarPopupTheme"
-                app:subtitleTextAppearance="@style/TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Small" />
+                android:layout_height="?actionBarSize" />
 
             <me.zhanghai.android.files.ui.OverlayToolbar
                 android:id="@+id/overlayToolbar"

@@ -42,14 +42,14 @@ class FileListSearchTest {
         }
     }
 
-    /** 50: «Назад» закрывает поиск — снова обычный список папки. */
+    /** 50: «Назад» закрывает поиск — снова обычный список папки (первое нажатие может спрятать клавиатуру). */
     @Test
     fun back_closesSearch() {
         screen.launch().use {
             search("needle")
             screen.assertShown("needle_deep.txt")
 
-            screen.pressBack()
+            screen.pressBackToCloseSearch()
             screen.assertShown("hay.txt")
             screen.assertGone("needle_deep.txt")
             screen.assertShown(By.desc(viewSort), viewSort)

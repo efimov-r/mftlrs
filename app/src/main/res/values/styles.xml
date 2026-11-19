@@ -7,11 +7,8 @@
   -->
 
 <!-- mftlrs: Material Design 2-only styles removed (switch, shape, navigation view). -->
+<!-- mftlrs: TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Small removed, the file list toolbar is in Compose. -->
 <resources xmlns:tools="http://schemas.android.com/tools">
-
-    <style name="TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Small">
-        <item name="android:textSize" tools:ignore="SpUsage">12dp</item>
-    </style>
 
     <!--
       ~ See also drawable-v21/mtrl_popupmenu_background.xml and

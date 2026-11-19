@@ -104,9 +104,24 @@ class FileListScreen : ExternalResource() {
 
     // ---- Поиск и проверки ----
 
-    fun waitFor(selector: BySelector, description: String): UiObject2 =
-        device.wait(Until.findObject(selector), TIMEOUT)
-            .also { assertNotNull("Нет на экране: $description. Кликабельное на экране: ${describeClickable()}", it) }
+    fun waitFor(selector: BySelector, description: String): UiObject2 {
+        var found: UiObject2? = null
+        pollUntil { device.findObject(selector).also { found = it } != null }
+        assertNotNull("Нет на экране: $description. Кликабельное на экране: ${describeClickable()}", found)
+        return found!!
+    }
+
+    // Compose не шлёт accessibility-события, когда подключена только UiAutomation, и кэш узлов UiAutomator не
+    // сбрасывается: экран на Compose выглядит для теста застывшим. Поэтому кэш сбрасывается перед каждой проверкой
+    private fun pollUntil(timeout: Long = TIMEOUT, condition: () -> Boolean): Boolean {
+        val deadline = SystemClock.uptimeMillis() + timeout
+        while (true) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) instrumentation.uiAutomation.clearCache()
+            if (runCatching(condition).getOrDefault(false)) return true
+            if (SystemClock.uptimeMillis() >= deadline) return false
+            SystemClock.sleep(POLL_INTERVAL)
+        }
+    }
 
     // Для сообщений об ошибках: класс, описание, id и текст всего кликабельного
     private fun describeClickable(): String =
@@ -125,7 +140,7 @@ class FileListScreen : ExternalResource() {
     fun assertShown(selector: BySelector, description: String) {
         assertTrue(
             "Нет на экране: $description. Кликабельное на экране: ${describeClickable()}",
-            device.wait(Until.hasObject(selector), TIMEOUT) == true,
+            pollUntil { device.hasObject(selector) },
         )
     }
 
@@ -134,7 +149,7 @@ class FileListScreen : ExternalResource() {
     }
 
     fun assertGone(selector: BySelector, description: String) {
-        assertTrue("Не пропало с экрана: $description", device.wait(Until.gone(selector), TIMEOUT) == true)
+        assertTrue("Не пропало с экрана: $description", pollUntil { !device.hasObject(selector) })
     }
 
     /** Без ожидания: вызывать, когда экран уже показан (например, после [assertShown] соседнего элемента). */
@@ -157,6 +172,17 @@ class FileListScreen : ExternalResource() {
     }
 
     fun pressBack() {
+        device.pressBack()
+    }
+
+    /**
+     * «Назад» при открытом поиске. Поле поиска при раскрытии получает фокус и открывает клавиатуру, и первое
+     * нажатие может только спрятать её, как у SearchView; тогда нужно второе.
+     */
+    fun pressBackToCloseSearch() {
+        device.pressBack()
+        if (pollUntil(KEYBOARD_TIMEOUT) { !device.hasObject(editText()) }) return
+
         device.pressBack()
     }
 
@@ -257,6 +283,7 @@ class FileListScreen : ExternalResource() {
     companion object {
         const val TIMEOUT = 5_000L
         private const val POLL_INTERVAL = 200L
+        private const val KEYBOARD_TIMEOUT = 1_000L // за это время поиск закрывается, если клавиатуры не было
 
         /** Поле ввода; у поля поиска в SearchView класс — AutoCompleteTextView. Новый объект: BySelector изменяемый. */
         fun editText(): BySelector = By.clazz(Pattern.compile("android\\.widget\\.(EditText|AutoCompleteTextView)"))

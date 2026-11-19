@@ -21,8 +21,6 @@ import android.text.TextUtils
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
@@ -31,8 +29,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -54,7 +50,6 @@ import me.zhanghai.android.files.R
 import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.app.clipboardManager
 import me.zhanghai.android.files.compat.checkSelfPermissionCompat
-import me.zhanghai.android.files.compat.setGroupDividerEnabledCompat
 import me.zhanghai.android.files.databinding.FileListFragmentAppBarIncludeBinding
 import me.zhanghai.android.files.databinding.FileListFragmentBinding
 import me.zhanghai.android.files.databinding.FileListFragmentBottomBarIncludeBinding
@@ -84,7 +79,6 @@ import me.zhanghai.android.files.terminal.Terminal
 import me.zhanghai.android.files.theme.MftlrsTheme
 import me.zhanghai.android.files.ui.CoordinatorAppBarLayout
 import me.zhanghai.android.files.ui.DrawerLayoutOnBackPressedCallback
-import me.zhanghai.android.files.ui.FixQueryChangeSearchView
 import me.zhanghai.android.files.ui.OverlayToolbarActionMode
 import me.zhanghai.android.files.ui.PersistentBarLayout
 import me.zhanghai.android.files.ui.PersistentBarLayoutToolbarActionMode
@@ -163,14 +157,15 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
 
     private lateinit var navigationFragment: NavigationFragment
 
-    private lateinit var menuBinding: MenuBinding
-
     private lateinit var overlayActionMode: ToolbarActionMode
 
     private lateinit var bottomActionMode: ToolbarActionMode
 
     // mftlrs: the file list is FileListContent in Compose.
     private val contentState = FileListContentState()
+
+    // mftlrs: the toolbar with its menu and search is FileListTopBar in Compose.
+    private val topBarState = FileListTopBarState()
 
     private val debouncedSearchRunnable = DebouncedRunnable(Handler(Looper.getMainLooper()), 1000) {
         if (!isResumed || !viewModel.isSearchViewExpanded) {
@@ -181,12 +176,6 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
             return@DebouncedRunnable
         }
         viewModel.search(query)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setHasOptionsMenu(true)
     }
 
     override fun onCreateView(
@@ -209,10 +198,26 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
                 as NavigationFragment
         }
         navigationFragment.listener = this
-        val activity = requireActivity() as AppCompatActivity
-        activity.setTitle(R.string.file_list_title)
-        activity.setSupportActionBar(binding.toolbar)
-        overlayActionMode = OverlayToolbarActionMode(binding.overlayToolbar, binding.toolbar)
+        requireActivity().setTitle(R.string.file_list_title)
+        topBarState.title = getString(R.string.file_list_title) // pickOptionsLiveData без значения, пока не выбор
+        // mftlrs: no support action bar, the toolbar is in Compose.
+        binding.toolbarComposeView.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MftlrsTheme {
+                    FileListTopBar(
+                        state = topBarState,
+                        onNavigationClick = { onNavigationClick() },
+                        onSearchExpand = { expandSearchView() },
+                        onSearchCollapse = { collapseSearchView() },
+                        onSearchQueryChange = { onSearchQueryChange(it) },
+                        onSearchSubmit = { onSearchSubmit(it) },
+                        onAction = { onTopBarAction(it) },
+                    )
+                }
+            }
+        }
+        overlayActionMode = OverlayToolbarActionMode(binding.overlayToolbar, binding.toolbarComposeView)
         bottomActionMode = PersistentBarLayoutToolbarActionMode(
             binding.persistentBarLayout, binding.bottomBarLayout, binding.bottomToolbar
         )
@@ -265,6 +270,19 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
                 .also { callback ->
                     viewModel.breadcrumbLiveData.observe(viewLifecycleOwner) {
                         callback.isEnabled = viewModel.canNavigateUpBreadcrumb
+                    }
+                }
+        )
+        // mftlrs: closing the search was done by the support action bar.
+        addOnBackPressedCallback(
+            object : OnBackPressedCallback(false) {
+                override fun handleOnBackPressed() {
+                    collapseSearchView()
+                }
+            }
+                .also { callback ->
+                    viewModel.searchViewExpandedLiveData.observe(viewLifecycleOwner) {
+                        callback.isEnabled = it
                     }
                 }
         )
@@ -384,166 +402,73 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-
-        menuBinding = MenuBinding.inflate(menu, inflater)
-        menuBinding.viewSortItem.subMenu!!.setGroupDividerEnabledCompat(true)
-        setUpSearchView()
-    }
-
-    private fun setUpSearchView() {
-        val searchView = menuBinding.searchItem.actionView as FixQueryChangeSearchView
-        // MenuItem.OnActionExpandListener.onMenuItemActionExpand() is called before SearchView
-        // resets the query.
-        searchView.setOnSearchClickListener {
-            viewModel.isSearchViewExpanded = true
-            searchView.setQuery(viewModel.searchViewQuery, false)
-            debouncedSearchRunnable()
-        }
-        // SearchView.OnCloseListener.onClose() is not always called.
-        menuBinding.searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
-            override fun onMenuItemActionExpand(item: MenuItem): Boolean = true
-
-            override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
-                viewModel.isSearchViewExpanded = false
-                viewModel.stopSearching()
-                return true
-            }
-        })
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String): Boolean {
-                debouncedSearchRunnable.cancel()
-                viewModel.search(query)
-                return true
-            }
-
-            override fun onQueryTextChange(query: String): Boolean {
-                if (searchView.shouldIgnoreQueryChange) {
-                    return false
-                }
-                viewModel.searchViewQuery = query
-                debouncedSearchRunnable()
-                return false
-            }
-        })
-        if (viewModel.isSearchViewExpanded) {
-            menuBinding.searchItem.expandActionView()
-        }
+    // mftlrs: the search was a SearchView in the options menu; its state stays in the view model.
+    private fun expandSearchView() {
+        topBarState.searchQuery = viewModel.searchViewQuery
+        viewModel.isSearchViewExpanded = true
+        debouncedSearchRunnable()
     }
 
     private fun collapseSearchView() {
-        if (this::menuBinding.isInitialized && menuBinding.searchItem.isActionViewExpanded) {
-            menuBinding.searchItem.collapseActionView()
+        if (!viewModel.isSearchViewExpanded) {
+            return
+        }
+        viewModel.isSearchViewExpanded = false
+        viewModel.stopSearching()
+    }
+
+    private fun onSearchQueryChange(query: String) {
+        viewModel.searchViewQuery = query
+        debouncedSearchRunnable()
+    }
+
+    private fun onSearchSubmit(query: String) {
+        debouncedSearchRunnable.cancel()
+        viewModel.search(query)
+    }
+
+    private fun onNavigationClick() {
+        binding.drawerLayout?.openDrawer(GravityCompat.START)
+        if (binding.persistentDrawerLayout != null) {
+            Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.putValue(
+                !Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.valueCompat
+            )
         }
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-
-        updateViewSortMenuItems()
-        updateSelectAllMenuItem()
-        updateShowHiddenFilesMenuItem()
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                binding.drawerLayout?.openDrawer(GravityCompat.START)
-                if (binding.persistentDrawerLayout != null) {
-                    Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.putValue(
-                        !Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.valueCompat
-                    )
-                }
-                true
-            }
-            R.id.action_view_list -> {
-                viewModel.viewType = FileViewType.LIST
-                true
-            }
-            R.id.action_view_grid -> {
-                viewModel.viewType = FileViewType.GRID
-                true
-            }
-            R.id.action_sort_by_name -> {
-                viewModel.setSortBy(By.NAME)
-                true
-            }
-            R.id.action_sort_by_type -> {
-                viewModel.setSortBy(By.TYPE)
-                true
-            }
-            R.id.action_sort_by_size -> {
-                viewModel.setSortBy(By.SIZE)
-                true
-            }
-            R.id.action_sort_by_last_modified -> {
-                viewModel.setSortBy(By.LAST_MODIFIED)
-                true
-            }
-            R.id.action_sort_order_ascending -> {
+    // mftlrs: was onOptionsItemSelected().
+    private fun onTopBarAction(action: FileListTopBarAction) {
+        when (action) {
+            FileListTopBarAction.VIEW_LIST -> viewModel.viewType = FileViewType.LIST
+            FileListTopBarAction.VIEW_GRID -> viewModel.viewType = FileViewType.GRID
+            FileListTopBarAction.SORT_BY_NAME -> viewModel.setSortBy(By.NAME)
+            FileListTopBarAction.SORT_BY_TYPE -> viewModel.setSortBy(By.TYPE)
+            FileListTopBarAction.SORT_BY_SIZE -> viewModel.setSortBy(By.SIZE)
+            FileListTopBarAction.SORT_BY_LAST_MODIFIED -> viewModel.setSortBy(By.LAST_MODIFIED)
+            FileListTopBarAction.SORT_ORDER_ASCENDING ->
                 viewModel.setSortOrder(
-                    if (!menuBinding.sortOrderAscendingItem.isChecked) {
+                    if (viewModel.sortOptions.order != Order.ASCENDING) {
                         Order.ASCENDING
                     } else {
                         Order.DESCENDING
                     }
                 )
-                true
-            }
-            R.id.action_sort_directories_first -> {
-                viewModel.setSortDirectoriesFirst(!menuBinding.sortDirectoriesFirstItem.isChecked)
-                true
-            }
-            R.id.action_view_sort_path_specific -> {
-                viewModel.isViewSortPathSpecific = !menuBinding.viewSortPathSpecificItem.isChecked
-                true
-            }
-            R.id.action_new_task -> {
-                newTask()
-                true
-            }
-            R.id.action_navigate_up -> {
-                navigateUp()
-                true
-            }
-            R.id.action_navigate_to -> {
-                showNavigateToPathDialog()
-                true
-            }
-            R.id.action_refresh -> {
-                refresh()
-                true
-            }
-            R.id.action_select_all -> {
-                selectAllFiles()
-                true
-            }
-            R.id.action_show_hidden_files -> {
-                setShowHiddenFiles(!menuBinding.showHiddenFilesItem.isChecked)
-                true
-            }
-            R.id.action_share -> {
-                share()
-                true
-            }
-            R.id.action_copy_path -> {
-                copyPath()
-                true
-            }
-            R.id.action_open_in_terminal -> {
-                openInTerminal()
-                true
-            }
-            R.id.action_add_bookmark -> {
-                addBookmark()
-                true
-            }
-            R.id.action_create_shortcut -> {
-                createShortcut()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
+            FileListTopBarAction.SORT_DIRECTORIES_FIRST ->
+                viewModel.setSortDirectoriesFirst(!viewModel.sortOptions.isDirectoriesFirst)
+            FileListTopBarAction.VIEW_SORT_PATH_SPECIFIC ->
+                viewModel.isViewSortPathSpecific = !viewModel.isViewSortPathSpecific
+            FileListTopBarAction.NEW_TASK -> newTask()
+            FileListTopBarAction.NAVIGATE_UP -> navigateUp()
+            FileListTopBarAction.NAVIGATE_TO -> showNavigateToPathDialog()
+            FileListTopBarAction.REFRESH -> refresh()
+            FileListTopBarAction.SELECT_ALL -> selectAllFiles()
+            FileListTopBarAction.SHOW_HIDDEN_FILES ->
+                setShowHiddenFiles(!Settings.FILE_LIST_SHOW_HIDDEN_FILES.valueCompat)
+            FileListTopBarAction.SHARE -> share()
+            FileListTopBarAction.COPY_PATH -> copyPath()
+            FileListTopBarAction.OPEN_IN_TERMINAL -> openInTerminal()
+            FileListTopBarAction.ADD_BOOKMARK -> addBookmark()
+            FileListTopBarAction.CREATE_SHORTCUT -> createShortcut()
         }
     }
 
@@ -566,7 +491,17 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
                 return true
             }
         }
-        return false
+        // mftlrs: alphabetic shortcuts of the removed menu/file_list.xml.
+        val action = when (keyCode) {
+            KeyEvent.KEYCODE_L -> FileListTopBarAction.NAVIGATE_TO
+            KeyEvent.KEYCODE_R -> FileListTopBarAction.REFRESH
+            KeyEvent.KEYCODE_A ->
+                if (topBarState.isSelectAllVisible) FileListTopBarAction.SELECT_ALL else null
+            KeyEvent.KEYCODE_H -> FileListTopBarAction.SHOW_HIDDEN_FILES
+            else -> null
+        } ?: return false
+        onTopBarAction(action)
+        return true
     }
 
     private fun onPersistentDrawerOpenChanged(open: Boolean) {
@@ -585,16 +520,19 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
     }
 
     private fun onSearchViewExpandedChanged(expanded: Boolean) {
-        updateViewSortMenuItems()
+        if (expanded) {
+            topBarState.searchQuery = viewModel.searchViewQuery
+        }
+        topBarState.isSearchExpanded = expanded
     }
 
     private fun onFileListChanged(stateful: Stateful<List<FileItem>>) {
         val files = stateful.value
         val isSearching = viewModel.searchState.isSearching
-        when {
-            stateful is Failure -> binding.toolbar.setSubtitle(R.string.error)
-            stateful is Loading && !isSearching -> binding.toolbar.setSubtitle(R.string.loading)
-            else -> binding.toolbar.subtitle = getSubtitle(files!!)
+        topBarState.subtitle = when {
+            stateful is Failure -> getString(R.string.error)
+            stateful is Loading && !isSearching -> getString(R.string.loading)
+            else -> getSubtitle(files!!)
         }
         val hasFiles = !files.isNullOrEmpty()
         contentState.isRefreshing = stateful is Loading && (hasFiles || isSearching)
@@ -654,44 +592,16 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
     private fun onViewTypeChanged(viewType: FileViewType) {
         // mftlrs: the column count is computed by FileListContent from its actual width.
         contentState.viewType = viewType
-        updateViewSortMenuItems()
+        topBarState.viewType = viewType
     }
 
     private fun onSortOptionsChanged(sortOptions: FileSortOptions) {
         updateAdapterFileList()
-        updateViewSortMenuItems()
+        topBarState.sortOptions = sortOptions
     }
 
     private fun onViewSortPathSpecificChanged(pathSpecific: Boolean) {
-        updateViewSortMenuItems()
-    }
-
-    private fun updateViewSortMenuItems() {
-        if (!this::menuBinding.isInitialized) {
-            return
-        }
-        val searchViewExpanded = viewModel.isSearchViewExpanded
-        menuBinding.viewSortItem.isVisible = !searchViewExpanded
-        if (searchViewExpanded) {
-            return
-        }
-        val viewType = viewModel.viewType
-        val checkedViewTypeItem = when (viewType) {
-            FileViewType.LIST -> menuBinding.viewListItem
-            FileViewType.GRID -> menuBinding.viewGridItem
-        }
-        checkedViewTypeItem.isChecked = true
-        val sortOptions = viewModel.sortOptions
-        val checkedSortByItem = when (sortOptions.by) {
-            By.NAME -> menuBinding.sortByNameItem
-            By.TYPE -> menuBinding.sortByTypeItem
-            By.SIZE -> menuBinding.sortBySizeItem
-            By.LAST_MODIFIED -> menuBinding.sortByLastModifiedItem
-        }
-        checkedSortByItem.isChecked = true
-        menuBinding.sortOrderAscendingItem.isChecked = sortOptions.order == Order.ASCENDING
-        menuBinding.sortDirectoriesFirstItem.isChecked = sortOptions.isDirectoriesFirst
-        menuBinding.viewSortPathSpecificItem.isChecked = viewModel.isViewSortPathSpecific
+        topBarState.isViewSortPathSpecific = pathSpecific
     }
 
     private fun navigateUp() {
@@ -717,7 +627,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
 
     private fun onShowHiddenFilesChanged(showHiddenFiles: Boolean) {
         updateAdapterFileList()
-        updateShowHiddenFilesMenuItem()
+        topBarState.showHiddenFiles = showHiddenFiles
     }
 
     // mftlrs: sorting moved here from the removed FileListAdapter.
@@ -739,14 +649,6 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
     }
 
     private var lastIsSearching = false
-
-    private fun updateShowHiddenFilesMenuItem() {
-        if (!this::menuBinding.isInitialized) {
-            return
-        }
-        val showHiddenFiles = Settings.FILE_LIST_SHOW_HIDDEN_FILES.valueCompat
-        menuBinding.showHiddenFilesItem.isChecked = showHiddenFiles
-    }
 
     private fun share() {
         shareFile(currentPath, MimeType.DIRECTORY)
@@ -794,18 +696,11 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
             }
         }
         requireActivity().title = title
-        updateSelectAllMenuItem()
+        topBarState.title = title
+        topBarState.isSelectAllVisible = pickOptions == null || pickOptions.allowMultiple
         updateOverlayToolbar()
         updateBottomToolbar()
         contentState.pickOptions = pickOptions
-    }
-
-    private fun updateSelectAllMenuItem() {
-        if (!this::menuBinding.isInitialized) {
-            return
-        }
-        val pickOptions = viewModel.pickOptions
-        menuBinding.selectAllItem.isVisible = pickOptions == null || pickOptions.allowMultiple
     }
 
     private fun pickFiles(files: FileItemSet) {
@@ -1660,7 +1555,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
         val persistentDrawerLayout: PersistentDrawerLayout? = null,
         val persistentBarLayout: PersistentBarLayout,
         val appBarLayout: CoordinatorAppBarLayout,
-        val toolbar: Toolbar,
+        val toolbarComposeView: ComposeView,
         val overlayToolbar: Toolbar,
         val breadcrumbLayout: BreadcrumbLayout,
         val contentLayout: ViewGroup,
@@ -1686,46 +1581,10 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileItemListener
                 return Binding(
                     bindingRoot, includeBinding.drawerLayout, includeBinding.persistentDrawerLayout,
                     includeBinding.persistentBarLayout, appBarBinding.appBarLayout,
-                    appBarBinding.toolbar, appBarBinding.overlayToolbar,
+                    appBarBinding.toolbarComposeView, appBarBinding.overlayToolbar,
                     appBarBinding.breadcrumbLayout, contentBinding.contentLayout,
                     contentBinding.composeView, bottomBarBinding.bottomBarLayout, bottomBarBinding.bottomToolbar,
                     bottomBarBinding.bottomCreateFileNameEdit, speedDialBinding.speedDialView
-                )
-            }
-        }
-    }
-
-    private class MenuBinding private constructor(
-        val menu: Menu,
-        val searchItem: MenuItem,
-        val viewSortItem: MenuItem,
-        val viewListItem: MenuItem,
-        val viewGridItem: MenuItem,
-        val sortByNameItem: MenuItem,
-        val sortByTypeItem: MenuItem,
-        val sortBySizeItem: MenuItem,
-        val sortByLastModifiedItem: MenuItem,
-        val sortOrderAscendingItem: MenuItem,
-        val sortDirectoriesFirstItem: MenuItem,
-        val viewSortPathSpecificItem: MenuItem,
-        val selectAllItem: MenuItem,
-        val showHiddenFilesItem: MenuItem
-    ) {
-        companion object {
-            fun inflate(menu: Menu, inflater: MenuInflater): MenuBinding {
-                inflater.inflate(R.menu.file_list, menu)
-                return MenuBinding(
-                    menu, menu.findItem(R.id.action_search), menu.findItem(R.id.action_view_sort),
-                    menu.findItem(R.id.action_view_list), menu.findItem(R.id.action_view_grid),
-                    menu.findItem(R.id.action_sort_by_name),
-                    menu.findItem(R.id.action_sort_by_type),
-                    menu.findItem(R.id.action_sort_by_size),
-                    menu.findItem(R.id.action_sort_by_last_modified),
-                    menu.findItem(R.id.action_sort_order_ascending),
-                    menu.findItem(R.id.action_sort_directories_first),
-                    menu.findItem(R.id.action_view_sort_path_specific),
-                    menu.findItem(R.id.action_select_all),
-                    menu.findItem(R.id.action_show_hidden_files)
                 )
             }
         }

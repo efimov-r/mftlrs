@@ -9,6 +9,8 @@
   - `TestSandbox.kt` — тестовые файлы, папки, ZIP;
   - тесты по темам: `FileListScreenTest` (папки, состояния, архив, выделение), `FileListViewSortTest`, `FileListFileMenuTest`, `FileListPasteTest`, `FileListCreateTest`, `FileListSelectionTest`, `FileListSearchTest`, `FileListExitTest`.
 - **Режимы выбора файла (54–60) не автоматизированы** — проверяются руками. Запуск экрана с ожиданием результата (`ActivityScenario.launchActivityForResult`) на устройстве 2026-11-18 зависал: на экране висела пустая служебная активити AndroidX (белый экран), экран выбора не появлялся, каждый тест ждал таймаута. Владелец решил такие тесты не делать.
+- **Кэш UiAutomator сбрасывается перед каждой проверкой** (`FileListScreen.pollUntil`, `uiAutomation.clearCache()`): Compose без TalkBack не шлёт событий изменения окна, и без сброса тест видит застывший экран — [gotchas.md](gotchas.md), «UI-тест не видит изменений на Compose». Ожидания — только через `waitFor`, `assertShown`, `assertGone`, `waitUntil`; голые `device.wait(Until…)` для элементов на Compose не годятся.
+- **Поиск и клавиатура:** поле поиска при раскрытии получает фокус и открывает клавиатуру; первое «Назад» может только спрятать её. Закрывать поиск — `FileListScreen.pressBackToCloseSearch()` (решение владельца 2026-11-19: поведение как у `SearchView`, тест подстроен).
 - **Пересоздание экрана** (пункт 64) проверяется `scenario.recreate()` — как при повороте, но без поворота телефона и без смены его настроек.
 - **Чёрный ящик:** элементы ищутся UI Automator через accessibility, без Espresso и ссылок на классы экрана, поэтому тестам всё равно, на Views экран или на Compose. Строки — из ресурсов приложения (`screen.string(R.string...)`), язык устройства не важен.
 - **Отдельное приложение:** build type `uiTest` (`testBuildType 'uiTest'` в `app/build.gradle`) — `applicationId` с суффиксом `.uitest`, свои authority провайдеров. Debug-сборка на устройстве, её настройки и данные не затрагиваются; Gradle после прогона удаляет только `.uitest`.
@@ -24,7 +26,7 @@
 |---|---|
 | имена файлов, заголовки, подзаголовок, пункты меню, подписи FAB, тексты диалогов | `By.text` — точный текст |
 | иконки на панелях: поиск, «Вид и сортировка», «Вырезать», «Копировать», «Удалить», «Вставить», крестик | `By.desc` — описание = заголовок пункта меню (`contentDescription`) |
-| кнопка ⋮ экрана | `By.desc` — системная строка Android `action_menu_overflow_description` («Другие варианты» на устройстве 2026-11-18), запасной вариант — `abc_action_menu_overflow_description` AppCompat |
+| кнопка ⋮ экрана | `By.desc` — системная строка Android `action_menu_overflow_description` («Другие варианты» на устройстве 2026-11-18) или `abc_action_menu_overflow_description` AppCompat («Ещё»). В Compose (`FileListTopBar`) — строка AppCompat |
 | иконка файла (тап — выделить) | id `iconLayout` (`FileListScreen.clickFileIcon`). В Compose — `testTag("iconLayout")` и `testTagsAsResourceId = true` |
 | кнопка ⋮ у файла | id `menuButton` внутри самого маленького контейнера, где есть и имя файла, и эта кнопка. В Compose — `Modifier.testTag("menuButton")` и `testTagsAsResourceId = true` |
 | главная кнопка FAB | id `sd_main_fab` (из библиотеки speed-dial). В Compose — `testTag("sd_main_fab")` |
@@ -64,6 +66,8 @@
 | `FileListExitTest` | панель «Закрыть mftlrs?» на корне `/`: «Отмена», «Закрыть», «Свернуть» | 3 |
 
 Прогон 2026-11-18 на текущей сборке (Views): 37 из 37, ~4,5 мин.
+
+Прогон 2026-11-19 после чистки этапа 3 (список на Compose): 36 из 37. `FileListSearchTest.clickDirectoryInResults_opensItAndClosesSearch` упал со `StaleObjectException` в `clickFile("Sub")`. Повтор класса — 4 из 4. Вероятная причина — гонка в тесте: `Sub` есть и в обычном списке папки, `fileRow` находит строку до прихода результатов поиска (задержка 1 с), а затем Compose заменяет узел. На Views `RecyclerView` переиспользовал View, и узел не устаревал. Тест пока не меняли.
 
 Замечено по ходу (поведение приложения, не теста): если в доступе ко всем файлам отказали, экран спрашивает его снова при каждом пересоздании (повороте) — `FileListScreen.recreate()` закрывает этот диалог. Что тесты ловят поломку, проверено: тест с испорченным ожиданием упал с понятным сообщением.
 
