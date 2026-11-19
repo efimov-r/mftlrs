@@ -31,7 +31,6 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.Insets
 import androidx.core.view.GravityCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.LifecycleOwner
@@ -40,7 +39,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.TextRange
 import java8.nio.file.Path
@@ -74,7 +72,6 @@ import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.terminal.Terminal
 import me.zhanghai.android.files.theme.MftlrsTheme
 import me.zhanghai.android.files.ui.DrawerLayoutOnBackPressedCallback
-import me.zhanghai.android.files.ui.PersistentDrawerLayout
 import me.zhanghai.android.files.util.DebouncedRunnable
 import me.zhanghai.android.files.util.Failure
 import me.zhanghai.android.files.util.Loading
@@ -143,7 +140,9 @@ class FileListFragment : Fragment(), FileItemListener,
 
     private val viewModel by viewModels { { FileListViewModel() } }
 
-    private lateinit var binding: Binding
+    // mftlrs: the include binding is enough, the other parts of the screen are in Compose; drawerLayout
+    // and persistentDrawerLayout are nullable, each exists in one layout configuration.
+    private lateinit var binding: FileListFragmentIncludeBinding
 
     private lateinit var navigationFragment: NavigationFragment
 
@@ -183,9 +182,9 @@ class FileListFragment : Fragment(), FileItemListener,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View =
-        Binding.inflate(inflater, container, false)
-            .also { binding = it }
+        FileListFragmentBinding.inflate(inflater, container, false)
             .root
+            .also { binding = FileListFragmentIncludeBinding.bind(it) }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -1536,28 +1535,4 @@ class FileListFragment : Fragment(), FileItemListener,
 
     @Parcelize
     class Args(val intent: Intent) : ParcelableArgs
-
-    private class Binding private constructor(
-        val root: View,
-        val drawerLayout: DrawerLayout? = null,
-        val persistentDrawerLayout: PersistentDrawerLayout? = null,
-        val screenLayout: ViewGroup,
-        val composeView: ComposeView
-    ) {
-        companion object {
-            fun inflate(
-                inflater: LayoutInflater,
-                root: ViewGroup?,
-                attachToRoot: Boolean
-            ): Binding {
-                val binding = FileListFragmentBinding.inflate(inflater, root, attachToRoot)
-                val bindingRoot = binding.root
-                val includeBinding = FileListFragmentIncludeBinding.bind(bindingRoot)
-                return Binding(
-                    bindingRoot, includeBinding.drawerLayout, includeBinding.persistentDrawerLayout,
-                    includeBinding.screenLayout, includeBinding.composeView
-                )
-            }
-        }
-    }
 }

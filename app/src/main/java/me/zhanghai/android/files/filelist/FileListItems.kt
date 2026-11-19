@@ -181,7 +181,8 @@ private class FileItemActions(
 @Composable
 private fun rememberFileItemUi(file: FileItem): FileItemUi {
     val context = LocalContext.current
-    return remember(file) {
+    val separator = stringResource(R.string.file_item_description_separator) // не через context: lint, смена конфигурации
+    return remember(file, separator) {
         val attributes = file.attributes
         val isDirectory = attributes.isDirectory
         val description = if (isDirectory) {
@@ -189,8 +190,7 @@ private fun rememberFileItemUi(file: FileItem): FileItemUi {
         } else {
             val lastModificationTime = attributes.lastModifiedTime().toInstant().formatShort(context)
             val size = attributes.fileSize.formatHumanReadable(context)
-            listOf(lastModificationTime, size)
-                .joinToString(context.getString(R.string.file_item_description_separator))
+            listOf(lastModificationTime, size).joinToString(separator)
         }
         val badgeRes = if (file.attributesNoFollowLinks.isSymbolicLink) {
             if (file.isSymbolicLinkBroken) {

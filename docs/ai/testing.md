@@ -29,7 +29,7 @@
 | кнопка ⋮ экрана | `By.desc` — системная строка Android `action_menu_overflow_description` («Другие варианты» на устройстве 2026-11-18) или `abc_action_menu_overflow_description` AppCompat («Ещё»). В Compose (`FileListTopBar`) — строка AppCompat |
 | иконка файла (тап — выделить) | id `iconLayout` (`FileListScreen.clickFileIcon`). В Compose — `testTag("iconLayout")` и `testTagsAsResourceId = true` |
 | кнопка ⋮ у файла | id `menuButton` внутри самого маленького контейнера, где есть и имя файла, и эта кнопка. В Compose — `Modifier.testTag("menuButton")` и `testTagsAsResourceId = true` |
-| главная кнопка FAB | id `sd_main_fab` (было из библиотеки speed-dial). В Compose (`FileListFab`) — `testTag("sd_main_fab")` и `testTagsAsResourceId = true` |
+| главная кнопка FAB | id `sd_main_fab` (было из библиотеки speed-dial). В Compose (`FileListFab`) — `testTag("sd_main_fab")`; `testTagsAsResourceId = true` — один раз на корне `FileListScreen`, действует на все части экрана |
 | поле имени в диалоге, поле поиска | класс `android.widget.EditText` или `android.widget.AutoCompleteTextView` (так называется поле SearchView) — `FileListScreen.editText()` |
 | элемент списка, когда то же имя есть в другом месте (поле поиска) | `clickFile` — контейнер с именем и кнопкой ⋮, как у меню файла |
 | сетка или список | по координатам: в сетке два файла в одном ряду, в списке — друг под другом |

@@ -48,9 +48,9 @@
 - **Как правильно:** разрешать удалением (`git rm -r app/src/main/res/values-eu` и т. д.); после слияния этих 11 папок быть не должно, а в манифесте — `android:supportsRtl="false"`. Код учёта RTL удалён; после слияния поиск по `isLayoutDirectionRtl`, `AutoMirrorDrawable`, `layoutDirectionCompat`, `LAYOUT_DIRECTION_RTL`, `autoMirrored` должен быть пустым
 
 ## Цвет верхней панели списка файлов не зависит от `colorAppBarSurface`
-- **Что случится:** правка `colorAppBarSurface` в теме не меняет панель главного экрана; при слиянии с upstream возвращается `liftOnScroll` — панель снова того же цвета, что список, и перекрашивается только при прокрутке
-- **Причина:** в `layout/file_list_fragment_app_bar_include.xml` фон `CoordinatorAppBarLayout` и `overlayToolbar` — `?colorSurfaceContainer`, `liftOnScroll="false"`; `file_list_toolbar_scroll_flags` в `values/integers.xml` — `noScroll`, панель не прячется (2026-11-15)
-- **Как правильно:** цвет панели менять через `colorSurfaceContainer` или прямо в этом layout; фон `overlayToolbar` держать таким же, как у панели — синхронизация через `syncBackgroundColorTo` без `liftOnScroll` не срабатывает
+- **Что случится:** правка `colorAppBarSurface` в теме не меняет панель главного экрана; при слиянии с upstream — конфликты «удалено у нас — изменено у upstream» в `file_list_fragment_app_bar_include.xml` и других `_include` главного экрана, `PersistentBarLayout`, `BottomBarLayout`, `values-sw600dp/integers.xml`
+- **Причина:** главный экран на Compose (`FileListScreen`): фон панели и крошек — `colorScheme.surfaceContainer`, панель не прячется при прокрутке, панель выделения — свой фон `surfaceContainer` в `FileListTopBar` (2026-11-19, этапы 4–7)
+- **Как правильно:** цвет панели менять в `FileListScreen` и `FileListTopBar`; удалённые файлы оставлять удалёнными, правки upstream в них переносить по смыслу в Compose-файлы `filelist/`
 
 ## `gradlew` без `JAVA_HOME`
 - **Что случится:** `ERROR: JAVA_HOME is not set and no 'java' command could be found`

@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2019 Hai Zhang <dreaming.in.code.zh@gmail.com>
  * All Rights Reserved.
- * Modified for mftlrs, 2026.
  */
 
 package me.zhanghai.android.files.ui
@@ -74,7 +73,7 @@ class CoordinatorScrollingFrameLayout : FrameLayout, AttachedBehavior {
                     } else {
                         scrollingView.updatePadding(bottom = bottomInsets.systemWindowInsetBottom)
                     }
-                } else if (!childView.fitsSystemWindows) { // mftlrs: the Compose file list pads itself.
+                } else {
                     childView.updateLayoutParams<MarginLayoutParams> {
                         bottomMargin = bottomInsets.systemWindowInsetBottom
                     }

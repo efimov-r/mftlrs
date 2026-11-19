@@ -1,6 +1,6 @@
 # Экраны и компоненты UI
 
-Перечень Activity, Fragment, диалогов, настроек, адаптеров, своих View и ресурсов разметки, по группам. Пакет везде — `me.zhanghai.android.files.<подпакет>`. Как устроены главный экран и боковая панель — [architecture.md](architecture.md). Подсчёт — на 2026-11-15, коммит `9b5e15ab`.
+Перечень Activity, Fragment, диалогов, настроек, адаптеров, своих View и ресурсов разметки, по группам. Пакет везде — `me.zhanghai.android.files.<подпакет>`. Как устроены главный экран и боковая панель — [architecture.md](architecture.md); элементы на Compose — [compose.md](compose.md). Подсчёт — на 2026-11-15, коммит `9b5e15ab`; адаптеры, свои View и разметка обновлены 2026-11-19 после переноса главного экрана на Compose.
 
 ## Сводка
 
@@ -13,8 +13,8 @@
 | DialogFragment | 34 + 5 баз |
 | Свои Preference | 15 |
 | Адаптеры | 10 + 6 баз в `ui/` |
-| Свои View и помощники в `ui/` | ~40 |
-| Разметка `res/` | layout 53, menu 2, XML настроек 2 |
+| Свои View и помощники в `ui/` | 36 + 2 на Compose в `ui/compose/` |
+| Разметка `res/` | layout 47 + 1 в `layout-sw600dp-land`, menu 2, XML настроек 2 |
 
 Объём: Kotlin в пакете приложения — ~59 тыс. строк; пакеты с экранами (`filelist`, `storage`, `fileproperties`, `viewer`, `settings`, `navigation`, `ftpserver`, `about`) — ~17,5 тыс. вместе с ViewModel и моделями; `ui/` — ~4,3 тыс.; `layout`, `menu`, `xml` — ~4,6 тыс.
 
@@ -79,7 +79,7 @@
 
 | Fragment | Пакет | Layout | Примечание |
 |---|---|---|---|
-| `FileListFragment` | `filelist` | `file_list_fragment` + 5 `_include` | главный экран, 1738 строк |
+| `FileListFragment` | `filelist` | `file_list_fragment` + `_include` (drawer и `ComposeView` с `FileListScreen`) | главный экран, ~1580 строк |
 | `NavigationFragment` | `navigation` | `navigation_fragment` | боковая панель внутри `FileListFragment`; уйдёт при редизайне |
 | `TextEditorFragment` | `viewer.text` | `text_editor_fragment` | |
 | `ImageViewerFragment` | `viewer.image` | `image_viewer_fragment` | ViewPager2 + `ImageViewerAdapter` |
@@ -243,16 +243,15 @@
 
 ## Свои View и помощники UI
 
-Почти всё — в `ui/`. Отдельно: `navigation/NavigationRecyclerView`. `filelist/BreadcrumbLayout` (хлебные крошки) удалён — теперь `FileListBreadcrumbs` на Compose.
+Почти всё — в `ui/`. Отдельно: `navigation/NavigationRecyclerView`. Главный экран, кроме боковой панели, — на Compose (`filelist/FileListScreen.kt` и части, [compose.md](compose.md)); его View удалены: `BreadcrumbLayout`, `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode`, `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode`, `FixQueryChangeSearchView`, `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `PersistentBarLayout`, `BottomBarLayout`, `CheckableItemBackground`, `AspectRatioFrameLayout`, `AppBarLayoutExpandHackListener`.
 
 | Назначение | Классы в `ui/` |
 |---|---|
 | Боковая панель — уйдут при редизайне | `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback` |
-| Режимы панелей | нет: `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode`, `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode` удалены — панели главного экрана на Compose (`FileListTopBar`, `FileListBottomBar`) |
-| Панели и прокрутка | `BottomBarLayout`, `PersistentBarLayout`, `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrollingFrameLayout`, `CoordinatorScrollingLinearLayout`, `ScrollingViewOnApplyWindowInsetsListener` |
-| Fast scroll | `ThemedFastScroller` (текстовый редактор). `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback` удалены — FAB на Compose (`FileListFab`) |
-| Элементы списка | `CheckableFrameLayout`, `CheckableForegroundLinearLayout`, `AspectRatioImageView`, `DisabledAlphaImageView`, `AutoGoneTextView`, `AutoMirrorDrawable` |
-| Поля ввода и поиск | `ReadOnlyTextInputLayout`, `ReadOnlyTextInputEditText`, `ScrollingChildEditText`, `DropDownView`, `FixLayoutSearchView`, `FixQueryChangeSearchView`, `AllowSoftInputHackAlertDialogCustomView` |
+| Панели и прокрутка других экранов | `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrollingFrameLayout`, `CoordinatorScrollingLinearLayout`, `ScrollingViewOnApplyWindowInsetsListener` |
+| Fast scroll | `ThemedFastScroller` (текстовый редактор) |
+| Элементы списка | `CheckableFrameLayout`, `CheckableForegroundLinearLayout`, `AspectRatioImageView`, `DisabledAlphaImageView`, `AutoGoneTextView` |
+| Поля ввода и поиск | `ReadOnlyTextInputLayout`, `ReadOnlyTextInputEditText`, `ScrollingChildEditText`, `DropDownView`, `FixLayoutSearchView`, `AllowSoftInputHackAlertDialogCustomView` |
 | Картинки и страницы | `SaveStateSubsamplingScaleImageView`, `WrapFirstPageContentViewPager`, `ViewPagerTransformers` |
 | Лицензии | `LicensesDialogExtensions` |
 
@@ -271,7 +270,7 @@
 
 | Папка | Кол-во | Что |
 |---|---|---|
-| `res/layout/` | 52 | экраны, диалоги, элементы списков |
+| `res/layout/` | 47 | экраны, диалоги, элементы списков; у главного экрана — только `file_list_fragment` и `_include` (drawer и `ComposeView`) |
 | `res/layout-sw600dp-land/` | 1 | `file_list_fragment_include.xml` — постоянная боковая панель на планшете |
 | `res/menu/` | 2 | `text_editor`, `image_viewer`; все `file_list*` удалены — меню главного экрана на Compose |
 | `res/xml/` | 2 настроек | `settings.xml`, `ftp_server.xml`; ещё `shortcuts.xml`, `netework_security_config.xml` |
