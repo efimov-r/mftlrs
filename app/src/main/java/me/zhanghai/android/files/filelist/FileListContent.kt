@@ -6,7 +6,6 @@
 package me.zhanghai.android.files.filelist
 
 import android.os.Parcelable
-import android.text.TextUtils
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -26,9 +25,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -37,43 +33,28 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import java8.nio.file.Path
 import kotlinx.parcelize.Parcelize
 import me.zhanghai.android.files.R
-import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.ui.compose.MftlrsFastScrollbar
 
 private val GRID_COLUMN_WIDTH = 180.dp // как FileListFragment.updateSpanCount: ширина / 180 dp, не меньше 2
-
-// Состояние списка. Заполняет FileListFragment из своих наблюдателей LiveData, Compose только рисует
-internal class FileListContentState {
-    var files by mutableStateOf<List<FileItem>>(emptyList()) // уже отфильтрованы и отсортированы
-    var isRefreshing by mutableStateOf(false) // индикатор свайпа: загрузка, когда файлы уже есть
-    var isLoading by mutableStateOf(false) // индикатор по центру: загрузка без файлов
-    var errorText by mutableStateOf<String?>(null)
-    var isEmpty by mutableStateOf(false)
-    var viewType by mutableStateOf(FileViewType.LIST)
-    var selectedPaths by mutableStateOf<Set<Path>>(emptySet()) // снимок: FileItemSet меняется на месте
-    var pickOptions by mutableStateOf<PickOptions?>(null)
-    var nameEllipsize by mutableStateOf(TextUtils.TruncateAt.END)
-    val gridState = LazyGridState()
-
-    val scrollPosition: ScrollPosition
-        get() = ScrollPosition(gridState.firstVisibleItemIndex, gridState.firstVisibleItemScrollOffset)
-
-    fun scrollTo(position: ScrollPosition) {
-        gridState.requestScrollToItem(position.index, position.offset) // применится при следующем измерении
-    }
-}
 
 // Позиция прокрутки для TrailData вместо состояния GridLayoutManager
 @Parcelize
 data class ScrollPosition(val index: Int, val offset: Int) : Parcelable
 
+internal val LazyGridState.scrollPosition: ScrollPosition
+    get() = ScrollPosition(firstVisibleItemIndex, firstVisibleItemScrollOffset)
+
+internal fun LazyGridState.scrollTo(position: ScrollPosition) {
+    requestScrollToItem(position.index, position.offset) // применится при следующем измерении
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun FileListContent(
-    state: FileListContentState,
+    state: FileListUiState.Content,
+    gridState: LazyGridState, // во фрагменте: позиция прокрутки уходит в TrailData и Bundle
     listener: FileItemListener,
     bottomInset: Dp, // под панелью навигации: список уходит под неё, последний элемент — над ней
     onRefresh: () -> Unit,
@@ -91,13 +72,14 @@ internal fun FileListContent(
                 }
 
                 MftlrsFastScrollbar(
-                    state = state.gridState,
+                    state = gridState,
                     columnCount = columnCount,
                     modifier = Modifier.fillMaxSize(),
                     bottomPadding = bottomInset,
                 ) {
                     FileGrid(
                         state = state,
+                        gridState = gridState,
                         columnCount = columnCount,
                         bottomPadding = dimensionResource(R.dimen.list_bottom_padding_with_fab) + bottomInset,
                         listener = listener,
@@ -124,7 +106,8 @@ internal fun FileListContent(
 
 @Composable
 private fun FileGrid(
-    state: FileListContentState,
+    state: FileListUiState.Content,
+    gridState: LazyGridState,
     columnCount: Int,
     bottomPadding: Dp,
     listener: FileItemListener,
@@ -134,7 +117,7 @@ private fun FileGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
         modifier = Modifier.fillMaxSize(),
-        state = state.gridState,
+        state = gridState,
         contentPadding = PaddingValues(bottom = bottomPadding),
     ) {
         items(state.files, key = { it.path.toString() }) { file ->

@@ -17,7 +17,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
-import android.text.TextUtils
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -31,16 +30,24 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.Insets
 import androidx.fragment.app.Fragment
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.TextRange
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import java8.nio.file.Path
 import java8.nio.file.Paths
+import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.app.application
@@ -62,7 +69,6 @@ import me.zhanghai.android.files.navigation.BookmarkDirectories
 import me.zhanghai.android.files.navigation.BookmarkDirectory
 import me.zhanghai.android.files.navigation.NavigationItem
 import me.zhanghai.android.files.navigation.NavigationItemListLiveData
-import me.zhanghai.android.files.navigation.NavigationRootMapLiveData
 import me.zhanghai.android.files.provider.archive.createArchiveRootPath
 import me.zhanghai.android.files.provider.archive.isArchivePath
 import me.zhanghai.android.files.provider.linux.isLinuxPath
@@ -70,10 +76,7 @@ import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.terminal.Terminal
 import me.zhanghai.android.files.theme.MftlrsTheme
 import me.zhanghai.android.files.util.DebouncedRunnable
-import me.zhanghai.android.files.util.Failure
-import me.zhanghai.android.files.util.Loading
 import me.zhanghai.android.files.util.ParcelableArgs
-import me.zhanghai.android.files.util.Stateful
 import me.zhanghai.android.files.util.Success
 import me.zhanghai.android.files.util.addOnBackPressedCallback
 import me.zhanghai.android.files.util.args
@@ -90,7 +93,6 @@ import me.zhanghai.android.files.util.createViewIntent
 import me.zhanghai.android.files.util.extraPath
 import me.zhanghai.android.files.util.extraPathList
 import me.zhanghai.android.files.util.getParcelableSafe
-import me.zhanghai.android.files.util.getQuantityString
 import me.zhanghai.android.files.util.layoutInNavigation
 import me.zhanghai.android.files.util.layoutInStatusBar
 import me.zhanghai.android.files.util.putArgs
@@ -142,27 +144,22 @@ class FileListFragment : Fragment(), FileItemListener,
     private lateinit var binding: FileListFragmentBinding
 
     // mftlrs: NavigationFragment and DrawerLayout are FileListNavigation in Compose.
-    private val navigationState = FileListNavigationState()
     private val navigationOnBackPressedCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
             closeNavigationDrawer()
         }
     }
 
-    // mftlrs: the file list is FileListContent in Compose.
-    private val contentState = FileListContentState()
-
-    // mftlrs: the toolbar with its menu and search is FileListTopBar in Compose.
-    private val topBarState = FileListTopBarState()
-
-    // mftlrs: the bottom bar was a toolbar action mode; it is FileListBottomBar in Compose.
-    private val bottomBarState = FileListBottomBarState()
+    // mftlrs: the screen state is FileListViewModel.uiState; only the states of Compose elements
+    // are kept here: the scroll position of FileListContent and the file name of FileListBottomBar.
+    private val gridState = LazyGridState()
+    private val createFileNameState = TextFieldState()
+    private var isCreateFileNameFocusRequested by mutableStateOf(false)
 
     // mftlrs: system window insets for FileListScreen, which was done by fitsSystemWindows views.
     private var windowInsets by mutableStateOf(Insets.NONE)
 
     // mftlrs: the speed dial is FileListFab in Compose.
-    private val fabState = FileListFabState()
     private val fabOnBackPressedCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
             setFabExpanded(false)
@@ -193,7 +190,6 @@ class FileListFragment : Fragment(), FileItemListener,
         super.onActivityCreated(savedInstanceState)
 
         requireActivity().setTitle(R.string.file_list_title)
-        topBarState.title = getString(R.string.file_list_title) // pickOptionsLiveData без значения, пока не выбор
         // mftlrs: no support action bar; the whole screen is FileListScreen in Compose.
         binding.screenLayout.apply {
             // Was set by DrawerLayout and PersistentDrawerLayout with fitsSystemWindows: the screen is drawn
@@ -216,8 +212,14 @@ class FileListFragment : Fragment(), FileItemListener,
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 MftlrsTheme {
+                    // Collected only while started, so that the file list is not reloaded in
+                    // background.
+                    val state by viewModel.uiState.collectAsStateWithLifecycle()
+                    // Was set by onPickOptionsChanged().
+                    val title = fileListTitle(state.topBar.pickOptions)
+                    LaunchedEffect(title) { requireActivity().title = title }
                     FileListNavigation(
-                        state = navigationState,
+                        isOpen = state.isNavigationOpen,
                         isPersistentOpen = Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN
                             .observeAsState(Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.valueCompat).value,
                         windowInsets = windowInsets,
@@ -226,15 +228,15 @@ class FileListFragment : Fragment(), FileItemListener,
                         listener = this@FileListFragment,
                         onOpenChange = { setNavigationOpen(it) },
                     ) { screenInsets ->
-                        Screen(screenInsets)
+                        Screen(state, screenInsets)
                     }
                 }
             }
         }
         savedInstanceState?.getString(STATE_CREATE_FILE_NAME)
-            ?.let { bottomBarState.fileName.setTextAndPlaceCursorAtEnd(it) }
+            ?.let { createFileNameState.setTextAndPlaceCursorAtEnd(it) }
         savedInstanceState?.getParcelableSafe<ScrollPosition>(STATE_SCROLL_POSITION)
-            ?.let { contentState.scrollTo(it) }
+            ?.let { gridState.scrollTo(it) }
 
         // mftlrs: exit confirmation; added first so that it is called last, and not when picking.
         addExitConfirmation().also { callback ->
@@ -347,26 +349,20 @@ class FileListFragment : Fragment(), FileItemListener,
                 viewModel.pickOptions = pickOptions
             }
         }
-        viewModel.currentPathLiveData.observe(viewLifecycleOwner) { onCurrentPathChanged(it) }
-        viewModel.searchViewExpandedLiveData.observe(viewLifecycleOwner) {
-            onSearchViewExpandedChanged(it)
+        // mftlrs: the observers of the screen state moved to FileListViewModel.uiState.
+        viewModel.pickOptionsLiveData.observe(viewLifecycleOwner) { initCreateFileName(it) }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { onEvent(it) }
+            }
         }
-        viewModel.viewTypeLiveData.observe(viewLifecycleOwner) { onViewTypeChanged(it) }
-        // Live data only calls observeForever() on its sources when it is active, so we have to
-        // make view type live data active first (so that it can load its initial value) before we
-        // register another observer that needs to get the view type.
-        // mftlrs: FILE_LIST_PERSISTENT_DRAWER_OPEN is observed by FileListNavigation in Compose.
-        viewModel.sortOptionsLiveData.observe(viewLifecycleOwner) { onSortOptionsChanged(it) }
-        viewModel.viewSortPathSpecificLiveData.observe(viewLifecycleOwner) {
-            onViewSortPathSpecificChanged(it)
-        }
-        viewModel.pickOptionsLiveData.observe(viewLifecycleOwner) { onPickOptionsChanged(it) }
-        viewModel.selectedFilesLiveData.observe(viewLifecycleOwner) { onSelectedFilesChanged(it) }
-        viewModel.pasteStateLiveData.observe(viewLifecycleOwner) { onPasteStateChanged(it) }
-        Settings.FILE_NAME_ELLIPSIZE.observe(viewLifecycleOwner) { onFileNameEllipsizeChanged(it) }
-        viewModel.fileListLiveData.observe(viewLifecycleOwner) { onFileListChanged(it) }
-        Settings.FILE_LIST_SHOW_HIDDEN_FILES.observe(viewLifecycleOwner) {
-            onShowHiddenFilesChanged(it)
+    }
+
+    // mftlrs: one-time events of FileListViewModel.
+    private fun onEvent(event: FileListEvent) {
+        when (event) {
+            is FileListEvent.ScrollTo -> gridState.scrollTo(event.position)
+            is FileListEvent.ShowError -> showToast(event.text)
         }
     }
 
@@ -374,24 +370,26 @@ class FileListFragment : Fragment(), FileItemListener,
         super.onSaveInstanceState(outState)
 
         if (view != null) {
-            outState.putParcelable(STATE_SCROLL_POSITION, contentState.scrollPosition)
+            val state = viewModel.uiState.value
+            outState.putParcelable(STATE_SCROLL_POSITION, gridState.scrollPosition)
             // mftlrs: the EditText and the speed dial saved these themselves.
-            outState.putString(STATE_CREATE_FILE_NAME, bottomBarState.fileName.text.toString())
-            outState.putBoolean(STATE_FAB_EXPANDED, fabState.isExpanded)
+            outState.putString(STATE_CREATE_FILE_NAME, createFileNameState.text.toString())
+            outState.putBoolean(STATE_FAB_EXPANDED, state.isFabExpanded)
             // mftlrs: DrawerLayout saved this itself.
-            outState.putBoolean(STATE_NAVIGATION_OPEN, navigationState.isOpen)
+            outState.putBoolean(STATE_NAVIGATION_OPEN, state.isNavigationOpen)
         }
     }
 
     // mftlrs: was in onActivityCreated(); FileListScreen in the navigation drawer of FileListNavigation.
     @Composable
-    private fun Screen(windowInsets: Insets) {
+    private fun Screen(state: FileListUiState, windowInsets: Insets) {
         FileListScreen(
             windowInsets = windowInsets,
-            isBottomBarVisible = bottomBarState.isVisible,
+            isBottomBarVisible = state.bottomBar.isVisible,
             topBar = {
                 FileListTopBar(
-                    state = topBarState,
+                    state = state.topBar,
+                    selectionBar = state.selectionBar,
                     onNavigationClick = { onNavigationClick() },
                     onSearchExpand = { expandSearchView() },
                     onSearchCollapse = { collapseSearchView() },
@@ -412,7 +410,8 @@ class FileListFragment : Fragment(), FileItemListener,
             },
             content = { bottomInset ->
                 FileListContent(
-                    state = contentState,
+                    state = state.content,
+                    gridState = gridState,
                     listener = this@FileListFragment,
                     bottomInset = bottomInset,
                     onRefresh = { refresh() },
@@ -420,14 +419,17 @@ class FileListFragment : Fragment(), FileItemListener,
             },
             bottomBar = {
                 FileListBottomBar(
-                    state = bottomBarState,
+                    state = state.bottomBar,
+                    fileName = createFileNameState,
+                    isFileNameFocusRequested = isCreateFileNameFocusRequested,
+                    onFileNameFocused = { isCreateFileNameFocusRequested = false },
                     onClose = { onBottomBarClose() },
                     onAction = { onBottomBarAction(it) },
                 )
             },
             fab = { bottomPadding, endPadding ->
                 FileListFab(
-                    state = fabState,
+                    isExpanded = state.isFabExpanded,
                     bottomPadding = bottomPadding,
                     endPadding = endPadding,
                     onExpandedChange = { setFabExpanded(it) },
@@ -450,7 +452,6 @@ class FileListFragment : Fragment(), FileItemListener,
 
     // mftlrs: the search was a SearchView in the options menu; its state stays in the view model.
     private fun expandSearchView() {
-        topBarState.searchQuery = viewModel.searchViewQuery
         viewModel.isSearchViewExpanded = true
         debouncedSearchRunnable()
     }
@@ -486,7 +487,7 @@ class FileListFragment : Fragment(), FileItemListener,
     // mftlrs: the modal navigation drawer; the persistent one is FILE_LIST_PERSISTENT_DRAWER_OPEN.
     private fun setNavigationOpen(open: Boolean) {
         val isOpen = open && !resources.configuration.isPersistentNavigation
-        navigationState.isOpen = isOpen
+        viewModel.setNavigationOpen(isOpen)
         navigationOnBackPressedCallback.isEnabled = isOpen
     }
 
@@ -527,17 +528,19 @@ class FileListFragment : Fragment(), FileItemListener,
     }
 
     fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean {
+        val state = viewModel.uiState.value
         // mftlrs: alphabetic shortcut of menu/file_list_paste.xml; a disabled item did not react.
-        if (bottomBarState.isVisible && keyCode == KeyEvent.KEYCODE_V && bottomBarState.isActionEnabled) {
-            val action = bottomBarState.action
+        val bottomBar = state.bottomBar
+        if (bottomBar.isVisible && keyCode == KeyEvent.KEYCODE_V && bottomBar.isActionEnabled) {
+            val action = bottomBar.action
             if (action == FileListBottomBarAction.PASTE || action == FileListBottomBarAction.EXTRACT_HERE) {
                 onBottomBarAction(action)
                 return true
             }
         }
         // mftlrs: alphabetic shortcuts of menu/file_list_select.xml and file_list_pick.xml.
-        if (topBarState.isSelectionMode) {
-            val selectionAction = topBarState.selectionActions.firstOrNull {
+        if (state.selectionBar.isVisible) {
+            val selectionAction = state.selectionBar.actions.firstOrNull {
                 when (keyCode) {
                     KeyEvent.KEYCODE_X -> it == FileListSelectionAction.CUT
                     KeyEvent.KEYCODE_C ->
@@ -556,102 +559,12 @@ class FileListFragment : Fragment(), FileItemListener,
             KeyEvent.KEYCODE_L -> FileListTopBarAction.NAVIGATE_TO
             KeyEvent.KEYCODE_R -> FileListTopBarAction.REFRESH
             KeyEvent.KEYCODE_A ->
-                if (topBarState.isSelectAllVisible) FileListTopBarAction.SELECT_ALL else null
+                if (state.topBar.isSelectAllVisible) FileListTopBarAction.SELECT_ALL else null
             KeyEvent.KEYCODE_H -> FileListTopBarAction.SHOW_HIDDEN_FILES
             else -> null
         } ?: return false
         onTopBarAction(action)
         return true
-    }
-
-    private fun onCurrentPathChanged(path: Path) {
-        updateSelectionBar()
-        updateBottomBar()
-    }
-
-    private fun onSearchViewExpandedChanged(expanded: Boolean) {
-        if (expanded) {
-            topBarState.searchQuery = viewModel.searchViewQuery
-        }
-        topBarState.isSearchExpanded = expanded
-    }
-
-    private fun onFileListChanged(stateful: Stateful<List<FileItem>>) {
-        val files = stateful.value
-        val isSearching = viewModel.searchState.isSearching
-        topBarState.subtitle = when {
-            stateful is Failure -> getString(R.string.error)
-            stateful is Loading && !isSearching -> getString(R.string.loading)
-            else -> getSubtitle(files!!)
-        }
-        val hasFiles = !files.isNullOrEmpty()
-        contentState.isRefreshing = stateful is Loading && (hasFiles || isSearching)
-        contentState.isLoading = stateful is Loading && !(hasFiles || isSearching)
-        var errorText: String? = null
-        val throwable = (stateful as? Failure)?.throwable
-        if (throwable != null) {
-            throwable.printStackTrace()
-            val error = throwable.toString()
-            if (hasFiles) {
-                showToast(error)
-            } else {
-                errorText = error
-            }
-        }
-        contentState.errorText = errorText
-        contentState.isEmpty = stateful is Success && !hasFiles
-        if (files != null) {
-            updateAdapterFileList()
-        } else {
-            // mftlrs: a new directory starts from the top, as the cleared RecyclerView did.
-            contentState.files = emptyList()
-            contentState.scrollTo(ScrollPosition(0, 0))
-        }
-        if (stateful is Success) {
-            (viewModel.pendingState as? ScrollPosition)?.let { contentState.scrollTo(it) }
-        }
-    }
-
-    private fun getSubtitle(files: List<FileItem>): String {
-        val directoryCount = files.count { it.attributes.isDirectory }
-        val fileCount = files.size - directoryCount
-        val directoryCountText = if (directoryCount > 0) {
-            getQuantityString(
-                R.plurals.file_list_subtitle_directory_count_format, directoryCount, directoryCount
-            )
-        } else {
-            null
-        }
-        val fileCountText = if (fileCount > 0) {
-            getQuantityString(
-                R.plurals.file_list_subtitle_file_count_format, fileCount, fileCount
-            )
-        } else {
-            null
-        }
-        return when {
-            !directoryCountText.isNullOrEmpty() && !fileCountText.isNullOrEmpty() ->
-                (directoryCountText + getString(R.string.file_list_subtitle_separator)
-                    + fileCountText)
-            !directoryCountText.isNullOrEmpty() -> directoryCountText
-            !fileCountText.isNullOrEmpty() -> fileCountText
-            else -> getString(R.string.empty)
-        }
-    }
-
-    private fun onViewTypeChanged(viewType: FileViewType) {
-        // mftlrs: the column count is computed by FileListContent from its actual width.
-        contentState.viewType = viewType
-        topBarState.viewType = viewType
-    }
-
-    private fun onSortOptionsChanged(sortOptions: FileSortOptions) {
-        updateAdapterFileList()
-        topBarState.sortOptions = sortOptions
-    }
-
-    private fun onViewSortPathSpecificChanged(pathSpecific: Boolean) {
-        topBarState.isViewSortPathSpecific = pathSpecific
     }
 
     private fun navigateUp() {
@@ -675,31 +588,6 @@ class FileListFragment : Fragment(), FileItemListener,
         Settings.FILE_LIST_SHOW_HIDDEN_FILES.putValue(showHiddenFiles)
     }
 
-    private fun onShowHiddenFilesChanged(showHiddenFiles: Boolean) {
-        updateAdapterFileList()
-        topBarState.showHiddenFiles = showHiddenFiles
-    }
-
-    // mftlrs: sorting moved here from the removed FileListAdapter.
-    private fun updateAdapterFileList() {
-        // mftlrs: may be called by sort options before the file list has a value.
-        var files = viewModel.fileListLiveData.value?.value ?: return
-        if (!Settings.FILE_LIST_SHOW_HIDDEN_FILES.valueCompat) {
-            files = files.filterNot { it.isHidden }
-        }
-        val isSearching = viewModel.searchState.isSearching
-        if (!isSearching) {
-            files = files.sortedWith(viewModel.sortOptions.createComparator())
-        }
-        if (isSearching != lastIsSearching) {
-            lastIsSearching = isSearching
-            contentState.scrollTo(ScrollPosition(0, 0))
-        }
-        contentState.files = files
-    }
-
-    private var lastIsSearching = false
-
     private fun share() {
         shareFile(currentPath, MimeType.DIRECTORY)
     }
@@ -719,7 +607,7 @@ class FileListFragment : Fragment(), FileItemListener,
 
     override fun navigateTo(path: Path) {
         collapseSearchView()
-        viewModel.navigateTo(contentState.scrollPosition, path)
+        viewModel.navigateTo(gridState.scrollPosition, path)
     }
 
     private fun copyPath(path: Path) {
@@ -732,25 +620,15 @@ class FileListFragment : Fragment(), FileItemListener,
         startActivitySafe(intent)
     }
 
-    private fun onPickOptionsChanged(pickOptions: PickOptions?) {
-        val title = if (pickOptions == null) {
-            getString(R.string.file_list_title)
-        } else {
-            val count = if (pickOptions.allowMultiple) Int.MAX_VALUE else 1
-            when (pickOptions.mode) {
-                PickOptions.Mode.OPEN_FILE ->
-                    getQuantityString(R.plurals.file_list_title_open_file, count)
-                PickOptions.Mode.CREATE_FILE -> getString(R.string.file_list_title_create_file)
-                PickOptions.Mode.OPEN_DIRECTORY ->
-                    getQuantityString(R.plurals.file_list_title_open_directory, count)
-            }
+    // mftlrs: was in updateBottomToolbar(); the file name field is a Compose state kept here.
+    private fun initCreateFileName(pickOptions: PickOptions?) {
+        if (pickOptions?.mode != PickOptions.Mode.CREATE_FILE ||
+            viewModel.isCreateFileNameEditInitialized) {
+            return
         }
-        requireActivity().title = title
-        topBarState.title = title
-        topBarState.isSelectAllVisible = pickOptions == null || pickOptions.allowMultiple
-        updateSelectionBar()
-        updateBottomBar()
-        contentState.pickOptions = pickOptions
+        setCreateFileName(pickOptions.fileName!!)
+        isCreateFileNameFocusRequested = true
+        viewModel.isCreateFileNameEditInitialized = true
     }
 
     private fun pickFiles(files: FileItemSet) {
@@ -787,64 +665,6 @@ class FileListFragment : Fragment(), FileItemListener,
         }
     }
 
-    private fun onSelectedFilesChanged(files: FileItemSet) {
-        updateSelectionBar()
-        contentState.selectedPaths = files.mapTo(mutableSetOf()) { it.path }
-    }
-
-    // mftlrs: the selection bar is in FileListTopBar; was updateOverlayToolbar() with
-    // menu/file_list_select.xml and file_list_pick.xml.
-    private fun updateSelectionBar() {
-        val files = viewModel.selectedFiles
-        if (files.isEmpty()) {
-            topBarState.isSelectionMode = false
-            return
-        }
-        topBarState.selectionTitle = getString(R.string.file_list_select_title_format, files.size)
-        val pickOptions = viewModel.pickOptions
-        topBarState.selectionActions = if (pickOptions != null) {
-            val isOpen = when (pickOptions.mode) {
-                PickOptions.Mode.OPEN_FILE, PickOptions.Mode.OPEN_DIRECTORY -> true
-                PickOptions.Mode.CREATE_FILE -> false
-            }
-            buildList {
-                add(if (isOpen) FileListSelectionAction.OPEN else FileListSelectionAction.CREATE)
-                if (pickOptions.allowMultiple) {
-                    add(FileListSelectionAction.SELECT_ALL)
-                }
-            }
-        } else {
-            val isAnyFileReadOnly = files.any { it.path.fileSystem.isReadOnly }
-            val areAllFilesArchivePaths = files.all { it.path.isArchivePath }
-            val areAllFilesArchiveFiles = files.all { it.isArchiveFile }
-            val isCurrentPathReadOnly = viewModel.currentPath.fileSystem.isReadOnly
-            buildList {
-                if (!isAnyFileReadOnly) {
-                    add(FileListSelectionAction.CUT)
-                }
-                add(
-                    if (areAllFilesArchivePaths) {
-                        FileListSelectionAction.COPY_EXTRACT
-                    } else {
-                        FileListSelectionAction.COPY
-                    }
-                )
-                if (!isAnyFileReadOnly) {
-                    add(FileListSelectionAction.DELETE)
-                }
-                if (areAllFilesArchiveFiles) {
-                    add(FileListSelectionAction.EXTRACT)
-                }
-                if (!isCurrentPathReadOnly) {
-                    add(FileListSelectionAction.ARCHIVE)
-                }
-                add(FileListSelectionAction.SHARE)
-                add(FileListSelectionAction.SELECT_ALL)
-            }
-        }
-        topBarState.isSelectionMode = true
-    }
-
     // mftlrs: was onOverlayActionModeMenuItemClicked().
     private fun onSelectionAction(action: FileListSelectionAction) {
         val files = viewModel.selectedFiles
@@ -870,7 +690,7 @@ class FileListFragment : Fragment(), FileItemListener,
 
     // mftlrs: was setText() and setSelection() on the EditText; the base name is selected.
     private fun setCreateFileName(fileName: String) {
-        bottomBarState.fileName.edit {
+        createFileNameState.edit {
             replace(0, length, fileName)
             selection = TextRange(0, fileName.asFileName().baseName.length)
         }
@@ -929,82 +749,9 @@ class FileListFragment : Fragment(), FileItemListener,
 
     private fun selectAllFiles() {
         val pickOptions = viewModel.pickOptions
-        val files = contentState.files.filterTo(fileItemSetOf()) { isFileSelectable(it, pickOptions) }
+        val files = viewModel.uiState.value.content.files
+            .filterTo(fileItemSetOf()) { isFileSelectable(it, pickOptions) }
         selectFiles(files, true)
-    }
-
-    private fun onPasteStateChanged(pasteState: PasteState) {
-        updateBottomBar()
-    }
-
-    // mftlrs: was updateBottomToolbar() with menu/file_list_paste.xml and file_list_pick_bottom.xml.
-    private fun updateBottomBar() {
-        val pickOptions = viewModel.pickOptions
-        if (pickOptions != null) {
-            when (pickOptions.mode) {
-                PickOptions.Mode.CREATE_FILE -> {
-                    bottomBarState.isCreateFileMode = true
-                    bottomBarState.action = FileListBottomBarAction.CREATE
-                    if (!viewModel.isCreateFileNameEditInitialized) {
-                        setCreateFileName(pickOptions.fileName!!)
-                        bottomBarState.isFileNameFocusRequested = true
-                        viewModel.isCreateFileNameEditInitialized = true
-                    }
-                }
-                PickOptions.Mode.OPEN_DIRECTORY -> {
-                    val path = viewModel.currentPath
-                    val navigationRoot = NavigationRootMapLiveData.valueCompat[path]
-                    val name = navigationRoot?.getName(requireContext()) ?: path.name
-                    bottomBarState.title =
-                        getString(R.string.file_list_open_current_directory_format, name)
-                    bottomBarState.isCreateFileMode = false
-                    bottomBarState.action = FileListBottomBarAction.OPEN
-                }
-                else -> {
-                    hideBottomBar()
-                    return
-                }
-            }
-            bottomBarState.isActionEnabled = true
-        } else {
-            val pasteState = viewModel.pasteState
-            val files = pasteState.files
-            if (files.isEmpty()) {
-                hideBottomBar()
-                return
-            }
-            val areAllFilesArchivePaths = files.all { it.path.isArchivePath }
-            bottomBarState.title = getString(
-                if (pasteState.copy) {
-                    if (areAllFilesArchivePaths) {
-                        R.string.file_list_paste_extract_title_format
-                    } else {
-                        R.string.file_list_paste_copy_title_format
-                    }
-                } else {
-                    R.string.file_list_paste_move_title_format
-                }, files.size
-            )
-            bottomBarState.isCreateFileMode = false
-            bottomBarState.action = if (areAllFilesArchivePaths) {
-                FileListBottomBarAction.EXTRACT_HERE
-            } else {
-                FileListBottomBarAction.PASTE
-            }
-            bottomBarState.isActionEnabled = !viewModel.currentPath.fileSystem.isReadOnly
-        }
-        bottomBarState.isVisible = true
-    }
-
-    // mftlrs: was finishing the bottom action mode.
-    private fun hideBottomBar() {
-        if (!bottomBarState.isVisible) {
-            return
-        }
-        bottomBarState.isVisible = false
-        if (viewModel.pickOptions == null) {
-            viewModel.clearPasteState()
-        }
     }
 
     private fun onBottomBarClose() {
@@ -1012,7 +759,8 @@ class FileListFragment : Fragment(), FileItemListener,
         if (pickOptions != null) {
             requireActivity().finish()
         } else {
-            hideBottomBar()
+            // mftlrs: was finishing the bottom action mode; the bar hides by the paste state.
+            viewModel.clearPasteState()
         }
     }
 
@@ -1020,7 +768,7 @@ class FileListFragment : Fragment(), FileItemListener,
         when (action) {
             FileListBottomBarAction.OPEN -> pickPaths(linkedSetOf(viewModel.currentPath))
             FileListBottomBarAction.CREATE -> {
-                val fileName = bottomBarState.fileName.text.toString()
+                val fileName = createFileNameState.text.toString()
                 if (fileName.isEmpty()) {
                     showToast(R.string.file_list_create_file_name_error_empty)
                 } else if (fileName.asFileNameOrNull() == null) {
@@ -1041,7 +789,7 @@ class FileListFragment : Fragment(), FileItemListener,
     }
 
     private fun setFabExpanded(expanded: Boolean) {
-        fabState.isExpanded = expanded
+        viewModel.setFabExpanded(expanded)
         fabOnBackPressedCallback.isEnabled = expanded
     }
 
@@ -1070,10 +818,6 @@ class FileListFragment : Fragment(), FileItemListener,
 
     private fun makePathListForJob(files: FileItemSet): List<Path> =
         files.map { it.path }.sortedBy { it.toUri() }
-
-    private fun onFileNameEllipsizeChanged(fileNameEllipsize: TextUtils.TruncateAt) {
-        contentState.nameEllipsize = fileNameEllipsize
-    }
 
     override fun clearSelectedFiles() {
         viewModel.clearSelectedFiles()
@@ -1181,7 +925,7 @@ class FileListFragment : Fragment(), FileItemListener,
         }
         var paths = mutableListOf<Path>()
         // We need the ordered list from our adapter instead of the list from FileListLiveData.
-        for (file in contentState.files) {
+        for (file in viewModel.uiState.value.content.files) {
             val filePath = file.path
             if (file.mimeType.isImage || filePath == path) {
                 paths.add(filePath)

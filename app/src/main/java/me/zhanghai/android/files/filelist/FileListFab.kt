@@ -29,8 +29,6 @@ import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -49,11 +47,6 @@ import me.zhanghai.android.files.R
 private const val OVERLAY_ALPHA = 0.87f // ThemedSpeedDialView: colorSurface с прозрачностью 0,87
 private const val EXPANDED_ROTATION = 135f // sdMainFabAnimationRotateAngle
 
-// Состояние FAB. Заполняет FileListFragment, Compose только рисует
-internal class FileListFabState {
-    var isExpanded by mutableStateOf(false)
-}
-
 internal enum class FileListFabAction(
     @StringRes val titleRes: Int,
     @DrawableRes val iconRes: Int,
@@ -64,7 +57,7 @@ internal enum class FileListFabAction(
 
 @Composable
 internal fun FileListFab(
-    state: FileListFabState,
+    isExpanded: Boolean,
     bottomPadding: Dp, // над нижней панелью или панелью навигации
     endPadding: Dp, // панель навигации справа (ландшафт)
     onExpandedChange: (Boolean) -> Unit,
@@ -76,7 +69,7 @@ internal fun FileListFab(
     // Пустое место не забирает касания: экран под слоем FAB работает, пока FAB закрыт
     Box(modifier = Modifier.fillMaxSize()) {
         AnimatedVisibility(
-            visible = state.isExpanded,
+            visible = isExpanded,
             enter = fadeIn(tween(duration)),
             exit = fadeOut(tween(duration)),
         ) {
@@ -94,7 +87,7 @@ internal fun FileListFab(
             horizontalAlignment = Alignment.End,
         ) {
             AnimatedVisibility(
-                visible = state.isExpanded,
+                visible = isExpanded,
                 enter = fadeIn(tween(duration)),
                 exit = fadeOut(tween(duration)),
             ) {
@@ -109,9 +102,9 @@ internal fun FileListFab(
                 }
             }
             MainButton(
-                isExpanded = state.isExpanded,
+                isExpanded = isExpanded,
                 duration = duration,
-                onClick = { onExpandedChange(!state.isExpanded) },
+                onClick = { onExpandedChange(!isExpanded) },
             )
         }
     }

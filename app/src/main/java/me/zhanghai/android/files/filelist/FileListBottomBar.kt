@@ -21,35 +21,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.zhanghai.android.files.R
+import me.zhanghai.android.files.navigation.NavigationRootMapLiveData
+import me.zhanghai.android.files.util.valueCompat
 
 // Нижняя панель главного экрана — перенос тулбара с menu/file_list_paste.xml и file_list_pick_bottom.xml:
 // крестик, заголовок или поле имени файла, кнопка действия. Фон, тень и выезд снизу — у FileListScreen
-
-// Состояние панели. Заполняет FileListFragment, Compose только рисует
-internal class FileListBottomBarState {
-    var isVisible by mutableStateOf(false) // при скрытии остальное не сбрасывается: панель уезжает с ним
-    var title by mutableStateOf("")
-    var isCreateFileMode by mutableStateOf(false) // поле имени вместо заголовка
-    var action by mutableStateOf(FileListBottomBarAction.PASTE)
-    var isActionEnabled by mutableStateOf(true)
-    var isFileNameFocusRequested by mutableStateOf(false) // поле забирает фокус и сбрасывает флаг
-    val fileName = TextFieldState()
-}
 
 internal enum class FileListBottomBarAction(
     @StringRes val titleRes: Int,
@@ -63,11 +52,15 @@ internal enum class FileListBottomBarAction(
 
 @Composable
 internal fun FileListBottomBar(
-    state: FileListBottomBarState,
+    state: FileListUiState.BottomBar,
+    fileName: TextFieldState, // поле имени — во фрагменте: он задаёт имя и читает его по «Сохранить»
+    isFileNameFocusRequested: Boolean,
+    onFileNameFocused: () -> Unit, // поле забрало фокус, флаг можно сбросить
     onClose: () -> Unit,
     onAction: (FileListBottomBarAction) -> Unit,
 ) {
     val paddingStart = dimensionResource(R.dimen.file_list_toolbar_padding_start)
+    val title = state.title
 
     Row(
         modifier = Modifier
@@ -84,15 +77,17 @@ internal fun FileListBottomBar(
             onClick = onClose,
         )
         Spacer(modifier = Modifier.width(TITLE_START - 48.dp - paddingStart))
-        if (state.isCreateFileMode) {
+        if (title is FileListUiState.BottomBarTitle.FileName) {
             FileNameField(
-                state = state,
+                state = fileName,
+                isFocusRequested = isFileNameFocusRequested,
+                onFocused = onFileNameFocused,
                 onConfirm = { onAction(FileListBottomBarAction.CREATE) },
                 modifier = Modifier.weight(1f),
             )
         } else {
             Text(
-                text = state.title,
+                text = titleText(title),
                 modifier = Modifier.weight(1f),
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
@@ -110,25 +105,42 @@ internal fun FileListBottomBar(
     }
 }
 
+// «Перемещение: N» и др. или «Открыть «<папка>»»: имя хранилища, если папка — его корень
+@Composable
+private fun titleText(title: FileListUiState.BottomBarTitle): String =
+    when (title) {
+        FileListUiState.BottomBarTitle.FileName -> ""
+        is FileListUiState.BottomBarTitle.Paste -> stringResource(title.formatRes, title.count)
+        is FileListUiState.BottomBarTitle.OpenDirectory -> {
+            val context = LocalContext.current
+            val name = remember(title.path) {
+                NavigationRootMapLiveData.valueCompat[title.path]?.getName(context) ?: title.path.name
+            }
+            stringResource(R.string.file_list_open_current_directory_format, name)
+        }
+    }
+
 // Поле имени без рамки, как EditText с background="@null"; Enter — «Сохранить»
 @Composable
 private fun FileNameField(
-    state: FileListBottomBarState,
+    state: TextFieldState,
+    isFocusRequested: Boolean,
+    onFocused: () -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
     val textStyle = MaterialTheme.typography.bodyLarge
 
-    LaunchedEffect(state.isFileNameFocusRequested) {
-        if (!state.isFileNameFocusRequested) return@LaunchedEffect
+    LaunchedEffect(isFocusRequested) {
+        if (!isFocusRequested) return@LaunchedEffect
 
         focusRequester.requestFocus()
-        state.isFileNameFocusRequested = false
+        onFocused()
     }
 
     BasicTextField(
-        state = state.fileName,
+        state = state,
         modifier = modifier.focusRequester(focusRequester),
         textStyle = textStyle.copy(color = MaterialTheme.colorScheme.onSurface),
         lineLimits = TextFieldLineLimits.SingleLine,
@@ -137,7 +149,7 @@ private fun FileNameField(
         onKeyboardAction = { onConfirm() },
         decorator = { innerTextField ->
             Box(contentAlignment = Alignment.CenterStart) {
-                if (state.fileName.text.isEmpty()) {
+                if (state.text.isEmpty()) {
                     Text(
                         text = stringResource(R.string.file_list_create_file_name_hint),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

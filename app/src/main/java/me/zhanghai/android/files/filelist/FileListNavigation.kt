@@ -39,7 +39,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -89,15 +88,10 @@ private val SCRIM_COLOR = Color(0x99000000) // DrawerLayout.DEFAULT_SCRIM_COLOR
 internal val Configuration.isPersistentNavigation: Boolean
     get() = smallestScreenWidthDp >= 600 && orientation == Configuration.ORIENTATION_LANDSCAPE
 
-// Открыта ли выезжающая панель. Заполняет FileListFragment («Назад», поворот), Compose синхронизирует с жестами
-internal class FileListNavigationState {
-    var isOpen by mutableStateOf(false)
-}
-
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun FileListNavigation(
-    state: FileListNavigationState,
+    isOpen: Boolean, // выезжающая панель; хранит FileListViewModel, жесты сообщают через onOpenChange
     isPersistentOpen: Boolean, // Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN, только для панели рядом с экраном
     windowInsets: Insets, // px, как у FileListScreen
     items: List<NavigationItem?>,
@@ -134,7 +128,7 @@ internal fun FileListNavigation(
             )
         } else {
             ModalNavigation(
-                state = state,
+                isOpen = isOpen,
                 onOpenChange = onOpenChange,
                 sheet = { sheet(MODAL_ELEVATION) },
                 content = { content(windowInsets) },
@@ -157,18 +151,18 @@ private fun sheetWidth(maxWidth: Dp, insetLeftPx: Int): Dp {
 
 @Composable
 private fun ModalNavigation(
-    state: FileListNavigationState,
+    isOpen: Boolean,
     onOpenChange: (Boolean) -> Unit,
     sheet: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val drawerState = rememberDrawerState(if (state.isOpen) DrawerValue.Open else DrawerValue.Closed)
+    val drawerState = rememberDrawerState(if (isOpen) DrawerValue.Open else DrawerValue.Closed)
     val currentOnOpenChange by rememberUpdatedState(onOpenChange)
 
-    // Фрагмент открывает и закрывает панель через state, жесты — через drawerState; оба сводятся к state.isOpen
-    LaunchedEffect(state.isOpen) {
+    // Фрагмент открывает и закрывает панель через isOpen, жесты — через drawerState; оба сводятся к isOpen
+    LaunchedEffect(isOpen) {
         try {
-            if (state.isOpen) drawerState.open() else drawerState.close()
+            if (isOpen) drawerState.open() else drawerState.close()
         } finally {
             currentOnOpenChange(drawerState.currentValue == DrawerValue.Open) // анимацию мог прервать жест
         }

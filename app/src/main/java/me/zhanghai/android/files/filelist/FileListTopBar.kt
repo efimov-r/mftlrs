@@ -51,6 +51,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -70,24 +71,6 @@ import me.zhanghai.android.files.filelist.FileSortOptions.Order
 
 internal val TITLE_START = 72.dp // contentInsetStartWithNavigation тулбара; нужен и нижней панели
 private val SUBTITLE_SIZE = 12.sp // TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Small, там 12dp
-
-// Состояние панели. Заполняет FileListFragment из своих наблюдателей LiveData, Compose только рисует
-internal class FileListTopBarState {
-    var title by mutableStateOf("")
-    var subtitle by mutableStateOf("")
-    var isSearchExpanded by mutableStateOf(false)
-    var searchQuery by mutableStateOf("") // начальный текст поля при раскрытии
-    var viewType by mutableStateOf(FileViewType.LIST)
-    var sortOptions by mutableStateOf(FileSortOptions(By.NAME, Order.ASCENDING, true))
-    var isViewSortPathSpecific by mutableStateOf(false)
-    var isSelectAllVisible by mutableStateOf(true)
-    var showHiddenFiles by mutableStateOf(false)
-
-    // Панель выделения. При скрытии заголовок и пункты не сбрасываются: панель гаснет с ними
-    var isSelectionMode by mutableStateOf(false)
-    var selectionTitle by mutableStateOf("")
-    var selectionActions by mutableStateOf(emptyList<FileListSelectionAction>())
-}
 
 // Пункты панели выделения: с иконкой — кнопка на панели, без — пункт меню ⋮
 internal enum class FileListSelectionAction(
@@ -130,9 +113,53 @@ internal enum class FileListTopBarAction {
     CREATE_SHORTCUT,
 }
 
+// Заголовок экрана по режиму выбора; его же фрагмент ставит заголовком Activity
+@Composable
+internal fun fileListTitle(pickOptions: PickOptions?): String {
+    if (pickOptions == null) return stringResource(R.string.file_list_title)
+
+    val count = if (pickOptions.allowMultiple) Int.MAX_VALUE else 1
+    return when (pickOptions.mode) {
+        PickOptions.Mode.OPEN_FILE -> pluralStringResource(R.plurals.file_list_title_open_file, count)
+        PickOptions.Mode.CREATE_FILE -> stringResource(R.string.file_list_title_create_file)
+        PickOptions.Mode.OPEN_DIRECTORY -> pluralStringResource(R.plurals.file_list_title_open_directory, count)
+    }
+}
+
+// «Загрузка…», «Ошибка», «N папок, M файлов» или «Пусто», как FileListFragment.getSubtitle
+@Composable
+private fun subtitleText(subtitle: FileListUiState.Subtitle?): String =
+    when (subtitle) {
+        null -> ""
+        FileListUiState.Subtitle.Loading -> stringResource(R.string.loading)
+        FileListUiState.Subtitle.Error -> stringResource(R.string.error)
+        is FileListUiState.Subtitle.Counts -> {
+            val directories = subtitle.directoryCount
+            val files = subtitle.fileCount
+            val directoriesText = if (directories > 0) {
+                pluralStringResource(R.plurals.file_list_subtitle_directory_count_format, directories, directories)
+            } else {
+                null
+            }
+            val filesText = if (files > 0) {
+                pluralStringResource(R.plurals.file_list_subtitle_file_count_format, files, files)
+            } else {
+                null
+            }
+            when {
+                directoriesText != null && filesText != null ->
+                    directoriesText + stringResource(R.string.file_list_subtitle_separator) + filesText
+                directoriesText != null -> directoriesText
+                filesText != null -> filesText
+                else -> stringResource(R.string.empty)
+            }
+        }
+    }
+
 @Composable
 internal fun FileListTopBar(
-    state: FileListTopBarState,
+    state: FileListUiState.TopBar,
+    selectionBar: FileListUiState.SelectionBar, // при скрытии гаснет со старыми заголовком и пунктами
     onNavigationClick: () -> Unit,
     onSearchExpand: () -> Unit,
     onSearchCollapse: () -> Unit,
@@ -154,16 +181,16 @@ internal fun FileListTopBar(
             onSearchSubmit = onSearchSubmit,
             onAction = onAction,
             // Под панелью выделения основная остаётся (поиск не теряет текст), но скрыта от TalkBack и тестов
-            modifier = if (state.isSelectionMode) Modifier.clearAndSetSemantics {} else Modifier,
+            modifier = if (selectionBar.isVisible) Modifier.clearAndSetSemantics {} else Modifier,
         )
         AnimatedVisibility(
-            visible = state.isSelectionMode,
+            visible = selectionBar.isVisible,
             enter = fadeIn(tween(fadeDuration)),
             exit = fadeOut(tween(fadeDuration)),
         ) {
             SelectionBar(
-                title = state.selectionTitle,
-                actions = state.selectionActions,
+                title = stringResource(R.string.file_list_select_title_format, selectionBar.count),
+                actions = selectionBar.actions,
                 onClose = onSelectionClose,
                 onAction = onSelectionAction,
             )
@@ -173,7 +200,7 @@ internal fun FileListTopBar(
 
 @Composable
 private fun MainBar(
-    state: FileListTopBarState,
+    state: FileListUiState.TopBar,
     onNavigationClick: () -> Unit,
     onSearchExpand: () -> Unit,
     onSearchCollapse: () -> Unit,
@@ -211,8 +238,8 @@ private fun MainBar(
             )
             Spacer(modifier = Modifier.width(TITLE_START - 48.dp - dimensionResource(R.dimen.file_list_toolbar_padding_start)))
             Title(
-                title = state.title,
-                subtitle = state.subtitle,
+                title = fileListTitle(state.pickOptions),
+                subtitle = subtitleText(state.subtitle),
                 modifier = Modifier.weight(1f),
             )
             BarIcon(
@@ -398,7 +425,7 @@ private fun SearchField(
 // «Вид и сортировка»: группы с одним выбором и флажки, между группами — разделитель
 @Composable
 private fun ViewSortMenu(
-    state: FileListTopBarState,
+    state: FileListUiState.TopBar,
     onAction: (FileListTopBarAction) -> Unit,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -455,7 +482,7 @@ private fun ViewSortMenu(
 // Меню ⋮: пункты и порядок — как в menu/file_list.xml
 @Composable
 private fun OverflowMenu(
-    state: FileListTopBarState,
+    state: FileListUiState.TopBar,
     onAction: (FileListTopBarAction) -> Unit,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
