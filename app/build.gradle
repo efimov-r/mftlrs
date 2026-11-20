@@ -153,6 +153,7 @@ dependencies {
     // mftlrs: Compose for the new main screen.
     implementation platform('androidx.compose:compose-bom:2026.09.00')
     implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.activity:activity-compose:1.13.0' // setContent and BackHandler in FileListActivity
     implementation 'androidx.compose.runtime:runtime-livedata'
     implementation "androidx.lifecycle:lifecycle-runtime-compose:$androidx_lifecycle_version" // collectAsStateWithLifecycle
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$androidx_lifecycle_version" // viewModel() in the properties dialog

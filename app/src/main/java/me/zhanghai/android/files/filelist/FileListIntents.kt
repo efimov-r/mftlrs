@@ -31,7 +31,7 @@ import me.zhanghai.android.files.util.putArgs
 import me.zhanghai.android.files.util.withChooser
 import me.zhanghai.android.files.viewer.image.ImageViewerActivity
 
-// Интенты главного экрана — перенос из FileListFragment. Собирает их фрагмент, выполняя события FileListViewModel
+// Интенты главного экрана — перенос из FileListFragment. Собирает их FileListActivity, выполняя события FileListViewModel
 
 private const val IMAGE_VIEWER_ACTIVITY_PATH_LIST_SIZE_MAX = 1000 // больше — TransactionTooLargeException
 

@@ -64,8 +64,8 @@ import me.zhanghai.android.files.util.valueCompat
 import java.io.Closeable
 
 // TODO: Use SavedStateHandle to save state.
-// mftlrs: also the actions of the main screen, which were in FileListFragment; it executes the
-// one-time events and is still the listener of the dialogs.
+// mftlrs: also the actions of the main screen, which were in FileListFragment (removed);
+// FileListActivity executes the one-time events.
 class FileListViewModel : ViewModel(), FileItemListener {
     private val trailLiveData = TrailLiveData()
     val hasTrail: Boolean
@@ -73,7 +73,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
     val pendingState: Parcelable?
         get() = trailLiveData.valueCompat.pendingState
 
-    // mftlrs: the scroll position of the list, updated by FileListFragment; saved in the trail
+    // mftlrs: the scroll position of the list, updated by FileListActivity; saved in the trail
     // when navigating away, as the state of GridLayoutManager was.
     var scrollPosition = ScrollPosition(0, 0)
 
@@ -295,7 +295,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), _uiState.value)
 
-    // mftlrs: one-time events for FileListFragment.
+    // mftlrs: one-time events for FileListActivity.
     private val _events = Channel<FileListEvent>(Channel.BUFFERED)
     internal val events: Flow<FileListEvent> = _events.receiveAsFlow()
 
@@ -1086,7 +1086,7 @@ internal data class FileListUiState(
     }
 }
 
-// mftlrs: one-time events of the main screen, executed by FileListFragment.
+// mftlrs: one-time events of the main screen, executed by FileListActivity.
 internal sealed interface FileListEvent {
     data class ScrollTo(val position: ScrollPosition) : FileListEvent
 
@@ -1144,7 +1144,7 @@ internal sealed interface FileListDialog {
 }
 
 // mftlrs: the rationale dialogs of the permission requests, were ShowRequest*DialogFragment. The
-// result goes to FileListFragment, which has the permission launchers.
+// result goes to FileListPermissions, which has the permission launchers.
 internal enum class FileListPermissionDialog(@StringRes val messageRes: Int, @StringRes val confirmRes: Int) {
     ALL_FILES_ACCESS(R.string.all_files_access_rationale_message, android.R.string.ok),
     STORAGE(R.string.storage_permission_rationale_message, android.R.string.ok),

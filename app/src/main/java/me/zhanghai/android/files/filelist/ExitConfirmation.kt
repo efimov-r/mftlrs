@@ -5,8 +5,8 @@
 
 package me.zhanghai.android.files.filelist
 
-import android.view.ViewGroup
-import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,66 +17,34 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.setViewTreeLifecycleOwner
-import androidx.savedstate.findViewTreeSavedStateRegistryOwner
-import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import me.zhanghai.android.files.R
-import me.zhanghai.android.files.theme.MftlrsTheme
 import me.zhanghai.android.files.ui.compose.MftlrsBottomSheet
-import me.zhanghai.android.files.util.addOnBackPressedCallback
 
 // «Назад» спрашивает: закрыть приложение, свернуть или остаться.
-// Вызывать раньше остальных addOnBackPressedCallback: последний добавленный срабатывает первым
-fun Fragment.addExitConfirmation(): OnBackPressedCallback {
-    val visible = mutableStateOf(false)
-    val activity = requireActivity()
-    val container = activity.findViewById<ViewGroup>(android.R.id.content)
+// Ставить раньше остальных BackHandler экрана: позже добавленный срабатывает первым
+@Composable
+internal fun FileListExitConfirmation(enabled: Boolean) {
+    val activity = requireNotNull(LocalActivity.current)
+    var visible by remember { mutableStateOf(false) }
 
-    val composeView = ComposeView(activity).apply {
-        setViewTreeLifecycleOwner(viewLifecycleOwner)
-        setViewTreeSavedStateRegistryOwner(requireView().findViewTreeSavedStateRegistryOwner()) // активити без setContentView: владельцев нет на decor view
-        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-        setContent {
-            MftlrsTheme {
-                ExitSheet(
-                    visible = visible.value,
-                    onClose = { activity.finishAndRemoveTask() }, // и убрать из недавних
-                    onMinimize = {
-                        visible.value = false
-                        activity.moveTaskToBack(true)
-                    },
-                    onDismissRequest = { visible.value = false },
-                )
-            }
-        }
-    }
-    container.addView(composeView, ViewGroup.LayoutParams(0, 0)) // сам ничего не рисует, панель — в своём окне
+    BackHandler(enabled) { visible = true }
 
-    viewLifecycleOwner.lifecycle.addObserver(
-        object : DefaultLifecycleObserver {
-            override fun onDestroy(owner: LifecycleOwner) {
-                container.removeView(composeView)
-            }
-        }
+    ExitSheet(
+        visible = visible,
+        onClose = { activity.finishAndRemoveTask() }, // и убрать из недавних
+        onMinimize = {
+            visible = false
+            activity.moveTaskToBack(true)
+        },
+        onDismissRequest = { visible = false },
     )
-
-    val callback = object : OnBackPressedCallback(true) {
-        override fun handleOnBackPressed() {
-            visible.value = true
-        }
-    }
-    addOnBackPressedCallback(callback)
-
-    return callback
 }
 
 @Composable

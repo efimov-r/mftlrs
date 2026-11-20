@@ -33,7 +33,7 @@
 - [x] 10. Логика из `FileListFragment` — в `FileListViewModel`: 10a — состояние (`StateFlow<FileListUiState>`), 10b — действия и события (`Channel`), UI-тесты 49 из 49; 10c — unit-тесты, 41 из 41 ([testing.md](testing.md), «Unit-тесты»)
 - [x] 11. 13 диалогов `filelist` — на Compose (`FileListDialogs.kt`, `MftlrsInputDialog`, unit-тесты 51 из 51)
 - [ ] 11b. «Свойства» на Compose — код готов целиком (`fileproperties/FilePropertiesDialog.kt` и др., unit-тесты 59 из 59); осталось: владельцу — вид и чек-лист 82 на телефоне
-- [ ] 12. Без `FileListFragment`: `FileListActivity.setContent`; весь набор UI-тестов — один прогон здесь, не раньше (решение владельца 2026-11-20); release-сборка на телефоне; весь ручной [чек-лист](file-list-checklist.md) владельцем, один раз
+- [ ] 12. Без `FileListFragment` — готово (`FileListActivity.setContent { FileListRoot }`, `FileListPermissions.kt`, UI-тесты 49 из 49, unit-тесты, release-сборка на телефоне встала); осталось: владельцу — весь ручной [чек-лист](file-list-checklist.md), один раз, в том числе пункты этапов 0–11b выше
 
 ## Отложено
 

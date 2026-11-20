@@ -7,7 +7,7 @@
 | Группа | Кол-во |
 |---|---|
 | Activity | 28 + база `AppActivity` |
-| Fragment полноэкранные | 17 (2 без UI) |
+| Fragment полноэкранные | 16 (2 без UI) |
 | PreferenceFragment | 3 + база |
 | Вкладки свойств файла | 0 — на Compose с 2026-11-20 |
 | DialogFragment | 15 + 1 база (13 диалогов главного экрана и 6 «Свойств» — на Compose с 2026-11-20) |
@@ -28,7 +28,7 @@
 
 | Activity | Пакет | Fragment внутри | Откуда открывается |
 |---|---|---|---|
-| `FileListActivity` | `filelist` | `FileListFragment` | лаунчер; открытие папок и архивов; выбор файла для других приложений (`GET_CONTENT`, `OPEN_DOCUMENT`, `CREATE_DOCUMENT`); ярлыки |
+| `FileListActivity` | `filelist` | нет: `setContent { FileListRoot }`, Compose целиком (с 2026-11-21) | лаунчер; открытие папок и архивов; выбор файла для других приложений (`GET_CONTENT`, `OPEN_DOCUMENT`, `CREATE_DOCUMENT`); ярлыки |
 | `TextEditorActivity` | `viewer.text` | `TextEditorFragment` | `VIEW` для `text/*`, JSON, XML и др. |
 | `ImageViewerActivity` | `viewer.image` | `ImageViewerFragment` | `VIEW` для `image/*` |
 | `SettingsActivity` | `settings` | `SettingsFragment` | меню; `APPLICATION_PREFERENCES` |
@@ -73,13 +73,12 @@
 
 ## Fragment
 
-### Полноэкранные (17)
+### Полноэкранные (16)
 
 Наследуют `androidx.fragment.app.Fragment`, разметка через ViewBinding.
 
 | Fragment | Пакет | Layout | Примечание |
 |---|---|---|---|
-| `FileListFragment` | `filelist` | `file_list_fragment` (`ComposeView` с `FileListNavigation` и `FileListScreen`) | главный экран, ~600 строк: хост Compose, события, разрешения (логика — в `FileListViewModel`); `NavigationFragment` удалён 2026-11-20 |
 | `TextEditorFragment` | `viewer.text` | `text_editor_fragment` | |
 | `ImageViewerFragment` | `viewer.image` | `image_viewer_fragment` | ViewPager2 + `ImageViewerAdapter` |
 | `SettingsFragment` | `settings` | `settings_fragment` | обёртка над `SettingsPreferenceFragment` |
@@ -223,6 +222,6 @@
 
 | Папка | Кол-во | Что |
 |---|---|---|
-| `res/layout/` | 29 | экраны, диалоги, элементы списков; у главного экрана — только `file_list_fragment` (`ComposeView`); `navigation_*` и `layout-sw600dp-land/` удалены 2026-11-20, разметка диалогов главного экрана и «Свойств» — тоже |
+| `res/layout/` | 28 | экраны, диалоги, элементы списков; у главного экрана разметки нет (`file_list_fragment` удалён 2026-11-21); `navigation_*` и `layout-sw600dp-land/` удалены 2026-11-20, разметка диалогов главного экрана и «Свойств» — тоже |
 | `res/menu/` | 2 | `text_editor`, `image_viewer`; все `file_list*` удалены — меню главного экрана на Compose |
 | `res/xml/` | 2 настроек | `settings.xml`, `ftp_server.xml`; ещё `shortcuts.xml`, `netework_security_config.xml` |
