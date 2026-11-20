@@ -1,6 +1,6 @@
 # Экраны и компоненты UI
 
-Перечень Activity, Fragment, диалогов, настроек, адаптеров, своих View и ресурсов разметки, по группам. Пакет везде — `me.zhanghai.android.files.<подпакет>`. Как устроены главный экран и боковая панель — [architecture.md](architecture.md); элементы на Compose — [compose.md](compose.md). Подсчёт — на 2026-11-15, коммит `9b5e15ab`; адаптеры, свои View и разметка обновлены 2026-11-19 после переноса главного экрана на Compose.
+Перечень Activity, Fragment, диалогов, настроек, адаптеров, своих View и ресурсов разметки, по группам. Пакет везде — `me.zhanghai.android.files.<подпакет>`. Как устроены главный экран и боковая панель — [architecture.md](architecture.md); элементы на Compose — [compose.md](compose.md). Подсчёт — на 2026-11-15, коммит `9b5e15ab`; адаптеры, свои View и разметка обновлены 2026-11-19 после переноса главного экрана на Compose; «Свойства» — на Compose с 2026-11-20.
 
 ## Сводка
 
@@ -9,12 +9,12 @@
 | Activity | 28 + база `AppActivity` |
 | Fragment полноэкранные | 17 (2 без UI) |
 | PreferenceFragment | 3 + база |
-| Вкладки свойств файла | 7 + база |
-| DialogFragment | 21 + 2 базы (13 диалогов главного экрана — на Compose с 2026-11-20) |
+| Вкладки свойств файла | 0 — на Compose с 2026-11-20 |
+| DialogFragment | 15 + 1 база (13 диалогов главного экрана и 6 «Свойств» — на Compose с 2026-11-20) |
 | Свои Preference | 15 |
-| Адаптеры | 10 + 6 баз в `ui/` |
-| Свои View и помощники в `ui/` | 36 + 3 на Compose в `ui/compose/` |
-| Разметка `res/` | layout 40, menu 2, XML настроек 2 |
+| Адаптеры | 4 + 5 баз в `ui/` |
+| Свои View и помощники в `ui/` | 34 + 5 на Compose в `ui/compose/` |
+| Разметка `res/` | layout 29, menu 2, XML настроек 2 |
 
 Объём: Kotlin в пакете приложения — ~59 тыс. строк; пакеты с экранами (`filelist`, `storage`, `fileproperties`, `viewer`, `settings`, `navigation`, `ftpserver`, `about`) — ~17,5 тыс. вместе с ViewModel и моделями; `ui/` — ~4,3 тыс.; `layout`, `menu`, `xml` — ~4,6 тыс.
 
@@ -106,21 +106,11 @@
 | `FtpServerPreferenceFragment` | `ftpserver` | `xml/ftp_server.xml` |
 | `StandardDirectoryListPreferenceFragment` | `settings` | строится в коде |
 
-### Вкладки свойств файла (7)
+### Вкладки свойств файла (0)
 
-Наследуют `fileproperties/FilePropertiesTabFragment` (layout `file_properties_tab_fragment`, строки — `file_properties_tab_item`). Показываются в `FilePropertiesDialogFragment`.
+Диалог «Свойства» с 7 вкладками и его 5 диалогов — на Compose (`fileproperties/FilePropertiesDialog.kt` и др., [compose.md](compose.md)) с 2026-11-20. Удалены: `FilePropertiesDialogFragment`, база `FilePropertiesTabFragment`, 7 вкладок-фрагментов, `SetOwner`/`SetGroup`/`SetMode`/`SetSeLinuxContext`/`PermissionList` `DialogFragment` и база `SetPrincipalDialogFragment`, разметка `file_properties_*`, `set_*_dialog`, `permission_*`, `principal_item`, `mode_bit_item`.
 
-| Fragment | Подпакет | Вызывает диалоги |
-|---|---|---|
-| `FilePropertiesBasicTabFragment` | `basic` | |
-| `FilePropertiesPermissionTabFragment` | `permission` | `SetOwner`, `SetGroup`, `SetMode`, `SetSeLinuxContext` |
-| `FilePropertiesChecksumTabFragment` | `checksum` | |
-| `FilePropertiesImageTabFragment` | `image` | |
-| `FilePropertiesAudioTabFragment` | `audio` | |
-| `FilePropertiesVideoTabFragment` | `video` | |
-| `FilePropertiesApkTabFragment` | `apk` | `PermissionList` |
-
-## Диалоги — DialogFragment (21)
+## Диалоги — DialogFragment (15)
 
 Наследуют `AppCompatDialogFragment`, внутри — `MaterialAlertDialogBuilder`.
 
@@ -141,17 +131,6 @@
 | `FileJobConflictDialogFragment` | `filejob` | `file_job_conflict_dialog_view` |
 | `FileJobErrorDialogFragment` | `filejob` | `file_job_error_dialog_view` |
 | `ArchivePasswordDialogFragment` | `fileaction` | `archive_password_dialog` |
-
-### Свойства и права — `fileproperties` (6)
-
-| Диалог | Что делает | Layout |
-|---|---|---|
-| `FilePropertiesDialogFragment` | свойства файла, 7 вкладок | `file_properties_dialog` |
-| `SetOwnerDialogFragment` | сменить владельца | `set_principal_dialog` |
-| `SetGroupDialogFragment` | сменить группу | `set_principal_dialog` |
-| `SetModeDialogFragment` | права `rwx` | `set_mode_dialog` |
-| `SetSeLinuxContextDialogFragment` | контекст SELinux | `set_selinux_context_dialog` |
-| `PermissionListDialogFragment` | разрешения APK | `permission_list_dialog` |
 
 ### Хранилища и закладки (5)
 
@@ -181,13 +160,11 @@
 | `RootStrategyPreference.DialogFragment` | `settings` | выбор режима root (вложенный класс) |
 | `LicensesDialogFragment` | `ui` | «Лицензии» в `AboutFragment` |
 
-### Абстрактные базы (4)
+### Абстрактные базы (2)
 
 | Класс | Пакет | Наследники |
 |---|---|---|
-| `SetPrincipalDialogFragment` | `fileproperties.permission` | `SetOwner`, `SetGroup` |
 | `MaterialPreferenceDialogFragmentCompat` | `ui` | `MaterialListPreferenceDialogFragmentCompat`, `RootStrategyPreference.DialogFragment` |
-| `FilePropertiesTabFragment` | `fileproperties` | 7 вкладок |
 | `PreferenceFragmentCompat` | `ui` | 3 PreferenceFragment |
 
 ## Свои Preference (15)
@@ -203,9 +180,9 @@
 
 ## Адаптеры
 
-### Экранные (10)
+### Экранные (4)
 
-Список и сетка файлов главного экрана — на Compose (`filelist/FileListContent.kt`, `FileListItems.kt`), `FileListAdapter` удалён 2026-11-19; боковая панель — `filelist/FileListNavigation.kt`, `NavigationListAdapter` удалён 2026-11-20.
+Список и сетка файлов главного экрана — на Compose (`filelist/FileListContent.kt`, `FileListItems.kt`), `FileListAdapter` удалён 2026-11-19; боковая панель — `filelist/FileListNavigation.kt`, `NavigationListAdapter` удалён 2026-11-20; списки «Свойств» — `LazyColumn`, `PermissionListAdapter`, `PrincipalListAdapter`, `UserListAdapter`, `GroupListAdapter`, `ModeBitListAdapter` удалены 2026-11-20.
 
 | Адаптер | Пакет | База | Где |
 |---|---|---|---|
@@ -213,27 +190,22 @@
 | `BookmarkDirectoryListAdapter` | `settings` | `SimpleAdapter` + `DraggableItemAdapter` | список закладок |
 | `LanSmbServerListAdapter` | `storage` | `SimpleAdapter` | найденные SMB-серверы |
 | `ImageViewerAdapter` | `viewer.image` | `SimpleAdapter` | страницы просмотра картинок |
-| `PermissionListAdapter` | `fileproperties.apk` | `SimpleAdapter` | разрешения APK |
-| `PrincipalListAdapter` | `fileproperties.permission` | `SimpleAdapter`, абстрактный | база для двух ниже |
-| `UserListAdapter` | `fileproperties.permission` | `PrincipalListAdapter` | выбор владельца |
-| `GroupListAdapter` | `fileproperties.permission` | `PrincipalListAdapter` | выбор группы |
-| `ModeBitListAdapter` | `fileproperties.permission` | `BaseAdapter` | биты прав в `SetModeDialogFragment` |
 
-### Базы в `ui/` (6)
+### Базы в `ui/` (5)
 
-`SimpleAdapter`, `ListAdapter`, `StaticAdapter`, `UnfilteredArrayAdapter`, `ViewPagerAdapter`, `TabFragmentPagerAdapter`; к ним — `ListDiffer`. `AnimatedListAdapter` (анимация появления строк) удалён вместе с настройкой «Анимация списка файлов».
+`SimpleAdapter`, `ListAdapter`, `StaticAdapter`, `UnfilteredArrayAdapter`, `ViewPagerAdapter`; к ним — `ListDiffer`. `TabFragmentPagerAdapter` удалён вместе с вкладками «Свойств». `AnimatedListAdapter` (анимация появления строк) удалён вместе с настройкой «Анимация списка файлов».
 
 ## Свои View и помощники UI
 
-Почти всё — в `ui/`. Главный экран с боковой панелью — на Compose (`filelist/FileListNavigation.kt`, `FileListScreen.kt` и части, [compose.md](compose.md)); его View удалены: `NavigationRecyclerView`, `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback`, `BreadcrumbLayout`, `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode`, `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode`, `FixQueryChangeSearchView`, `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `PersistentBarLayout`, `BottomBarLayout`, `CheckableItemBackground`, `AspectRatioFrameLayout`, `AppBarLayoutExpandHackListener`.
+Почти всё — в `ui/`. Главный экран с боковой панелью — на Compose (`filelist/FileListNavigation.kt`, `FileListScreen.kt` и части, [compose.md](compose.md)); его View удалены: `NavigationRecyclerView`, `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback`, `BreadcrumbLayout`, `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode`, `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode`, `FixQueryChangeSearchView`, `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `PersistentBarLayout`, `BottomBarLayout`, `CheckableItemBackground`, `AspectRatioFrameLayout`, `AppBarLayoutExpandHackListener`. С «Свойствами» удалены `DropDownView` (и `androidx.appcompat.widget.FixPaddingListPopupWindow`), `WrapFirstPageContentViewPager`.
 
 | Назначение | Классы в `ui/` |
 |---|---|
 | Панели и прокрутка других экранов | `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrollingFrameLayout`, `CoordinatorScrollingLinearLayout`, `ScrollingViewOnApplyWindowInsetsListener` |
 | Fast scroll | `ThemedFastScroller` (текстовый редактор) |
 | Элементы списка | `CheckableFrameLayout`, `CheckableForegroundLinearLayout`, `AspectRatioImageView`, `DisabledAlphaImageView`, `AutoGoneTextView` |
-| Поля ввода и поиск | `ReadOnlyTextInputLayout`, `ReadOnlyTextInputEditText`, `ScrollingChildEditText`, `DropDownView`, `FixLayoutSearchView`, `AllowSoftInputHackAlertDialogCustomView` |
-| Картинки и страницы | `SaveStateSubsamplingScaleImageView`, `WrapFirstPageContentViewPager`, `ViewPagerTransformers` |
+| Поля ввода и поиск | `ReadOnlyTextInputLayout`, `ReadOnlyTextInputEditText` (диалоги хранилищ и закладок), `ScrollingChildEditText`, `FixLayoutSearchView`, `AllowSoftInputHackAlertDialogCustomView` |
+| Картинки и страницы | `SaveStateSubsamplingScaleImageView`, `ViewPagerTransformers` |
 | Лицензии | `LicensesDialogExtensions` |
 
 Библиотеки View, на которых держится UI: Material Components, `fastscroll` (zhanghai), `advrecyclerview` (перетаскивание), `subsampling-scale-image-view` и PhotoView (картинки), `preferencex`, `simplemenu-preference`, `licensesdialog`, `insetter`, `swiperefreshlayout`.
@@ -251,6 +223,6 @@
 
 | Папка | Кол-во | Что |
 |---|---|---|
-| `res/layout/` | 40 | экраны, диалоги, элементы списков; у главного экрана — только `file_list_fragment` (`ComposeView`); `navigation_*` и `layout-sw600dp-land/` удалены 2026-11-20, разметка диалогов главного экрана — тоже |
+| `res/layout/` | 29 | экраны, диалоги, элементы списков; у главного экрана — только `file_list_fragment` (`ComposeView`); `navigation_*` и `layout-sw600dp-land/` удалены 2026-11-20, разметка диалогов главного экрана и «Свойств» — тоже |
 | `res/menu/` | 2 | `text_editor`, `image_viewer`; все `file_list*` удалены — меню главного экрана на Compose |
 | `res/xml/` | 2 настроек | `settings.xml`, `ftp_server.xml`; ещё `shortcuts.xml`, `netework_security_config.xml` |

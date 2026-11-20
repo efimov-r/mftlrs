@@ -48,7 +48,6 @@ import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.app.clipboardManager
 import me.zhanghai.android.files.compat.checkSelfPermissionCompat
 import me.zhanghai.android.files.databinding.FileListFragmentBinding
-import me.zhanghai.android.files.fileproperties.FilePropertiesDialogFragment
 import me.zhanghai.android.files.navigation.NavigationItem
 import me.zhanghai.android.files.navigation.NavigationItemListLiveData
 import me.zhanghai.android.files.settings.Settings
@@ -340,7 +339,6 @@ class FileListFragment : Fragment(), NavigationItem.Listener {
             is FileListEvent.ScrollTo -> gridState.scrollTo(event.position)
             is FileListEvent.ShowError -> showToast(event.text)
             is FileListEvent.ShowToast -> showToast(event.textRes)
-            is FileListEvent.ShowProperties -> FilePropertiesDialogFragment.show(event.file, this)
             is FileListEvent.SetCreateFileName -> setCreateFileName(event.name)
             is FileListEvent.OpenInNewTask ->
                 startActivitySafe(createOpenInNewTaskIntent(event.path))

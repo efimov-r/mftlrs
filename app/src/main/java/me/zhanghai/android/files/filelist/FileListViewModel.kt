@@ -792,7 +792,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
     }
 
     override fun showPropertiesDialog(file: FileItem) {
-        sendEvent(FileListEvent.ShowProperties(file))
+        showDialog(FileListDialog.Properties(file))
     }
 
     // mftlrs: results of the dialogs in FileListDialogs.kt. The confirmations close the dialog
@@ -1094,9 +1094,6 @@ internal sealed interface FileListEvent {
 
     data class ShowToast(@StringRes val textRes: Int) : FileListEvent
 
-    // Still a DialogFragment, see FileListDialog.
-    data class ShowProperties(val file: FileItem) : FileListEvent
-
     // The file name field selects the name without the extension.
     data class SetCreateFileName(val name: String) : FileListEvent
 
@@ -1125,8 +1122,10 @@ internal sealed interface FileListEvent {
 }
 
 // mftlrs: the dialogs of the main screen in Compose (FileListDialogs.kt), were DialogFragments.
-// The properties dialog is still a DialogFragment (FileListEvent.ShowProperties).
 internal sealed interface FileListDialog {
+    data class Properties(val file: FileItem) : FileListDialog // FilePropertiesDialog
+
+
     data class NavigateToPath(val path: Path) : FileListDialog
 
     data class ConfirmReplaceFile(val file: FileItem) : FileListDialog

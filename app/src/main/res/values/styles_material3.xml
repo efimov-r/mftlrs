@@ -45,9 +45,7 @@
 
     <!-- mftlrs: Widget.MaterialFiles.Material3.NavigationView removed, the drawer is in Compose. -->
 
-    <style name="Widget.MaterialFiles.Material3.TabLayout" parent="Widget.Material3.TabLayout">
-        <item name="android:background">@android:color/transparent</item>
-    </style>
+    <!-- mftlrs: Widget.MaterialFiles.Material3.TabLayout removed, the properties dialog is in Compose. -->
 
     <style name="Widget.MaterialFiles.Material3.Toolbar" parent="Widget.Material3.Toolbar">
         <item name="contentInsetStartWithNavigation">@dimen/abc_action_bar_content_inset_with_nav</item>

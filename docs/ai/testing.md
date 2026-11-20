@@ -1,13 +1,13 @@
 # Тесты
 
-Два набора: unit-тесты логики главного экрана в JVM (раздел «Unit-тесты») и UI-тесты главного экрана на устройстве (всё остальное).
+Два набора: unit-тесты логики главного экрана и «Свойств» в JVM (раздел «Unit-тесты») и UI-тесты главного экрана на устройстве (всё остальное).
 
 ## Unit-тесты
 
-- **Где:** `app/src/test/java/me/zhanghai/android/files/filelist/`, JUnit 4. Без Robolectric: классы Android — заглушки AGP (`android.jar` для тестов), поэтому тестируются только чистые функции и модели.
+- **Где:** `app/src/test/java/me/zhanghai/android/files/filelist/` и `…/fileproperties/`, JUnit 4. Без Robolectric: классы Android — заглушки AGP (`android.jar` для тестов), поэтому тестируются только чистые функции и модели.
 - **Запуск:** `.\gradlew.bat :app:testUiTestUnitTest` — ~20 с, устройство не нужно. `testDebugUnitTest` нет: AGP 9 делает unit-тесты только для `testBuildType` (`uiTest`) — [gotchas.md](gotchas.md). Отчёт — `app/build/reports/tests/testUiTestUnitTest/index.html`. Агент запускает их сам, без вопроса — в отличие от UI-тестов.
 - **Файлы в тестах** — `TestFiles.kt`: настоящие `LinuxPath` и `ArchivePath` (`linuxPath`, `archivePath`), `FileItem` со своими атрибутами (`file`, `directory`, `fileItem`), диск не читается. `Path` в JVM создаётся без JNI-библиотеки `syscall`: путь — это байты, `fileSystem.isReadOnly` и `isArchivePath` системных вызовов не делают (проверено 2026-11-20). Провайдер в `FileSystemProvider` не устанавливается — `Paths.get` в тестах не работает, только эти помощники.
-- **Что тестировать:** логику, которую ViewModel берёт из LiveData и настроек, — выносить в чистые функции (`filelist/FileListUiLogic.kt`), ViewModel только вызывает их. Саму `FileListViewModel` в JVM не создать: `Settings` требует `application`, LiveData — главный поток.
+- **Что тестировать:** логику, которую ViewModel берёт из LiveData и настроек, — выносить в чистые функции (`filelist/FileListUiLogic.kt`, `fileproperties/FilePropertiesLogic.kt`), ViewModel и Compose только вызывают их. Саму `FileListViewModel` в JVM не создать: `Settings` требует `application`, LiveData — главный поток.
 
 | Класс | Что проверяет |
 |---|---|
@@ -17,8 +17,9 @@
 | `TrailDataTest` (6) | история: путь от корня, «Назад» с позицией прокрутки (один раз), переход к предку сохраняет хвост, к соседу — сбрасывает, путь внутри архива |
 | `FileItemSetTest` (4) | один элемент на путь, порядок добавления, `select` (в том числе сам с собой) |
 | `PasteStateTest` (4) | добавление, повтор без изменений, «Вырезать» после «Копировать» сбрасывает файлы |
+| `FilePropertiesLogicTest` (8) | «Свойства»: названия отмеченных битов прав, сравнение контрольной суммы (пусто, полное совпадение без учёта регистра и пробелов, оно важнее совпадения начала, начало, нет совпадения), камера из EXIF, выдержка (секунды и 1/N) |
 
-Прогон 2026-11-20 после этапа 11: 51 из 51.
+Прогон 2026-11-20 после этапа 11b: 59 из 59.
 
 ## UI-тесты
 

@@ -39,6 +39,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.dp
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.file.FileItem
+import me.zhanghai.android.files.fileproperties.FilePropertiesDialog
 import me.zhanghai.android.files.ui.compose.MftlrsInputDialog
 
 // Диалоги главного экрана, были DialogFragment в filelist. Какой показан — FileListUiState.dialog,
@@ -100,6 +101,7 @@ internal fun FileListDialogHost(dialog: FileListDialog, viewModel: FileListViewM
                     onDismissRequest = dismiss,
                 )
             is FileListDialog.OpenApk -> OpenApkDialog(dialog.file, viewModel)
+            is FileListDialog.Properties -> FilePropertiesDialog(dialog.file, onDismissRequest = dismiss)
         }
     }
 }
