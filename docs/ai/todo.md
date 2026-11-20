@@ -29,11 +29,8 @@
 - [ ] 6. Один экран `FileListScreen` в одном `ComposeView` — готово (`FileListScreen.kt`, UI-тесты 37 из 37); владельцу — весь чек-лист: портрет и ландшафт, светлая и тёмная тема; разметка планшета в ландшафте (`layout-sw600dp-land`) агентом не проверялась
 - [x] 7. Чистка старых View и документация — неиспользуемое удалено, `Binding` упрощён, документация обновлена, UI-тесты 49 из 49; release-сборка — в этапе 12
 - [x] 8. Тесты боковой панели — `FileListNavigationTest`, 12 тестов: пункты 53, 66–69, 71, 73; 72 (планшет) — руками
-- [ ] 9. Боковая панель на Compose один в один — готово (`FileListNavigation.kt`, View drawer удалены, UI-тесты 49 из 49 до последней правки отступов); осталось: прогнать весь набор UI-тестов ещё раз; владельцу — чек-лист 66–73, планшет (72) — руками
-- [ ] 10. Логика из `FileListFragment` — в `FileListViewModel`, порядок: 10a → 10b → UI-тесты → 10c
-  - [x] 10a. Состояние экрана — `StateFlow<FileListUiState>` во ViewModel, `FileList*State` удалены; сборка и `lintVitalRelease` проходят
-  - [x] 10b. Действия и разовые события (`Channel`) — во ViewModel, интенты — `FileListIntents.kt`; UI-тесты 49 из 49
-  - [ ] 10c. Unit-тесты на логику без ФС
+- [ ] 9. Боковая панель на Compose один в один — готово (`FileListNavigation.kt`, View drawer удалены, UI-тесты 49 из 49 после этапа 10b); осталось: владельцу — чек-лист 66–73, планшет (72) — руками
+- [x] 10. Логика из `FileListFragment` — в `FileListViewModel`: 10a — состояние (`StateFlow<FileListUiState>`), 10b — действия и события (`Channel`), UI-тесты 49 из 49; 10c — unit-тесты, 41 из 41 ([testing.md](testing.md), «Unit-тесты»)
 - [ ] 11. 13 диалогов `filelist` — на Compose; «Свойства» — оценить
 - [ ] 12. Без `FileListFragment`: `FileListActivity.setContent`; release-сборка на телефоне; весь ручной [чек-лист](file-list-checklist.md) владельцем, один раз
 

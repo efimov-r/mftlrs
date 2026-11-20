@@ -229,6 +229,10 @@ dependencies {
     // Also a dependency of jCIFS-NG.
     implementation 'org.slf4j:slf4j-android:1.7.36'
 
+    // mftlrs: unit tests of the main screen logic on the JVM; only for the uiTest build type
+    // (testBuildType): testUiTestUnitTest.
+    testImplementation 'junit:junit:4.13.2'
+
     // mftlrs: UI tests on a device. UI Automator finds elements through accessibility, so the same
     // tests work for the Views screen and for its Compose replacement.
     androidTestImplementation 'androidx.test:core-ktx:1.6.1'

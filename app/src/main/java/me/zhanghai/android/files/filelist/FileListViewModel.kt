@@ -55,7 +55,6 @@ import me.zhanghai.android.files.provider.linux.isLinuxPath
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.util.CloseableLiveData
 import me.zhanghai.android.files.util.Failure
-import me.zhanghai.android.files.util.Loading
 import me.zhanghai.android.files.util.Stateful
 import me.zhanghai.android.files.util.Success
 import me.zhanghai.android.files.util.asFileNameOrNull
@@ -209,22 +208,8 @@ class FileListViewModel : ViewModel(), FileItemListener {
 
     override fun selectFiles(files: FileItemSet, selected: Boolean) {
         val selectedFiles = _selectedFilesLiveData.valueCompat
-        if (selectedFiles === files) {
-            if (!selected && selectedFiles.isNotEmpty()) {
-                selectedFiles.clear()
-                _selectedFilesLiveData.value = selectedFiles
-            }
-            return
-        }
-        var changed = false
-        for (file in files) {
-            changed = changed or if (selected) {
-                selectedFiles.add(file)
-            } else {
-                selectedFiles.remove(file)
-            }
-        }
-        if (changed) {
+        // mftlrs: the logic is in FileListUiLogic.kt, for unit tests.
+        if (selectedFiles.select(files, selected)) {
             _selectedFilesLiveData.value = selectedFiles
         }
     }
@@ -254,14 +239,8 @@ class FileListViewModel : ViewModel(), FileItemListener {
 
     fun addToPasteState(copy: Boolean, files: FileItemSet) {
         val pasteState = _pasteStateLiveData.valueCompat
-        var changed = false
-        if (pasteState.copy != copy) {
-            changed = pasteState.files.isNotEmpty()
-            pasteState.files.clear()
-            pasteState.copy = copy
-        }
-        changed = changed or pasteState.files.addAll(files)
-        if (changed) {
+        // mftlrs: the logic is in FileListUiLogic.kt, for unit tests.
+        if (pasteState.add(copy, files)) {
             _pasteStateLiveData.value = pasteState
         }
     }
@@ -373,36 +352,17 @@ class FileListViewModel : ViewModel(), FileItemListener {
     private fun onFileListChanged(stateful: Stateful<List<FileItem>>) {
         val files = stateful.value
         val isSearching = searchState.isSearching
-        val subtitle = when {
-            stateful is Failure -> FileListUiState.Subtitle.Error
-            stateful is Loading && !isSearching -> FileListUiState.Subtitle.Loading
-            else -> {
-                val allFiles = files.orEmpty()
-                val directoryCount = allFiles.count { it.attributes.isDirectory }
-                FileListUiState.Subtitle.Counts(directoryCount, allFiles.size - directoryCount)
-            }
-        }
-        val hasFiles = !files.isNullOrEmpty()
-        var errorText: String? = null
         val throwable = (stateful as? Failure)?.throwable
         if (throwable != null) {
             throwable.printStackTrace()
-            val error = throwable.toString()
-            if (hasFiles) {
-                _events.trySend(FileListEvent.ShowError(error))
-            } else {
-                errorText = error
+            if (!files.isNullOrEmpty()) {
+                _events.trySend(FileListEvent.ShowError(throwable.toString()))
             }
         }
         _uiState.update {
             it.copy(
-                content = it.content.copy(
-                    isRefreshing = stateful is Loading && (hasFiles || isSearching),
-                    isLoading = stateful is Loading && !(hasFiles || isSearching),
-                    errorText = errorText,
-                    isEmpty = stateful is Success && !hasFiles,
-                ),
-                topBar = it.topBar.copy(subtitle = subtitle),
+                content = it.content.withStatus(stateful, isSearching),
+                topBar = it.topBar.copy(subtitle = fileListSubtitle(stateful, isSearching)),
             )
         }
         if (files != null) {
@@ -420,15 +380,11 @@ class FileListViewModel : ViewModel(), FileItemListener {
     // Was FileListFragment.updateAdapterFileList(), and sorting in the removed FileListAdapter.
     private fun updateFiles() {
         // May be called by sort options before the file list has a value.
-        var files = _fileListLiveData.value?.value ?: return
+        val allFiles = _fileListLiveData.value?.value ?: return
         val topBar = _uiState.value.topBar
-        if (!topBar.showHiddenFiles) {
-            files = files.filterNot { it.isHidden }
-        }
         val isSearching = searchState.isSearching
-        if (!isSearching) {
-            files = files.sortedWith(topBar.sortOptions.createComparator())
-        }
+        val files =
+            filterAndSortFiles(allFiles, topBar.showHiddenFiles, topBar.sortOptions, isSearching)
         if (isSearching != lastIsSearching) {
             lastIsSearching = isSearching
             _events.trySend(FileListEvent.ScrollTo(ScrollPosition(0, 0)))
@@ -457,109 +413,23 @@ class FileListViewModel : ViewModel(), FileItemListener {
         _uiState.update { it.copy(content = it.content.copy(selectedPaths = selectedPaths)) }
     }
 
-    // Was FileListFragment.updateOverlayToolbar() with menu/file_list_select.xml and
-    // file_list_pick.xml. When hidden, the bar fades out with its old title and actions.
+    // Was FileListFragment.updateOverlayToolbar(). When hidden, the bar fades out with its old
+    // title and actions.
     private fun updateSelectionBar() {
         val files = selectedFiles
         if (files.isEmpty()) {
             _uiState.update { it.copy(selectionBar = it.selectionBar.copy(isVisible = false)) }
             return
         }
-        val pickOptions = pickOptions
-        val actions = if (pickOptions != null) {
-            val isOpen = when (pickOptions.mode) {
-                PickOptions.Mode.OPEN_FILE, PickOptions.Mode.OPEN_DIRECTORY -> true
-                PickOptions.Mode.CREATE_FILE -> false
-            }
-            buildList {
-                add(if (isOpen) FileListSelectionAction.OPEN else FileListSelectionAction.CREATE)
-                if (pickOptions.allowMultiple) {
-                    add(FileListSelectionAction.SELECT_ALL)
-                }
-            }
-        } else {
-            val isAnyFileReadOnly = files.any { it.path.fileSystem.isReadOnly }
-            val areAllFilesArchivePaths = files.all { it.path.isArchivePath }
-            val areAllFilesArchiveFiles = files.all { it.isArchiveFile }
-            val isCurrentPathReadOnly = currentPath.fileSystem.isReadOnly
-            buildList {
-                if (!isAnyFileReadOnly) {
-                    add(FileListSelectionAction.CUT)
-                }
-                add(
-                    if (areAllFilesArchivePaths) {
-                        FileListSelectionAction.COPY_EXTRACT
-                    } else {
-                        FileListSelectionAction.COPY
-                    }
-                )
-                if (!isAnyFileReadOnly) {
-                    add(FileListSelectionAction.DELETE)
-                }
-                if (areAllFilesArchiveFiles) {
-                    add(FileListSelectionAction.EXTRACT)
-                }
-                if (!isCurrentPathReadOnly) {
-                    add(FileListSelectionAction.ARCHIVE)
-                }
-                add(FileListSelectionAction.SHARE)
-                add(FileListSelectionAction.SELECT_ALL)
-            }
-        }
+        val actions = selectionBarActions(files, pickOptions, currentPath)
         val selectionBar = FileListUiState.SelectionBar(true, files.size, actions)
         _uiState.update { it.copy(selectionBar = selectionBar) }
     }
 
-    // Was FileListFragment.updateBottomToolbar() with menu/file_list_paste.xml and
-    // file_list_pick_bottom.xml. When hidden, the bar slides out with its old content.
+    // Was FileListFragment.updateBottomToolbar(). When hidden, the bar slides out with its old
+    // content.
     private fun updateBottomBar() {
-        val pickOptions = pickOptions
-        val bottomBar = if (pickOptions != null) {
-            when (pickOptions.mode) {
-                PickOptions.Mode.CREATE_FILE ->
-                    FileListUiState.BottomBar(
-                        isVisible = true,
-                        title = FileListUiState.BottomBarTitle.FileName,
-                        action = FileListBottomBarAction.CREATE,
-                        isActionEnabled = true,
-                    )
-                PickOptions.Mode.OPEN_DIRECTORY ->
-                    FileListUiState.BottomBar(
-                        isVisible = true,
-                        title = FileListUiState.BottomBarTitle.OpenDirectory(currentPath),
-                        action = FileListBottomBarAction.OPEN,
-                        isActionEnabled = true,
-                    )
-                else -> null
-            }
-        } else {
-            val pasteState = pasteState
-            val files = pasteState.files
-            if (files.isNotEmpty()) {
-                val areAllFilesArchivePaths = files.all { it.path.isArchivePath }
-                val titleRes = if (pasteState.copy) {
-                    if (areAllFilesArchivePaths) {
-                        R.string.file_list_paste_extract_title_format
-                    } else {
-                        R.string.file_list_paste_copy_title_format
-                    }
-                } else {
-                    R.string.file_list_paste_move_title_format
-                }
-                FileListUiState.BottomBar(
-                    isVisible = true,
-                    title = FileListUiState.BottomBarTitle.Paste(titleRes, files.size),
-                    action = if (areAllFilesArchivePaths) {
-                        FileListBottomBarAction.EXTRACT_HERE
-                    } else {
-                        FileListBottomBarAction.PASTE
-                    },
-                    isActionEnabled = !currentPath.fileSystem.isReadOnly,
-                )
-            } else {
-                null
-            }
-        }
+        val bottomBar = fileListBottomBar(pickOptions, pasteState, currentPath)
         _uiState.update { it.copy(bottomBar = bottomBar ?: it.bottomBar.copy(isVisible = false)) }
     }
 
