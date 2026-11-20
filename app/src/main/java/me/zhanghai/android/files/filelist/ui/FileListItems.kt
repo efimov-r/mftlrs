@@ -77,7 +77,7 @@ import me.zhanghai.android.files.provider.common.isEncrypted
 import me.zhanghai.android.files.ui.theme.MftlrsTheme
 
 // Элементы списка и сетки главного экрана — перенос удалённых file_item_list.xml, file_item_grid.xml и
-// FileListAdapter; ripple, выделение и приглушение упрощены (docs/ai/compose-migration.md, «Отклонения»)
+// FileListAdapter; ripple, выделение и приглушение упрощены по сравнению с ними
 
 private const val DISABLED_ALPHA = 0.38f // android:disabledAlpha темы Material 3
 private const val CHECKED_ALPHA = 0.12f // CheckableItemBackground: colorPrimary с alpha 0,12

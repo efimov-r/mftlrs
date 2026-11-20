@@ -35,7 +35,7 @@ import org.junit.rules.ExternalResource
  * Главный экран для тестов: запуск, поиск элементов, ожидания. Элементы с текстом ищутся по тексту,
  * иконки — по `contentDescription`; элементы без того и другого — по имени id View (в Compose — такой же
  * `testTag` при `testTagsAsResourceId`). Перед каждым тестом сбрасывает настройки и песочницу.
- * Как тесты находят элементы — docs/ai/testing.md, «Контракт для Compose».
+ * Как тесты находят элементы — docs/ai/testing.md, «Контракт для UI-тестов».
  */
 class FileListScreen : ExternalResource() {
     val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()

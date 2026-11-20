@@ -1,6 +1,6 @@
 # Экраны и компоненты UI
 
-Перечень Activity, Fragment, диалогов, настроек, адаптеров, своих View и ресурсов разметки, по группам. Пакет везде — `me.zhanghai.android.files.<подпакет>`. Как устроены главный экран и боковая панель — [architecture.md](architecture.md); элементы на Compose — [compose.md](compose.md). Подсчёт — на 2026-11-15, коммит `9b5e15ab`; адаптеры, свои View и разметка обновлены 2026-11-19 после переноса главного экрана на Compose; «Свойства» — на Compose с 2026-11-20.
+Перечень Activity, Fragment, диалогов, настроек, адаптеров, своих View и ресурсов разметки, по группам. Пакет везде — `me.zhanghai.android.files.<подпакет>`. Как устроены главный экран и боковая панель — [architecture.md](architecture.md); элементы на Compose — [compose.md](compose.md). Подсчёт — на 2026-11-15, обновлён после переноса главного экрана и «Свойств» на Compose (2026-11-21).
 
 ## Сводка
 
@@ -9,8 +9,7 @@
 | Activity | 28 + база `AppActivity` |
 | Fragment полноэкранные | 16 (2 без UI) |
 | PreferenceFragment | 3 + база |
-| Вкладки свойств файла | 0 — на Compose с 2026-11-20 |
-| DialogFragment | 15 + 1 база (13 диалогов главного экрана и 6 «Свойств» — на Compose с 2026-11-20) |
+| DialogFragment | 15 + 1 база |
 | Свои Preference | 15 |
 | Адаптеры | 4 + 5 баз в `ui/view/` |
 | Свои View и помощники в `ui/view/` | 34 + 5 на Compose в `ui/compose/` |
@@ -28,7 +27,7 @@
 
 | Activity | Пакет | Fragment внутри | Откуда открывается |
 |---|---|---|---|
-| `FileListActivity` | `filelist` | нет: `setContent { FileListRoot }`, Compose целиком (с 2026-11-21) | лаунчер; открытие папок и архивов; выбор файла для других приложений (`GET_CONTENT`, `OPEN_DOCUMENT`, `CREATE_DOCUMENT`); ярлыки |
+| `FileListActivity` | `filelist` | нет: `setContent { FileListRoot }`, Compose целиком | лаунчер; открытие папок и архивов; выбор файла для других приложений (`GET_CONTENT`, `OPEN_DOCUMENT`, `CREATE_DOCUMENT`); ярлыки |
 | `TextEditorActivity` | `viewer.text` | `TextEditorFragment` | `VIEW` для `text/*`, JSON, XML и др. |
 | `ImageViewerActivity` | `viewer.image` | `ImageViewerFragment` | `VIEW` для `image/*` |
 | `SettingsActivity` | `settings` | `SettingsFragment` | меню; `APPLICATION_PREFERENCES` |
@@ -52,12 +51,12 @@
 | `FileJobConflictDialogActivity` | `filejob` | `FileJobConflictDialogFragment` |
 | `FileJobErrorDialogActivity` | `filejob` | `FileJobErrorDialogFragment` |
 | `ArchivePasswordDialogActivity` | `fileaction` | `ArchivePasswordDialogFragment` |
-| `OpenFileAsDialogActivity` | `filelist` | `OpenFileAsDialogFragment` |
+| `OpenFileAsDialogActivity` | `fileaction` | `OpenFileAsDialogFragment` |
 | `AddStorageDialogActivity` | `storage` | `AddStorageDialogFragment` |
 | `EditDeviceStorageDialogActivity` | `storage` | `EditDeviceStorageDialogFragment` |
 | `EditDocumentTreeDialogActivity` | `storage` | `EditDocumentTreeDialogFragment` |
 | `EditExternalStorageShortcutDialogActivity` | `storage` | `EditExternalStorageShortcutDialogFragment` |
-| `EditBookmarkDirectoryDialogActivity` | `navigation` | `EditBookmarkDirectoryDialogFragment` |
+| `EditBookmarkDirectoryDialogActivity` | `settings` | `EditBookmarkDirectoryDialogFragment` |
 
 ### Без UI (5)
 
@@ -65,8 +64,8 @@
 
 | Activity | Пакет | Что делает |
 |---|---|---|
-| `OpenFileActivity` | `filelist` | открывает файл из ярлыка (`intent.action.OPEN_FILE`) |
-| `EditFileActivity` | `filelist` | передаёт файл внешнему редактору (`createEditIntent`) |
+| `OpenFileActivity` | `fileaction` | открывает файл из ярлыка (`intent.action.OPEN_FILE`) |
+| `EditFileActivity` | `fileaction` | передаёт файл внешнему редактору (`createEditIntent`) |
 | `SaveAsActivity` | `viewer.saveas` | «Сохранить как» для `VIEW`/`SEND` от других приложений: запускает выбор места через `FileListActivity.CreateFileContract` |
 | `AddDocumentTreeActivity` | `storage` | через `AddDocumentTreeFragment` открывает системный выбор папки (SAF) |
 | `AddExternalStorageShortcutActivity` | `storage` | через `AddExternalStorageShortcutFragment` добавляет ярлык внешнего хранилища |
@@ -105,21 +104,15 @@
 | `FtpServerPreferenceFragment` | `ftpserver` | `xml/ftp_server.xml` |
 | `StandardDirectoryListPreferenceFragment` | `settings` | строится в коде |
 
-### Вкладки свойств файла (0)
-
-Диалог «Свойства» с 7 вкладками и его 5 диалогов — на Compose (`fileproperties/FilePropertiesDialog.kt` и др., [compose.md](compose.md)) с 2026-11-20. Удалены: `FilePropertiesDialogFragment`, база `FilePropertiesTabFragment`, 7 вкладок-фрагментов, `SetOwner`/`SetGroup`/`SetMode`/`SetSeLinuxContext`/`PermissionList` `DialogFragment` и база `SetPrincipalDialogFragment`, разметка `file_properties_*`, `set_*_dialog`, `permission_*`, `principal_item`, `mode_bit_item`.
-
 ## Диалоги — DialogFragment (15)
 
-Наследуют `AppCompatDialogFragment`, внутри — `MaterialAlertDialogBuilder`.
+Наследуют `AppCompatDialogFragment`, внутри — `MaterialAlertDialogBuilder`. Диалоги главного экрана и «Свойства» с их диалогами — на Compose ([compose.md](compose.md)).
 
-### Файлы — `filelist` (1)
+### Файлы — `fileaction` (1)
 
 | Диалог | Что делает | Layout |
 |---|---|---|
 | `OpenFileAsDialogFragment` | открыть как: текст, картинка и т. д.; через свою Activity | — |
-
-13 диалогов главного экрана — на Compose (`filelist/ui/FileListDialogs.kt`, 2026-11-20), их `DialogFragment`, базы `NameDialogFragment`, `FileNameDialogFragment`, `PathDialogFragment`, `CreateArchiveTypeRadioGroup` и разметка `name_dialog`, `name_dialog_name_include`, `create_archive_dialog` удалены: новый файл и папка, переименование, архив, «Перейти к…», подтверждения удаления и замены, APK, пять объяснений перед запросом разрешений.
 
 ### Фоновые операции (3)
 
@@ -141,7 +134,7 @@
 | `EditDeviceStorageDialogFragment` | `storage` | `edit_device_storage_dialog` |
 | `EditDocumentTreeDialogFragment` | `storage` | `edit_document_tree_dialog` |
 | `EditExternalStorageShortcutDialogFragment` | `storage` | `edit_external_storage_shortcut_dialog` |
-| `EditBookmarkDirectoryDialogFragment` | `navigation` | `edit_bookmark_directory_dialog` |
+| `EditBookmarkDirectoryDialogFragment` | `settings` | `edit_bookmark_directory_dialog` |
 
 ### Просмотрщики (3)
 
@@ -181,7 +174,7 @@
 
 ### Экранные (4)
 
-Список и сетка файлов главного экрана — на Compose (`filelist/ui/FileListContent.kt`, `FileListItems.kt`), `FileListAdapter` удалён 2026-11-19; боковая панель — `filelist/ui/FileListNavigation.kt`, `NavigationListAdapter` удалён 2026-11-20; списки «Свойств» — `LazyColumn`, `PermissionListAdapter`, `PrincipalListAdapter`, `UserListAdapter`, `GroupListAdapter`, `ModeBitListAdapter` удалены 2026-11-20.
+Список файлов, боковая панель и списки «Свойств» — на Compose, адаптеров у них нет.
 
 | Адаптер | Пакет | База | Где |
 |---|---|---|---|
@@ -192,11 +185,11 @@
 
 ### Базы в `ui/view/` (5)
 
-`SimpleAdapter`, `ListAdapter`, `StaticAdapter`, `UnfilteredArrayAdapter`, `ViewPagerAdapter`; к ним — `ListDiffer`. `TabFragmentPagerAdapter` удалён вместе с вкладками «Свойств». `AnimatedListAdapter` (анимация появления строк) удалён вместе с настройкой «Анимация списка файлов».
+`SimpleAdapter`, `ListAdapter`, `StaticAdapter`, `UnfilteredArrayAdapter`, `ViewPagerAdapter`; к ним — `ListDiffer`.
 
 ## Свои View и помощники UI
 
-Почти всё — в `ui/`. Главный экран с боковой панелью — на Compose (`filelist/FileListNavigation.kt`, `FileListScreen.kt` и части, [compose.md](compose.md)); его View удалены: `NavigationRecyclerView`, `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback`, `BreadcrumbLayout`, `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode`, `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode`, `FixQueryChangeSearchView`, `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `PersistentBarLayout`, `BottomBarLayout`, `CheckableItemBackground`, `AspectRatioFrameLayout`, `AppBarLayoutExpandHackListener`. С «Свойствами» удалены `DropDownView` (и `androidx.appcompat.widget.FixPaddingListPopupWindow`), `WrapFirstPageContentViewPager`.
+Почти всё — в `ui/view/`; главный экран и «Свойства» своих View не используют.
 
 | Назначение | Классы в `ui/view/` |
 |---|---|
@@ -222,6 +215,6 @@
 
 | Папка | Кол-во | Что |
 |---|---|---|
-| `res/layout/` | 28 | экраны, диалоги, элементы списков; у главного экрана разметки нет (`file_list_fragment` удалён 2026-11-21); `navigation_*` и `layout-sw600dp-land/` удалены 2026-11-20, разметка диалогов главного экрана и «Свойств» — тоже |
-| `res/menu/` | 2 | `text_editor`, `image_viewer`; все `file_list*` удалены — меню главного экрана на Compose |
+| `res/layout/` | 28 | экраны, диалоги, элементы списков; у главного экрана и «Свойств» разметки нет |
+| `res/menu/` | 2 | `text_editor`, `image_viewer`; меню главного экрана — на Compose |
 | `res/xml/` | 2 настроек | `settings.xml`, `ftp_server.xml`; ещё `shortcuts.xml`, `netework_security_config.xml` |

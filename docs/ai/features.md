@@ -10,9 +10,9 @@
 
 | Функция | Строк (доля) | Либ | Где в коде | Убрать? |
 |---|---|---|---|---|
-| Инфраструктура | 11320 (20,8%) | 15 | `app/`, `file/`, `util/`, `compat/`, `ui/` | **Оставить**; часть `ui/` уйдёт вместе с drawer |
+| Инфраструктура | 11320 (20,8%) | 15 | `app/`, `file/`, `util/`, `compat/`, `ui/` | **Оставить** |
 | Ядро ФС (NIO2) | 4300 (7,9%) | 2 | `provider/common/`, `provider/FileSystemProviders.kt` | **Оставить** — на нём всё |
-| Главный экран | 4270 (7,8%) | 3 | `filelist/` | **Оставить** — переделывается при редизайне |
+| Главный экран | 4270 (7,8%) | 0 | `filelist/` | **Оставить** — переделывается при редизайне |
 | Локальные файлы | 4140 (7,6%) | 1 | `provider/linux/`, `jni/syscall.c` | **Оставить** — основа |
 | SMB | 3260 (6,0%) | 7 | `provider/smb/`, `storage/*SmbServer*`, `java/com/hierynomus/` | **Оставить** — самая востребованная сеть; боль — скорость |
 | Фоновые операции | 3110 (5,7%) | 0 | `filejob/` | **Оставить**; доработать: экран прогресса, корзина |
@@ -20,9 +20,9 @@
 | Root и Shizuku | 2590 (4,8%) | 3 | `provider/root/`, `provider/remote/`, `aidl/` | **Оставить** — Shizuku даёт `Android/data` без root |
 | FTP-клиент | 2520 (4,6%) | 1 | `provider/ftp/`, `storage/*FtpServer*` | **По желанию** — изолирован, убирается вместе с `commons-net` |
 | WebDAV | 2210 (4,1%) | 1 | `provider/webdav/`, `storage/*WebDavServer*`, `java/at/bitfire/` | **Оставить** — Nextcloud и облака без закрытых SDK; минус — JitPack |
-| Архивы | 1870 (3,4%) | 1 | `provider/archive/`, `fileaction/`, `filelist/CreateArchive*` | **Оставить** |
+| Архивы | 1870 (3,4%) | 1 | `provider/archive/`, `fileaction/`, `filelist/data/CreateArchiveType.kt` | **Оставить** |
 | Настройки | 1660 (3,1%) | 3 | `settings/` | **Оставить**; при редизайне проверить библиотеки настроек |
-| Боковая панель | 1660 (3,0%) | 0 | `navigation/`, `filelist/ui/FileListNavigation.kt` | **Убрать** по цели проекта; пункты перенести в новый интерфейс. 2026-11-20 перенесена на Compose один в один, View drawer и `com.drakeet:drawer` удалены |
+| Боковая панель | 1660 (3,0%) | 0 | `navigation/`, `filelist/ui/FileListNavigation.kt` | **Убрать** по цели проекта; пункты перенести в новый интерфейс |
 | SFTP | 1580 (2,9%) | 3 | `provider/sftp/`, `storage/*SftpServer*`, `java/net/schmizz/` | **Оставить** — доступ к серверам по SSH |
 | FTP-сервер | 930 (1,7%) | 3 | `ftpserver/`, `res/xml/ftp_server.xml` | **По желанию** — если не нужен: минус 3 либы, сервис `specialUse` и плитка |
 | Права и SELinux | 910 (1,7%) | 0 | `fileproperties/permission/` | **Оставить** — ниша, но уникально |
@@ -31,27 +31,25 @@
 | Миниатюры | 620 (1,1%) | 5 | `coil/` | **Оставить** |
 | Свойства файла | 560 (1,0%) | 0 | `fileproperties/`, `fileproperties/basic/` | **Оставить** |
 | Текстовый редактор | 520 (1,0%) | 0 | `viewer/text/` | **Оставить** |
-| Темы | 490 (0,9%) | 1 | `ui/theme/` | **Переделано** 2026-11-15: две фиксированные темы, палитра mftlrs; MD2, выбор цвета, цвета из обоев и чёрный фон убраны из настроек |
+| Темы | 490 (0,9%) | 1 | `ui/theme/` | **Переделано**: две фиксированные темы, палитра mftlrs |
 | Просмотр картинок | 470 (0,9%) | 4 | `viewer/image/` | **Оставить** — есть проблемы жестов и поворота по EXIF |
 | Свойства APK | 410 (0,8%) | 0 | `fileproperties/apk/` | **Оставить** |
-| О программе | 270 (0,5%) | 1 | `about/`, `ui/view/Licenses*` | **Переделано** 2026-11-15: ссылки на форк, пункт «Основано на» |
+| О программе | 270 (0,5%) | 1 | `about/`, `ui/view/Licenses*` | **Переделано**: ссылки на форк, пункт «Основано на» |
 | Контрольные суммы | 210 (0,4%) | 0 | `fileproperties/checksum/` | **Оставить** |
 | Hidden API | 80 (0,1%) | 0 | `hiddenapi/`, `jni/hiddenapi.c` | **Оставить** — нужен `compat/` |
-| Firebase | 70 (0,1%) | 2 | — | **Убрано** 2026-11-15; замена — ACRA, места помечены `TODO(mftlrs)` |
 | «Сохранить как» | 46 (0,1%) | 0 | `viewer/saveas/` | **Оставить** |
 | Папки QQ, TIM, WeChat | ~40 (<0,1%) | 0 | `navigation/NavigationItems.kt`, входят в боковую панель | **Убрать** — на Android 11+ и так скрыты |
 | Терминал | 25 (<0,1%) | 0 | `terminal/` | **Проверить** — зовёт заброшенный Android Terminal Emulator, с Termux, вероятно, не работает |
-| Android TV | — | 0 | — | **Убрано** 2026-11-15: `leanback`, `LEANBACK_LAUNCHER`, баннер, `drawable-television/` |
 | Samsung DeX, оконный режим | — | 0 | манифест: `resizeableActivity`, `touchscreen required=false` | **Оставить** |
-| Переводы (22) | — | 0 | `res/values-*` | **Оставить** 22; 11 локалей и RTL **убраны** 2026-11-15 ([decisions.md](decisions.md), «Переводы»); новые строки — сразу во все локали ([style.md](style.md), «Тексты») |
+| Переводы (22) | — | 0 | `res/values-*` | **Оставить**; новые строки — сразу во все локали ([style.md](style.md), «Тексты») |
 
 ## Библиотеки по функциям
 
-Всего 56 прямых зависимостей (BoM не считаются). `bcprov`, `slf4j-android` и `material` нужны двум функциям и посчитаны в обеих.
+`bcprov`, `slf4j-android` и `material` нужны двум функциям и посчитаны в обеих. Compose (BOM, Material 3, `activity-compose`, `lifecycle-*-compose`, `coil-compose`) в подсчёт 2026-11-15 не входит.
 
 - **Инфраструктура (15):** `kotlin-stdlib-jdk8`, `kotlinx-coroutines-android`, `kotlinx-coroutines-core`, `activity-ktx`, `appcompat`, `core-ktx`, `fragment-ktx`, `lifecycle-common-java8`, `lifecycle-livedata-ktx`, `lifecycle-process`, `lifecycle-runtime-ktx`, `lifecycle-viewmodel-ktx`, `recyclerview`, `material`, `foregroundcompat`.
 - **Ядро ФС (2):** `retrofile` (бэкпорт `java.nio.file`), `desugar_jdk_libs`.
-- **Главный экран (2):** `fastscroll`, `swiperefreshlayout` (оба уже только для других экранов). `speed-dial` удалён 2026-11-19 — FAB на Compose.
+- **Другие экраны на Views (2):** `fastscroll` (текстовый редактор), `swiperefreshlayout` (поиск SMB).
 - **Локальные файлы (1):** `libselinux`.
 - **SMB (7):** `smbj` 0.11.5, `dcerpc`, `guava-android`, `listenablefuture` (заглушка от конфликта Guava с AndroidX), `jcifs-ng` (имена NetBIOS, поиск в сети; инициализируется при старте приложения), `slf4j-android`, BouncyCastle `bcprov`.
 - **Root и Shizuku (3):** `libsu:service`, Shizuku `api`, Shizuku `provider`.
@@ -59,16 +57,14 @@
 - **WebDAV (1):** `dav4jvm` (коммит через JitPack); транзитивно — OkHttp, общий клиент в `app/SystemServices.kt`.
 - **Архивы (1):** `libarchive` (нативная).
 - **Настройки (3):** `preference-ktx`, `preferencex` (takisoft), `simplemenu-preference` (rikka).
-- **Боковая панель (0):** панель на Compose; `drawerlayout` и `com.drakeet:drawer` удалены 2026-11-20.
 - **SFTP (3):** `sshj`, BouncyCastle `bcprov`, `bcpkix`.
 - **FTP-сервер (3):** `ftpserver-core`, `mina-core` 2.1.3, `slf4j-android`.
 - **EXIF, аудио, видео (2):** `exifinterface`, `androidsvg`.
 - **Хранилища (2):** `advrecyclerview`, `materialshadowninepatch`.
-- **Миниатюры (5):** `coil`, `coil-gif`, `coil-svg`, `coil-video`, `appiconloader`. Для Compose — ещё `coil-compose` (mftlrs).
+- **Миниатюры (5):** `coil`, `coil-gif`, `coil-svg`, `coil-video`, `appiconloader`.
 - **Темы (1):** `material`.
 - **Просмотр картинок (4):** `PhotoView`, `subsampling-scale-image-view`, `systemuihelper`, `insetter`.
 - **О программе (1):** `licensesdialog`.
-- **Firebase (2, убраны 2026-11-15):** `firebase-analytics`, `firebase-crashlytics-ndk`; плюс Gradle-плагины `google-services` и `firebase-crashlytics-gradle` и транзитивно сервисы Google Play. Без них прямых зависимостей — 57.
 
 ## Зафиксированные версии
 

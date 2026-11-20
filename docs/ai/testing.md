@@ -19,11 +19,11 @@
 | `PasteStateTest` (4) | добавление, повтор без изменений, «Вырезать» после «Копировать» сбрасывает файлы |
 | `FilePropertiesLogicTest` (8) | «Свойства»: названия отмеченных битов прав, сравнение контрольной суммы (пусто, полное совпадение без учёта регистра и пробелов, оно важнее совпадения начала, начало, нет совпадения), камера из EXIF, выдержка (секунды и 1/N) |
 
-Прогон 2026-11-21 после перестановки пакетов: 59 из 59.
+Последний прогон — 2026-11-21: 59 из 59.
 
 ## UI-тесты
 
-Автоматическая проверка главного экрана на устройстве. Нужны прежде всего для переноса на Compose ([compose-migration.md](compose-migration.md)): одни и те же тесты гоняются до и после каждого этапа. Решение — [decisions.md](decisions.md), «Главный экран на Compose».
+Автоматическая проверка главного экрана на устройстве: после изменений в `filelist/` и `navigation/` весь набор должен оставаться зелёным. Решение — [decisions.md](decisions.md), «`FileListActivity` и «Свойства» на Compose».
 
 ## Как устроено
 
@@ -39,31 +39,31 @@
 - **Чёрный ящик:** элементы ищутся UI Automator через accessibility, без Espresso и ссылок на классы экрана, поэтому тестам всё равно, на Views экран или на Compose. Строки — из ресурсов приложения (`screen.string(R.string...)`), язык устройства не важен.
 - **Отдельное приложение:** build type `uiTest` (`testBuildType 'uiTest'` в `app/build.gradle`) — `applicationId` с суффиксом `.uitest`, свои authority провайдеров. Debug-сборка на устройстве, её настройки и данные не затрагиваются; Gradle после прогона удаляет только `.uitest`.
 - **Песочница:** все тестовые файлы — в `Android/data/<applicationId>.uitest/files/uitest`. `TestSandbox` отказывается создавать и удалять что-либо вне неё и не разворачивает ссылки при удалении. Доступ ко всем файлам (`MANAGE_EXTERNAL_STORAGE`) тестовому приложению не выдаётся — Android сам не пустит его за пределы своих папок.
-- **Запуск экрана:** `ActivityScenario.launch(FileListActivity.createViewIntent(path))`. Экран при каждом запуске спрашивает доступ ко всем файлам — правило закрывает диалог «Назад».
+- **Запуск экрана:** `ActivityScenario.launch(FileListActivity.createViewIntent(path))`. Экран при каждом запуске спрашивает доступ ко всем файлам — правило закрывает диалог «Назад». То же при пересоздании и возврате из другой Activity — `FileListScreen.recreate()` и `pressBackToFileList()` закрывают этот диалог.
 - **Сброс настроек:** ключи `<пакет>_preferences` и `<пакет>_preferences_path` удаляются по одному на главном потоке. `clear()` не годится: `SettingLiveData` не получает ключ и держит старое значение.
 
-## Контракт для Compose
+## Контракт для UI-тестов
 
-Как тесты находят элементы. При переносе на Compose элемент должен находиться так же, иначе тест упадёт — это ошибка переноса, а не теста.
+Как тесты находят элементы. Меняешь UI — элемент должен находиться так же; иначе поменять способ поиска в `FileListScreen` и эту таблицу.
 
 | Элемент | Как ищется |
 |---|---|
 | имена файлов, заголовки, подзаголовок, пункты меню, подписи FAB, тексты диалогов | `By.text` — точный текст |
 | иконки на панелях: поиск, «Вид и сортировка», «Вырезать», «Копировать», «Удалить», «Вставить», крестик | `By.desc` — описание = заголовок пункта меню (`contentDescription`) |
-| кнопка ⋮ экрана | `By.desc` — системная строка Android `action_menu_overflow_description` («Другие варианты» на устройстве 2026-11-18) или `abc_action_menu_overflow_description` AppCompat («Ещё»). В Compose (`FileListTopBar`) — строка AppCompat |
-| иконка файла (тап — выделить) | id `iconLayout` (`FileListScreen.clickFileIcon`). В Compose — `testTag("iconLayout")` и `testTagsAsResourceId = true` |
-| кнопка ⋮ у файла | id `menuButton` внутри самого маленького контейнера, где есть и имя файла, и эта кнопка. В Compose — `Modifier.testTag("menuButton")` и `testTagsAsResourceId = true` |
-| главная кнопка FAB | id `sd_main_fab` (было из библиотеки speed-dial). В Compose (`FileListFab`) — `testTag("sd_main_fab")`; `testTagsAsResourceId = true` — на корне `FileListNavigation` и `FileListScreen`: действует только на потомков, панель — вне `FileListScreen` |
+| кнопка ⋮ экрана | `By.desc` — строка AppCompat `abc_action_menu_overflow_description` («Ещё», так в `FileListTopBar`) или системная `action_menu_overflow_description` («Другие варианты») |
+| иконка файла (тап — выделить) | id `iconLayout` — `testTag("iconLayout")` (`FileListScreen.clickFileIcon`) |
+| кнопка ⋮ у файла | id `menuButton` — `testTag("menuButton")` внутри самого маленького контейнера, где есть и имя файла, и эта кнопка |
+| главная кнопка FAB | id `sd_main_fab` — `testTag("sd_main_fab")` в `FileListFab` |
 | значок ☰ | `By.desc` — строка `open_navigation_drawer` |
-| контейнер навигации | id `navigation` — `testTag("navigation")` на панели `FileListNavigation` (на Views был `navigationFragment`). Закрытая панель за краем экрана в accessibility не попадает |
+| контейнер навигации | id `navigation` — `testTag("navigation")` на панели `FileListNavigation`. Закрытая панель за краем экрана в accessibility не попадает |
 | пункт навигации | самый маленький кликабельный объект внутри контейнера, у которого текст или текст потомка — заголовок пункта; если не виден — прокрутка `By.scrollable(true)` внутри контейнера |
 | подсветка текущей папки | `isChecked` или `isSelected`: пункт `FileListNavigation` ставит `semantics { selected }` — без роли `Tab` это `checked` |
-| поле имени в диалоге, поле поиска | класс `android.widget.EditText` или `android.widget.AutoCompleteTextView` (так называется поле SearchView) — `FileListScreen.editText()` |
+| поле имени в диалоге, поле поиска | класс `android.widget.EditText` или `android.widget.AutoCompleteTextView` — `FileListScreen.editText()` |
 | элемент списка, когда то же имя есть в другом месте (поле поиска) | `clickFile` — контейнер с именем и кнопкой ⋮, как у меню файла |
 | сетка или список | по координатам: в сетке два файла в одном ряду, в списке — друг под другом |
 | порядок сортировки | по координатам сверху вниз |
 
-У кнопки ⋮ файла и у FAB сейчас нет `contentDescription`, поэтому они ищутся по id. Если появится описание (для TalkBack), тесты можно перевести на `By.desc`.
+`testTag` становится id только с `testTagsAsResourceId = true` — флаг на корне `FileListNavigation` и `FileListScreen` ([gotchas.md](gotchas.md)). У кнопки ⋮ файла и у FAB нет `contentDescription`, поэтому они ищутся по id. Если появится описание (для TalkBack), тесты можно перевести на `By.desc`.
 
 ## Запуск
 
@@ -73,7 +73,7 @@
 .\gradlew.bat connectedUiTestAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=me.zhanghai.android.files.filelist.FileListPasteTest#cut_thenPaste_movesFile"
 ```
 
-- **Агенту: перед любым запуском UI-тестов — спросить владельца**, запускать ли (одним вопросом: какой набор или класс). Сам не запускать, даже если план этапа велит прогнать тесты (решение владельца 2026-11-20).
+- **Агенту: перед любым запуском UI-тестов — спросить владельца**, запускать ли (одним вопросом: какой набор или класс). Сам не запускать (решение владельца 2026-11-20).
 - Нужен подключённый по USB телефон с отладкой и **разблокированным экраном**. Эмулятор не используется.
 - Отчёт: `app/build/reports/androidTests/connected/uiTest/index.html`, XML — `app/build/outputs/androidTest-results/connected/uiTest/`. При «Нет на экране» в сообщении — список всего кликабельного на экране (класс, описание, id, текст).
 - Только собрать, без устройства: `.\gradlew.bat assembleUiTest assembleUiTestAndroidTest`.
@@ -95,20 +95,16 @@
 | `FileListExitTest` | панель «Закрыть mftlrs?» на корне `/`: «Отмена», «Закрыть», «Свернуть» | 3 |
 | `FileListNavigationTest` | ☰ и «Назад»; свайп из середины экрана; «Корень» — переход и сброс истории; «Добавить хранилище…»; «Загрузки»; закладка из меню экрана — переход; FTP-сервер, Настройки, О программе; подсветка текущей папки; долгое нажатие на закладку и стандартную папку | 53 (закладка), 66–69, 71, 73 |
 
-Прогон 2026-11-18 на текущей сборке (Views): 37 из 37, ~4,5 мин.
+Последний прогон — 2026-11-21: 49 из 49, весь набор ~7,5 мин, `FileListNavigationTest` отдельно ~2,3 мин.
 
-Прогон 2026-11-19 после чистки этапа 3 (список на Compose): 36 из 37. `FileListSearchTest.clickDirectoryInResults_opensItAndClosesSearch` упал со `StaleObjectException` в `clickFile("Sub")`. Повтор класса — 4 из 4. Вероятная причина — гонка в тесте: `Sub` есть и в обычном списке папки, `fileRow` находит строку до прихода результатов поиска (задержка 1 с), а затем Compose заменяет узел. На Views `RecyclerView` переиспользовал View, и узел не устаревал. Тест пока не меняли.
-
-Прогон 2026-11-19 после этапа 7 и с `FileListNavigationTest` (боковая панель на Views): 49 из 49, ~7,5 мин; `FileListNavigationTest` отдельно — ~2,3 мин.
-
-Замечено по ходу (поведение приложения, не теста): если в доступе ко всем файлам отказали, экран спрашивает его снова при каждом пересоздании (повороте) и при возврате из другой Activity — `FileListScreen.recreate()` и `pressBackToFileList()` закрывают этот диалог. Что тесты ловят поломку, проверено: тест с испорченным ожиданием упал с понятным сообщением.
+Нестабильный тест: `FileListSearchTest.clickDirectoryInResults_opensItAndClosesSearch` изредка падает со `StaleObjectException` в `clickFile("Sub")`, при повторе зелёный. Вероятная причина — гонка в тесте: `Sub` есть и в обычном списке папки, `fileRow` находит строку до прихода результатов поиска (задержка 1 с), а затем Compose заменяет узел. Тест пока не меняли.
 
 ## Как писать новые
 
 - Один тест — один пункт или пара связанных пунктов чек-листа; номер — в KDoc теста или класса.
 - Файлы — только через `sandbox.dir()` / `file()` / `zip()`; даты фиксированы (`FIXED_TIME`), чтобы список не зависел от дня прогона.
 - Ожидания — `assertShown`, `assertGone`, `waitFor`, `waitUntil` с таймаутом, без `Thread.sleep`. `assertAbsent` — без ожидания: только после того, как экран уже показан.
-- Новый способ найти элемент — сразу в таблицу «Контракт для Compose».
+- Новый способ найти элемент — сразу в таблицу «Контракт для UI-тестов».
 - Не уходить «Назад» выше папки песочницы на корне истории — там панель «Закрыть mftlrs?». Тест панели открывает корень `/` и только читает его.
 - Не использовать `ActivityScenario.launchActivityForResult` — см. «Как устроено», режимы выбора.
 - После тапа по пункту меню (`DropdownMenu`) — дождаться, пока меню пропадёт (`assertGone(пункт)`), и только потом «Назад»: иначе его забирает закрывающееся меню и экран остаётся на месте.

@@ -48,10 +48,12 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -60,10 +62,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.Insets
 import java8.nio.file.Path
+import kotlin.math.roundToInt
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.navigation.NavigationItem
 import me.zhanghai.android.files.util.getDimensionPixelSizeByAttr
@@ -109,13 +113,14 @@ internal fun FileListNavigation(
             .semantics { testTagsAsResourceId = true }, // testTag виден UI-тестам как id; панель — вне FileListScreen
     ) {
         val sheetWidth = sheetWidth(maxWidth, windowInsets.left)
-        val sheet = @Composable { elevation: Dp ->
+        val sheet = @Composable { elevation: Dp, overshoot: () -> Float ->
             NavigationSheet(
                 items = items,
                 checked = checked,
                 windowInsets = windowInsets,
                 width = sheetWidth,
                 elevation = elevation,
+                overshoot = overshoot,
                 listener = listener,
             )
         }
@@ -123,14 +128,14 @@ internal fun FileListNavigation(
             PersistentNavigation(
                 isOpen = isPersistentOpen,
                 windowInsets = windowInsets,
-                sheet = { sheet(0.dp) },
+                sheet = { sheet(0.dp) { 0f } },
                 content = content,
             )
         } else {
             ModalNavigation(
                 isOpen = isOpen,
                 onOpenChange = onOpenChange,
-                sheet = { sheet(MODAL_ELEVATION) },
+                sheet = { overshoot -> sheet(MODAL_ELEVATION, overshoot) },
                 content = { content(windowInsets) },
             )
         }
@@ -153,7 +158,7 @@ private fun sheetWidth(maxWidth: Dp, insetLeftPx: Int): Dp {
 private fun ModalNavigation(
     isOpen: Boolean,
     onOpenChange: (Boolean) -> Unit,
-    sheet: @Composable () -> Unit,
+    sheet: @Composable (overshoot: () -> Float) -> Unit,
     content: @Composable () -> Unit,
 ) {
     val drawerState = rememberDrawerState(if (isOpen) DrawerValue.Open else DrawerValue.Closed)
@@ -173,8 +178,9 @@ private fun ModalNavigation(
     }
 
     // Свайп открывает панель с любого места экрана, как FullDraggableContainer; «Назад» — колбэк во фрагменте
+    // После резкого свайпа пружина проносит панель дальше открытого положения: offset > 0
     ModalNavigationDrawer(
-        drawerContent = sheet,
+        drawerContent = { sheet { drawerState.currentOffset } },
         drawerState = drawerState,
         scrimColor = SCRIM_COLOR,
         content = content,
@@ -219,15 +225,27 @@ private fun NavigationSheet(
     windowInsets: Insets,
     width: Dp,
     elevation: Dp,
+    overshoot: () -> Float, // px, на сколько панель проскочила открытое положение; читается при отрисовке
     listener: NavigationItem.Listener,
 ) {
     val density = LocalDensity.current
     val (left, top, bottom) = with(density) {
         listOf(windowInsets.left.toDp(), windowInsets.top.toDp(), windowInsets.bottom.toDp())
     }
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
 
     Surface(
         modifier = Modifier
+            // Проскочившую панель держим у края: сдвигаем обратно на величину проскока. Целыми px, как сдвигает
+            // ModalNavigationDrawer: от сдвига на долю пикселя меняются расстояния между буквами
+            .graphicsLayer {
+                val gap = overshoot()
+                translationX = when {
+                    gap <= 0f || gap.isNaN() -> 0f // NaN — пока DrawerState не знает ширину панели
+                    isRtl -> gap.roundToInt().toFloat()
+                    else -> -gap.roundToInt().toFloat()
+                }
+            }
             .width(width)
             .fillMaxHeight()
             .testTag("navigation"), // контейнер навигации для UI-тестов

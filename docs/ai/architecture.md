@@ -28,7 +28,7 @@ FileJobService (копирование, удаление, архивы…) и Ft
   2. отладка WebView в debug;
   3. Coil (`coil/CoilInitializer.kt`);
   4. установка провайдеров ФС (`provider/FileSystemProviders.kt`), фоновая инициализация jcifs (NetBIOS, SMB1), назначение authenticator'ов сетевым клиентам;
-  5. миграции настроек по `versionCode` (`app/AppUpgrader.kt`; сейчас миграций нет — upstream-миграции 1.1.0–1.7.2 удалены 2026-11-21);
+  5. миграции настроек по `versionCode` (`app/AppUpgrader.kt`; сейчас миграций нет);
   6. принудительная инициализация LiveData на главном потоке;
   7. цвет темы и ночной режим;
   8. каналы уведомлений.
@@ -39,7 +39,7 @@ FileJobService (копирование, удаление, архивы…) и Ft
 
 | Компонент | Зачем |
 |---|---|
-| `filelist.FileListActivity` | лаунчер (поддержка Android TV убрана); `VIEW` папок и архивов (список MIME в манифесте); системный выбор файла: `GET_CONTENT`, `OPEN_DOCUMENT`, `CREATE_DOCUMENT`; свои действия `VIEW_DOWNLOADS` (ярлык) |
+| `filelist.FileListActivity` | лаунчер; `VIEW` папок и архивов (список MIME в манифесте); системный выбор файла: `GET_CONTENT`, `OPEN_DOCUMENT`, `CREATE_DOCUMENT`; свои действия `VIEW_DOWNLOADS` (ярлык) |
 | `fileaction.OpenFileActivity` | действие `…intent.action.OPEN_FILE` — открыть файл по пути (из ярлыков на рабочем столе; в ярлыке — полное имя класса, после переноса класса старые ярлыки не открываются) |
 | `fileaction.EditFileActivity`, `OpenFileAsDialogActivity` | пункты «Изменить» и «Открыть как» в системном chooser |
 | `viewer.text.TextEditorActivity` | `VIEW` для `text/*`, JSON, XML, YAML, скриптов |
@@ -101,7 +101,7 @@ FileJobService (копирование, удаление, архивы…) и Ft
 
 Снаружи `filelist/` используют только `FileListActivity` — как экран выбора папки или файла (`settings/`, `storage/`, `viewer/saveas/`). Общее, что раньше лежало в `filelist/`: расширения `Path` и `FileItem` (`name`, `toUserFriendlyString`, `isRemotePath`…), `PathObserver` — в `file/`; `FileSortOptions`, `FileViewType`, `OpenApkDefaultAction` — в `settings/`; `OpenFileActivity`, `EditFileActivity`, «Открыть как» — в `fileaction/`.
 
-- `FileListActivity` — без фрагментов и View (этап 12 — [compose-migration.md](compose-migration.md)), MVVM; плюс контракты выбора файла и папки внутри приложения (`OpenFileContract`, `CreateFileContract`, `OpenDirectoryContract`):
+- `FileListActivity` — без фрагментов, View и разметки, MVVM; плюс контракты выбора файла и папки внутри приложения (`OpenFileContract`, `CreateFileContract`, `OpenDirectoryContract`):
   - `setContent { FileListRoot(...) }` (`filelist/ui/FileListRoot.kt`): боковая панель `FileListNavigation`, внутри неё `FileListScreen` — раскладка из слотов; отступы под системные панели — `windowInsets` из слушателя insets на `android.R.id.content` (там же флаги `layoutInStatusBar`, `layoutInNavigation`);
   - `FileListRoot` собирает `FileListViewModel.uiState` через `collectAsStateWithLifecycle`, каждая часть (`Content`, `TopBar`, `SelectionBar`, `BottomBar`) — в свой composable; действия Compose вызывают методы ViewModel напрямую, `FileItemListener` списка реализует ViewModel;
   - «Назад» — 6 `BackHandler` в `FileListRoot` в порядке очереди (срабатывает первым последний): подтверждение выхода (`FileListExitConfirmation`, выключено в режиме выбора), вверх по крошкам, поиск, выделение, FAB, боковая панель;
@@ -112,14 +112,13 @@ FileJobService (копирование, удаление, архивы…) и Ft
   - разрешения — `FileListPermissions.kt`: лаунчеры `registerForActivityResult`, проверка в `onResume` — доступ ко всем файлам, хранилище, уведомления; сочетания клавиш — `onKeyShortcut` → `FileListViewModel.onKeyShortcut`.
 - `FileListViewModel` — состояние экрана `uiState` (`StateFlow<FileListUiState>`; LiveData ниже наблюдаются через `asFlow`, пока есть подписчик, `WhileSubscribed(5 с)` — иначе `FileListLiveData` перечитывал бы папку в фоне; файлы фильтрует и сортирует `updateFiles`, пункты панелей — `updateSelectionBar`, `updateBottomBar`; сами расчёты — чистые функции в `FileListUiLogic.kt`: подзаголовок, статусы списка, фильтр и сортировка, пункты панели выделения и нижней панели, изменение выделения и `PasteState` — их проверяют unit-тесты, [testing.md](testing.md)) и действия экрана: `start(intent)` — путь и режим выбора из интента, поиск с задержкой 1 с (`delay` в `viewModelScope`), `onTopBarAction`, `onSelectionAction`, `onBottomBarAction`, `onFabAction`, `openFile` (режим выбора, APK по настройке, папка или архив, иначе интент), результаты диалогов, сочетания клавиш. Задачи `FileJobService` (копирование, удаление, архив и др.) запускает сама через `application`-контекст. Источники: история (`TrailLiveData`), текущий путь, список (`FileListLiveData`) или поиск (`SearchFileListLiveData`), выделение (`FileItemSet`), буфер вырезать/копировать (`PasteState`), режим выбора (`PickOptions`), вид и сортировка — общие или для конкретной папки (`FileViewSortPathSpecificLiveData`, `settings/PathSettings.kt`).
 - `FileListLiveData` читает папку в `AsyncTask.THREAD_POOL_EXECUTOR` (`loadFileItem` на каждый файл) и перечитывает её по сигналу `PathObserver`.
-- Разметки у главного экрана нет: `FileListFragment` и `file_list_fragment.xml` удалены (этап 12).
 - Режим выбора (`PickOptions.Mode`: `OPEN_FILE`, `CREATE_FILE`, `OPEN_DIRECTORY`) — приложение работает как системный выбор файла для других приложений.
 
 ## Боковая панель — `navigation/`
 
 - Состав — `NavigationItems.kt`, `navigationItems`: видимые хранилища → тома SD и USB (API 30+) → «Добавить хранилище» → стандартные папки (Alarms, DCIM, Documents, Download, Movies, Music, Notifications, Pictures, Podcasts, Ringtones; QQ, TIM, WeChat — только до Android 11) → закладки → меню (FTP-сервер, Настройки, О программе).
 - Показывает список `FileListNavigation` (Compose, `filelist/ui/FileListNavigation.kt`) из `NavigationItemListLiveData`; действия идут в `NavigationItem.Listener` (реализует `FileListActivity`): `navigateTo`, `navigateToRoot`, `launchIntent`, `closeNavigationDrawer`. `NavigationRoot` — пункты, которые сбрасывают историю. Иконка пункта — `NavigationItem.iconRes` (vector, `painterResource`).
-- Телефон — `ModalNavigationDrawer`: свайп с любого места экрана, «Назад» — `BackHandler` в `FileListRoot` (последний в очереди, срабатывает первым). Планшет в ландшафте (`Configuration.isPersistentNavigation`: `sw600dp`, ландшафт) — панель рядом с экраном, видимость — настройка `FILE_LIST_PERSISTENT_DRAWER_OPEN`, ☰ её переключает.
+- Телефон — `ModalNavigationDrawer`: свайп с любого места экрана, «Назад» — `BackHandler` в `FileListRoot` (последний в очереди, срабатывает первым). Планшет в ландшафте (`Configuration.isPersistentNavigation`: `sw600dp`, ландшафт) — панель рядом с экраном, видимость — настройка `FILE_LIST_PERSISTENT_DRAWER_OPEN`, ☰ её переключает. Размеры панели — константы по замеру старой панели на телефоне; отступы для планшета не проверялись.
 - **Для редизайна без drawer:** данные (`navigationItems`, `BookmarkDirectories`, `StandardDirectoriesLiveData`, `NavigationRootMapLiveData`) от drawer'а не зависят и годятся для нового экрана; привязка к drawer'у — `FileListNavigation`, `FileListUiState.isNavigationOpen`, `setNavigationOpen()` и `closeNavigationDrawer()` в `FileListActivity`.
 
 ## Операции с файлами — `filejob/`
@@ -158,24 +157,21 @@ Apache FtpServer (`FtpServer.kt`) с файловой системой `Provider
 
 ## Темы — `ui/theme/`
 
-- **В mftlrs две фиксированные темы — светлая и тёмная** (2026-11-15). Палитра — `values/colors_mftlrs.xml` (роли Material 3, `mftlrs_light_*`, `mftlrs_dark_*`), темы — `values/themes_mftlrs.xml`: `Theme.Mftlrs.Material3.Light`, `.Dark`, `.DayNight` (в `values-night/themes_mftlrs.xml` указывает на `.Dark`). Upstream-тема `Theme.MaterialFiles.Material3` наследует `.DayNight`, просмотрщик картинок (`…Material3.Immersive`) — `.Dark`.
+- **Две фиксированные темы — светлая и тёмная** ([decisions.md](decisions.md)). Палитра — `values/colors_mftlrs.xml` (роли Material 3, `mftlrs_light_*`, `mftlrs_dark_*`), темы — `values/themes_mftlrs.xml`: `Theme.Mftlrs.Material3.Light`, `.Dark`, `.DayNight` (в `values-night/themes_mftlrs.xml` указывает на `.Dark`). Upstream-тема `Theme.MaterialFiles.Material3` наследует `.DayNight`, просмотрщик картинок (`…Material3.Immersive`) — `.Dark`. Compose — `MftlrsTheme` с той же палитрой ([compose.md](compose.md)).
 - Манифест ссылается прямо на `Theme.MaterialFiles.Material3`, `.Material3.Translucent`, `.Material3.Immersive`; подмены темы во время работы нет.
-- **Удалено полностью** (2026-11-15): Material Design 2 (`themes.xml` во всех `values-v*`, MD2-стили в `styles.xml`, ветки `isMaterial3Theme` в `FileListAdapter`, `ThemedSpeedDialView`, `ThemedSwipeRefreshLayout`), выбор цвета (`theme/custom/` — `CustomThemeHelper`, `ThemeColor`, `ThemeColorPreference`; пакет `colorpicker/`; `themes_custom.xml`, `colors_custom.xml`, `colors_material.xml`, `colors_google.xml`, `utils/generate-custom-themes.sh`), чёрный фон тёмной темы (стили `.Black`), цвета из обоев (`color-v31/`), настройки `THEME_COLOR`, `MATERIAL_DESIGN_3`, `BLACK_NIGHT_MODE` с ключами и строками во всех локалях.
 - Светлая или тёмная — по настройке «Ночной режим» (`NightModeHelper`): как в системе, выкл., вкл., по времени, при энергосбережении.
 - `color_primary_light` / `_dark` (`values/colors.xml`) — тоже палитра mftlrs: ими красятся уведомления. Вторичный текст — `color/m3_*default_color_secondary_text.xml`, переведены на `on_surface_variant` палитры. `colors_google_material3.xml` (нейтральная палитра `m3_ref_palette_*` для библиотеки) оставлен.
 
 ## Миниатюры — `coil/`
 
-Coil 2 со своими загрузчиками: `PathAttributesFetcher` (через NIO2, сетевые файлы — по настройке `READ_REMOTE_FILES_FOR_THUMBNAIL`), `VideoFrameFetcher`, `PdfPageFetcher` (`PdfRenderer`; до API 28 — по настройке), `AppIconFetcher` (иконки APK, appiconloader).
+Coil 2 со своими загрузчиками: `PathAttributesFetcher` (через NIO2, сетевые файлы — по настройке `READ_REMOTE_FILES_FOR_THUMBNAIL`), `VideoFrameFetcher`, `PdfPageFetcher` (`PdfRenderer`; до API 28 — по настройке), `AppIconFetcher` (иконки APK, appiconloader). Модель — пара `Path` и `BasicFileAttributes` (`path to attributes`), не один `Path`: загрузчики ключатся по ней.
 
 ## Отчёты о падениях
 
-- Firebase Analytics и Crashlytics upstream вырезаны (2026-11-15): плагины и зависимости в `app/build.gradle`, `app/google-services.json`, `nonfree/FirebaseInitializer.kt`, вызов в `app/AppInitializers.kt`, `FirebaseInitProvider` в манифесте. Сейчас отчётов нет.
-- Замена — ACRA ([decisions.md](decisions.md)). Места под неё помечены `TODO(mftlrs)`:
+- Сейчас отчётов нет: Firebase upstream вырезан. Замена — ACRA ([decisions.md](decisions.md)). Места под неё помечены `TODO(mftlrs)`:
   - `app/build.gradle` — зависимости;
   - `app/AppInitializers.kt` — инициализация. ACRA нужно запускать как можно раньше, обычно в `Application.attachBaseContext()`, а класса `Application` нет — решить при подключении;
   - `about/AboutFragment.kt` — пункт «Политика конфиденциальности» закомментирован; `privacyPolicyLayout` в разметке скрыт по умолчанию. Включить со ссылкой на свой `PRIVACY.md`.
-- `PRIVACY.md` пока upstream и упоминает Firebase — переписать при ребрендинге.
 
 ## Нативный код и hidden API
 
@@ -185,13 +181,12 @@ Coil 2 со своими загрузчиками: `PathAttributesFetcher` (че
 ## Хранение данных
 
 - БД нет. SharedPreferences по умолчанию (`Settings`) и отдельный файл для настроек папок (`PathSettings`).
-- Пароли серверов лежат в `Settings.STORAGES` открытым текстом (Parcel → Base64), а `allowBackup="true"` — они попадают в резервные копии Android.
+- Пароли серверов — открытым текстом и попадают в резервные копии Android — [bugs.md](bugs.md).
 
 ## Ресурсы, переводы, метаданные
 
-- 22 перевода в `res/values-*` (есть `values-ru`); upstream переводит через Transifex. 11 локалей удалены 2026-11-15, в том числе все RTL; в манифесте `supportsRtl="false"` — раскладка всегда слева направо, код учёта направления письма удалён ([decisions.md](decisions.md), «Переводы»). Список языков в настройках (`LocalePreference`) строится из папок `values-*` через `generateLocaleConfig`. Название `app_name` = `mftlrs` — только в `values/strings.xml`, `translatable="false"`, в локалях его нет.
-- Иконка — только адаптивная, `mipmap-anydpi-v26/launcher_icon.xml`: фон — цвет `launcher_icon_color`, белая папка — `mipmap-*/launcher_icon_foreground.png`, монохромный слой — вектор. Иконки ярлыков — тоже адаптивные: серый фон и векторный значок цвета `launcher_icon_color`. `launcher_icon_color` (`values/colors.xml`) — отдельный от темы цвет `#12876A` (бирюзово-зелёный); иконки не зависят от `color_primary_light`. Тот же цвет — в `art/*.svg` и `art/generate-png.sh`. Запечённых PNG нет (minSdk 26). Исходники — `art/*.svg`, выгрузка PNG переднего слоя и иконки для магазина — `art/generate-png.sh` + `deploy-png.sh` (Inkscape). Баннера Android TV нет.
-- `fastlane/metadata/android/` — тексты и скриншоты для Google Play и F-Droid (оригинальные).
+- 22 перевода в `res/values-*` (есть `values-ru`); RTL нет: `supportsRtl="false"`, раскладка всегда слева направо ([decisions.md](decisions.md), «Переводы»). Список языков в настройках (`LocalePreference`) строится из папок `values-*` через `generateLocaleConfig`. Название `app_name` = `mftlrs` — только в `values/strings.xml`, `translatable="false"`, в локалях его нет.
+- Иконка — только адаптивная, `mipmap-anydpi-v26/launcher_icon.xml`: фон — цвет `launcher_icon_color`, белая папка — `mipmap-*/launcher_icon_foreground.png`, монохромный слой — вектор. Иконки ярлыков — тоже адаптивные: серый фон и векторный значок цвета `launcher_icon_color`. `launcher_icon_color` (`values/colors.xml`) — отдельный от темы цвет `#12876A` (бирюзово-зелёный); иконки не зависят от `color_primary_light`. Тот же цвет — в `art/*.svg` и `art/generate-png.sh`. Запечённых PNG нет (minSdk 26). Исходники — `art/*.svg`, выгрузка PNG переднего слоя и иконки для магазина — `art/generate-png.sh` + `deploy-png.sh` (Inkscape).
 - `README.md`, `PRIVACY.md`, `SECURITY.md`, `fastlane/metadata/android/en-US/*.txt` — свои, про mftlrs, с указанием «основано на Material Files». Скриншоты и картинки fastlane — пока upstream.
 - Экран «О программе» (`about/`): ссылки — на форк; пункт «Основано на» — на upstream; в «Лицензиях» (`raw/licenses.xml`) первой — запись mftlrs. Правила атрибуции — [decisions.md](decisions.md), заголовки файлов — [style.md](style.md).
 
