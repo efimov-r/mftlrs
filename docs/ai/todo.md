@@ -32,7 +32,7 @@
 - [ ] 9. Боковая панель на Compose один в один — готово (`FileListNavigation.kt`, View drawer удалены, UI-тесты 49 из 49 до последней правки отступов); осталось: прогнать весь набор UI-тестов ещё раз; владельцу — чек-лист 66–73, планшет (72) — руками
 - [ ] 10. Логика из `FileListFragment` — в `FileListViewModel`, порядок: 10a → 10b → UI-тесты → 10c
   - [x] 10a. Состояние экрана — `StateFlow<FileListUiState>` во ViewModel, `FileList*State` удалены; сборка и `lintVitalRelease` проходят
-  - [ ] 10b. Действия и разовые события (`Channel`) — во ViewModel, интенты — `FileListIntents.kt`; затем весь набор UI-тестов
+  - [x] 10b. Действия и разовые события (`Channel`) — во ViewModel, интенты — `FileListIntents.kt`; UI-тесты 49 из 49
   - [ ] 10c. Unit-тесты на логику без ФС
 - [ ] 11. 13 диалогов `filelist` — на Compose; «Свойства» — оценить
 - [ ] 12. Без `FileListFragment`: `FileListActivity.setContent`; release-сборка на телефоне; весь ручной [чек-лист](file-list-checklist.md) владельцем, один раз

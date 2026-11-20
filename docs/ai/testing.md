@@ -50,6 +50,7 @@
 .\gradlew.bat connectedUiTestAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=me.zhanghai.android.files.filelist.FileListPasteTest#cut_thenPaste_movesFile"
 ```
 
+- **Агенту: перед любым запуском UI-тестов — спросить владельца**, запускать ли (одним вопросом: какой набор или класс). Сам не запускать, даже если план этапа велит прогнать тесты (решение владельца 2026-11-20).
 - Нужен подключённый по USB телефон с отладкой и **разблокированным экраном**. Эмулятор не используется.
 - Отчёт: `app/build/reports/androidTests/connected/uiTest/index.html`, XML — `app/build/outputs/androidTest-results/connected/uiTest/`. При «Нет на экране» в сообщении — список всего кликабельного на экране (класс, описание, id, текст).
 - Только собрать, без устройства: `.\gradlew.bat assembleUiTest assembleUiTestAndroidTest`.

@@ -6,8 +6,12 @@
 
 package me.zhanghai.android.files.filelist
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Environment
 import android.os.Parcelable
 import android.text.TextUtils
+import android.view.KeyEvent
 import androidx.annotation.StringRes
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
@@ -17,8 +21,11 @@ import androidx.lifecycle.asFlow
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import java8.nio.file.Path
+import java8.nio.file.Paths
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,29 +37,56 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.zhanghai.android.files.R
+import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.file.FileItem
+import me.zhanghai.android.files.file.MimeType
+import me.zhanghai.android.files.file.asMimeTypeOrNull
+import me.zhanghai.android.files.file.extension
+import me.zhanghai.android.files.file.isApk
+import me.zhanghai.android.files.filejob.FileJobService
 import me.zhanghai.android.files.filelist.FileSortOptions.By
 import me.zhanghai.android.files.filelist.FileSortOptions.Order
+import me.zhanghai.android.files.navigation.BookmarkDirectories
+import me.zhanghai.android.files.navigation.BookmarkDirectory
 import me.zhanghai.android.files.provider.archive.archiveRefresh
+import me.zhanghai.android.files.provider.archive.createArchiveRootPath
 import me.zhanghai.android.files.provider.archive.isArchivePath
+import me.zhanghai.android.files.provider.linux.isLinuxPath
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.util.CloseableLiveData
 import me.zhanghai.android.files.util.Failure
 import me.zhanghai.android.files.util.Loading
 import me.zhanghai.android.files.util.Stateful
 import me.zhanghai.android.files.util.Success
+import me.zhanghai.android.files.util.asFileNameOrNull
+import me.zhanghai.android.files.util.extraPath
+import me.zhanghai.android.files.util.takeIfNotEmpty
 import me.zhanghai.android.files.util.valueCompat
 import java.io.Closeable
 
 // TODO: Use SavedStateHandle to save state.
-class FileListViewModel : ViewModel() {
+// mftlrs: also the actions of the main screen, which were in FileListFragment; it executes the
+// one-time events and is still the listener of the dialogs.
+class FileListViewModel : ViewModel(), FileItemListener {
     private val trailLiveData = TrailLiveData()
     val hasTrail: Boolean
         get() = trailLiveData.value != null
     val pendingState: Parcelable?
         get() = trailLiveData.valueCompat.pendingState
 
-    fun navigateTo(lastState: Parcelable, path: Path) = trailLiveData.navigateTo(lastState, path)
+    // mftlrs: the scroll position of the list, updated by FileListFragment; saved in the trail
+    // when navigating away, as the state of GridLayoutManager was.
+    var scrollPosition = ScrollPosition(0, 0)
+
+    fun navigateTo(path: Path) {
+        collapseSearch()
+        trailLiveData.navigateTo(scrollPosition, path)
+    }
+
+    fun navigateToRoot(path: Path) {
+        collapseSearch()
+        resetTo(path)
+    }
 
     fun resetTo(path: Path) = trailLiveData.resetTo(path)
 
@@ -169,11 +203,11 @@ class FileListViewModel : ViewModel() {
     val selectedFiles: FileItemSet
         get() = _selectedFilesLiveData.valueCompat
 
-    fun selectFile(file: FileItem, selected: Boolean) {
+    override fun selectFile(file: FileItem, selected: Boolean) {
         selectFiles(fileItemSetOf(file), selected)
     }
 
-    fun selectFiles(files: FileItemSet, selected: Boolean) {
+    override fun selectFiles(files: FileItemSet, selected: Boolean) {
         val selectedFiles = _selectedFilesLiveData.valueCompat
         if (selectedFiles === files) {
             if (!selected && selectedFiles.isNotEmpty()) {
@@ -205,7 +239,7 @@ class FileListViewModel : ViewModel() {
         _selectedFilesLiveData.value = selectedFiles
     }
 
-    fun clearSelectedFiles() {
+    override fun clearSelectedFiles() {
         val selectedFiles = _selectedFilesLiveData.valueCompat
         if (selectedFiles.isEmpty()) {
             return
@@ -529,12 +563,496 @@ class FileListViewModel : ViewModel() {
         _uiState.update { it.copy(bottomBar = bottomBar ?: it.bottomBar.copy(isVisible = false)) }
     }
 
+    // mftlrs: was in FileListFragment.onActivityCreated(): the start path and the pick mode from
+    // the intent of FileListActivity.
+    fun start(intent: Intent) {
+        if (hasTrail) {
+            return
+        }
+        var path = intent.extraPath
+        var pickOptions: PickOptions? = null
+        when (val action = intent.action) {
+            Intent.ACTION_GET_CONTENT, Intent.ACTION_OPEN_DOCUMENT,
+            Intent.ACTION_CREATE_DOCUMENT -> {
+                val mode = if (action == Intent.ACTION_CREATE_DOCUMENT) {
+                    PickOptions.Mode.CREATE_FILE
+                } else {
+                    PickOptions.Mode.OPEN_FILE
+                }
+                val mimeType = intent.type?.asMimeTypeOrNull() ?: MimeType.ANY
+                val fileName = if (mode == PickOptions.Mode.CREATE_FILE) {
+                    intent.getStringExtra(Intent.EXTRA_TITLE)?.asFileNameOrNull()?.value
+                        ?: mimeType.extension?.let { "file.$it" } ?: "file"
+                } else {
+                    null
+                }
+                val readOnly = action == Intent.ACTION_GET_CONTENT
+                val extraMimeTypes = if (mode == PickOptions.Mode.OPEN_FILE) {
+                    intent.getStringArrayExtra(Intent.EXTRA_MIME_TYPES)
+                        ?.mapNotNull { it.asMimeTypeOrNull() }?.takeIfNotEmpty()
+                } else {
+                    null
+                }
+                val mimeTypes = extraMimeTypes ?: listOf(mimeType)
+                val localOnly = intent.getBooleanExtra(Intent.EXTRA_LOCAL_ONLY, false)
+                val allowMultiple = mode != PickOptions.Mode.CREATE_FILE &&
+                    intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                pickOptions =
+                    PickOptions(mode, fileName, readOnly, mimeTypes, localOnly, allowMultiple)
+            }
+            Intent.ACTION_OPEN_DOCUMENT_TREE -> {
+                val localOnly = intent.getBooleanExtra(Intent.EXTRA_LOCAL_ONLY, false)
+                pickOptions = PickOptions(
+                    PickOptions.Mode.OPEN_DIRECTORY, null, false, emptyList(), localOnly, false
+                )
+            }
+            ACTION_VIEW_DOWNLOADS ->
+                path = Paths.get(
+                    Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS
+                    ).path
+                )
+            else ->
+                if (path != null) {
+                    val mimeType = intent.type?.asMimeTypeOrNull()
+                    if (mimeType != null && path.isArchiveFile(mimeType)) {
+                        path = path.createArchiveRootPath()
+                    }
+                }
+        }
+        if (path == null) {
+            path = Settings.FILE_LIST_DEFAULT_DIRECTORY.valueCompat
+        }
+        resetTo(path)
+        if (pickOptions != null) {
+            this.pickOptions = pickOptions
+        }
+    }
+
+    // mftlrs: the search was a SearchView in the options menu of FileListFragment.
+    private var searchJob: Job? = null
+
+    fun expandSearch() {
+        isSearchViewExpanded = true
+        debounceSearch()
+    }
+
+    fun collapseSearch() {
+        if (!isSearchViewExpanded) {
+            return
+        }
+        isSearchViewExpanded = false
+        stopSearching()
+    }
+
+    fun onSearchQueryChange(query: String) {
+        searchViewQuery = query
+        debounceSearch()
+    }
+
+    fun onSearchSubmit(query: String) {
+        searchJob?.cancel()
+        search(query)
+    }
+
+    // Was DebouncedRunnable: searches a second after the last change of the query.
+    private fun debounceSearch() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(SEARCH_DELAY_MILLIS)
+            if (!isSearchViewExpanded) {
+                return@launch
+            }
+            val query = searchViewQuery
+            if (query.isEmpty()) {
+                return@launch
+            }
+            search(query)
+        }
+    }
+
+    // mftlrs: was FileListFragment.onOptionsItemSelected().
+    internal fun onTopBarAction(action: FileListTopBarAction) {
+        when (action) {
+            FileListTopBarAction.VIEW_LIST -> viewType = FileViewType.LIST
+            FileListTopBarAction.VIEW_GRID -> viewType = FileViewType.GRID
+            FileListTopBarAction.SORT_BY_NAME -> setSortBy(By.NAME)
+            FileListTopBarAction.SORT_BY_TYPE -> setSortBy(By.TYPE)
+            FileListTopBarAction.SORT_BY_SIZE -> setSortBy(By.SIZE)
+            FileListTopBarAction.SORT_BY_LAST_MODIFIED -> setSortBy(By.LAST_MODIFIED)
+            FileListTopBarAction.SORT_ORDER_ASCENDING ->
+                setSortOrder(
+                    if (sortOptions.order != Order.ASCENDING) Order.ASCENDING else Order.DESCENDING
+                )
+            FileListTopBarAction.SORT_DIRECTORIES_FIRST ->
+                setSortDirectoriesFirst(!sortOptions.isDirectoriesFirst)
+            FileListTopBarAction.VIEW_SORT_PATH_SPECIFIC ->
+                isViewSortPathSpecific = !isViewSortPathSpecific
+            FileListTopBarAction.NEW_TASK -> sendEvent(FileListEvent.OpenInNewTask(currentPath))
+            FileListTopBarAction.NAVIGATE_UP -> {
+                collapseSearch()
+                navigateUp()
+            }
+            FileListTopBarAction.NAVIGATE_TO ->
+                showDialog(FileListDialog.NavigateToPath(currentPath))
+            FileListTopBarAction.REFRESH -> reload()
+            FileListTopBarAction.SELECT_ALL -> selectAllFiles()
+            FileListTopBarAction.SHOW_HIDDEN_FILES ->
+                Settings.FILE_LIST_SHOW_HIDDEN_FILES.putValue(
+                    !Settings.FILE_LIST_SHOW_HIDDEN_FILES.valueCompat
+                )
+            FileListTopBarAction.SHARE -> share(currentPath, MimeType.DIRECTORY)
+            FileListTopBarAction.COPY_PATH -> sendEvent(FileListEvent.CopyPath(currentPath))
+            FileListTopBarAction.OPEN_IN_TERMINAL -> {
+                val path = currentPath
+                if (path.isLinuxPath) {
+                    sendEvent(FileListEvent.OpenInTerminal(path))
+                }
+            }
+            FileListTopBarAction.ADD_BOOKMARK -> addBookmark(currentPath)
+            FileListTopBarAction.CREATE_SHORTCUT ->
+                sendEvent(FileListEvent.CreateShortcut(currentPath, MimeType.DIRECTORY))
+        }
+    }
+
+    // mftlrs: alphabetic shortcuts of the removed menus; a hidden or disabled item doesn't react.
+    fun onKeyShortcut(keyCode: Int): Boolean {
+        val state = _uiState.value
+        val bottomBar = state.bottomBar
+        if (bottomBar.isVisible && keyCode == KeyEvent.KEYCODE_V && bottomBar.isActionEnabled) {
+            val action = bottomBar.action
+            if (action == FileListBottomBarAction.PASTE ||
+                action == FileListBottomBarAction.EXTRACT_HERE) {
+                pasteFiles(currentPath)
+                return true
+            }
+        }
+        if (state.selectionBar.isVisible) {
+            val selectionAction = state.selectionBar.actions.firstOrNull {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_X -> it == FileListSelectionAction.CUT
+                    KeyEvent.KEYCODE_C ->
+                        it == FileListSelectionAction.COPY ||
+                            it == FileListSelectionAction.COPY_EXTRACT
+                    KeyEvent.KEYCODE_A -> it == FileListSelectionAction.SELECT_ALL
+                    else -> false
+                }
+            }
+            if (selectionAction != null) {
+                onSelectionAction(selectionAction)
+                return true
+            }
+        }
+        val action = when (keyCode) {
+            KeyEvent.KEYCODE_L -> FileListTopBarAction.NAVIGATE_TO
+            KeyEvent.KEYCODE_R -> FileListTopBarAction.REFRESH
+            KeyEvent.KEYCODE_A ->
+                if (state.topBar.isSelectAllVisible) FileListTopBarAction.SELECT_ALL else null
+            KeyEvent.KEYCODE_H -> FileListTopBarAction.SHOW_HIDDEN_FILES
+            else -> null
+        } ?: return false
+        onTopBarAction(action)
+        return true
+    }
+
+    // mftlrs: was FileListFragment.onOverlayActionModeMenuItemClicked().
+    internal fun onSelectionAction(action: FileListSelectionAction) {
+        val files = selectedFiles
+        when (action) {
+            FileListSelectionAction.OPEN -> pickFiles(files)
+            FileListSelectionAction.CREATE -> confirmReplaceFile(files.single())
+            FileListSelectionAction.CUT -> cutFiles(files)
+            FileListSelectionAction.COPY, FileListSelectionAction.COPY_EXTRACT -> copyFiles(files)
+            FileListSelectionAction.DELETE ->
+                showDialog(FileListDialog.ConfirmDeleteFiles(files.toFileItemSet()))
+            FileListSelectionAction.EXTRACT -> extractFiles(files)
+            FileListSelectionAction.ARCHIVE ->
+                showDialog(FileListDialog.CreateArchive(files.toFileItemSet()))
+            FileListSelectionAction.SHARE -> shareFiles(files)
+            FileListSelectionAction.SELECT_ALL -> selectAllFiles()
+        }
+    }
+
+    fun onBottomBarClose() {
+        if (pickOptions != null) {
+            sendEvent(FileListEvent.Finish)
+        } else {
+            clearPasteState()
+        }
+    }
+
+    // fileName is the text of the file name field, for CREATE.
+    internal fun onBottomBarAction(action: FileListBottomBarAction, fileName: String) {
+        when (action) {
+            FileListBottomBarAction.OPEN -> pick(linkedSetOf(currentPath))
+            FileListBottomBarAction.CREATE -> {
+                if (fileName.isEmpty()) {
+                    sendEvent(FileListEvent.ShowToast(R.string.file_list_create_file_name_error_empty))
+                } else if (fileName.asFileNameOrNull() == null) {
+                    sendEvent(
+                        FileListEvent.ShowToast(R.string.file_list_create_file_name_error_invalid)
+                    )
+                } else {
+                    val file = getFileWithName(fileName)
+                    if (file != null) {
+                        confirmReplaceFile(file, false)
+                    } else {
+                        pick(linkedSetOf(currentPath.resolve(fileName)))
+                    }
+                }
+            }
+            FileListBottomBarAction.PASTE, FileListBottomBarAction.EXTRACT_HERE ->
+                pasteFiles(currentPath)
+        }
+    }
+
+    internal fun onFabAction(action: FileListFabAction) {
+        showDialog(
+            when (action) {
+                FileListFabAction.CREATE_FILE -> FileListDialog.CreateFile
+                FileListFabAction.CREATE_DIRECTORY -> FileListDialog.CreateDirectory
+            }
+        )
+        setFabExpanded(false)
+    }
+
+    override fun openFile(file: FileItem) {
+        val pickOptions = pickOptions
+        if (pickOptions != null) {
+            if (file.attributes.isDirectory) {
+                navigateTo(file.path)
+            } else {
+                when (pickOptions.mode) {
+                    PickOptions.Mode.OPEN_FILE -> pickFiles(fileItemSetOf(file))
+                    PickOptions.Mode.CREATE_FILE -> confirmReplaceFile(file)
+                    PickOptions.Mode.OPEN_DIRECTORY -> {}
+                }
+            }
+            return
+        }
+        if (file.mimeType.isApk) {
+            openApk(file)
+            return
+        }
+        if (file.isListable) {
+            navigateTo(file.listablePath)
+            return
+        }
+        openFileWithIntent(file, false)
+    }
+
+    private fun openApk(file: FileItem) {
+        if (!file.isListable) {
+            installApk(file)
+            return
+        }
+        when (Settings.OPEN_APK_DEFAULT_ACTION.valueCompat) {
+            OpenApkDefaultAction.INSTALL -> installApk(file)
+            OpenApkDefaultAction.VIEW -> viewApk(file)
+            OpenApkDefaultAction.ASK -> showDialog(FileListDialog.OpenApk(file))
+        }
+    }
+
+    fun installApk(file: FileItem) {
+        val path = file.path
+        val uri = path.installPackageUriOrNull()
+        if (uri != null) {
+            sendEvent(FileListEvent.InstallApk(uri))
+        } else {
+            FileJobService.installApk(path, application)
+        }
+    }
+
+    fun viewApk(file: FileItem) {
+        navigateTo(file.listablePath)
+    }
+
+    override fun openFileWith(file: FileItem) {
+        openFileWithIntent(file, true)
+    }
+
+    private fun openFileWithIntent(file: FileItem, withChooser: Boolean) {
+        val path = file.path
+        if (path.isArchivePath) {
+            FileJobService.open(path, file.mimeType, withChooser, application)
+        } else {
+            // The image viewer needs the ordered list on the screen.
+            sendEvent(FileListEvent.ViewFile(file, withChooser, _uiState.value.content.files))
+        }
+    }
+
+    override fun cutFile(file: FileItem) {
+        cutFiles(fileItemSetOf(file))
+    }
+
+    override fun copyFile(file: FileItem) {
+        copyFiles(fileItemSetOf(file))
+    }
+
+    override fun confirmDeleteFile(file: FileItem) {
+        showDialog(FileListDialog.ConfirmDeleteFiles(fileItemSetOf(file)))
+    }
+
+    override fun showRenameFileDialog(file: FileItem) {
+        showDialog(FileListDialog.RenameFile(file))
+    }
+
+    override fun extractFile(file: FileItem) {
+        copyFile(file.createDummyArchiveRoot())
+    }
+
+    override fun showCreateArchiveDialog(file: FileItem) {
+        showDialog(FileListDialog.CreateArchive(fileItemSetOf(file)))
+    }
+
+    override fun shareFile(file: FileItem) {
+        share(file.path, file.mimeType)
+    }
+
+    override fun copyPath(file: FileItem) {
+        sendEvent(FileListEvent.CopyPath(file.path))
+    }
+
+    override fun addBookmark(file: FileItem) {
+        addBookmark(file.path)
+    }
+
+    override fun createShortcut(file: FileItem) {
+        sendEvent(FileListEvent.CreateShortcut(file.path, file.mimeType))
+    }
+
+    override fun showPropertiesDialog(file: FileItem) {
+        showDialog(FileListDialog.Properties(file))
+    }
+
+    // mftlrs: results of the dialogs, passed by FileListFragment.
+
+    fun replaceFile(file: FileItem) {
+        pickFiles(fileItemSetOf(file))
+    }
+
+    fun deleteFiles(files: FileItemSet) {
+        FileJobService.delete(makePathListForJob(files), application)
+        selectFiles(files, false)
+    }
+
+    fun archive(files: FileItemSet, name: String, format: Int, filter: Int, password: String?) {
+        val archiveFile = currentPath.resolve(name)
+        FileJobService.archive(
+            makePathListForJob(files), archiveFile, format, filter, password, application
+        )
+        selectFiles(files, false)
+    }
+
+    fun renameFile(file: FileItem, newName: String) {
+        FileJobService.rename(file.path, newName, application)
+        selectFile(file, false)
+    }
+
+    fun createFile(name: String) {
+        FileJobService.create(currentPath.resolve(name), false, application)
+    }
+
+    fun createDirectory(name: String) {
+        FileJobService.create(currentPath.resolve(name), true, application)
+    }
+
+    fun getFileWithName(name: String): FileItem? {
+        val fileListData = fileListStateful
+        if (fileListData !is Success) {
+            return null
+        }
+        return fileListData.value.find { it.name == name }
+    }
+
+    private fun confirmReplaceFile(file: FileItem, setFileName: Boolean = true) {
+        if (setFileName) {
+            sendEvent(FileListEvent.SetCreateFileName(file.name))
+        }
+        showDialog(FileListDialog.ConfirmReplaceFile(file))
+    }
+
+    private fun pickFiles(files: FileItemSet) {
+        pick(files.mapTo(linkedSetOf()) { it.path })
+    }
+
+    private fun pick(paths: LinkedHashSet<Path>) {
+        sendEvent(FileListEvent.Pick(paths, pickOptions!!))
+    }
+
+    private fun cutFiles(files: FileItemSet) {
+        addToPasteState(false, files)
+        selectFiles(files, false)
+    }
+
+    private fun copyFiles(files: FileItemSet) {
+        addToPasteState(true, files)
+        selectFiles(files, false)
+    }
+
+    private fun extractFiles(files: FileItemSet) {
+        copyFiles(files.mapTo(fileItemSetOf()) { it.createDummyArchiveRoot() })
+        selectFiles(files, false)
+    }
+
+    private fun shareFiles(files: FileItemSet) {
+        sendEvent(FileListEvent.Share(files.map { it.path }, files.map { it.mimeType }))
+        selectFiles(files, false)
+    }
+
+    private fun share(path: Path, mimeType: MimeType) {
+        sendEvent(FileListEvent.Share(listOf(path), listOf(mimeType)))
+    }
+
+    private fun selectAllFiles() {
+        val pickOptions = pickOptions
+        val files = _uiState.value.content.files
+            .filterTo(fileItemSetOf()) { isFileSelectable(it, pickOptions) }
+        selectFiles(files, true)
+    }
+
+    private fun pasteFiles(targetDirectory: Path) {
+        val pasteState = pasteState
+        val sources = makePathListForJob(pasteState.files)
+        if (pasteState.copy) {
+            FileJobService.copy(sources, targetDirectory, application)
+        } else {
+            FileJobService.move(sources, targetDirectory, application)
+        }
+        clearPasteState()
+    }
+
+    private fun addBookmark(path: Path) {
+        BookmarkDirectories.add(BookmarkDirectory(null, path))
+        sendEvent(FileListEvent.ShowToast(R.string.file_add_bookmark_success))
+    }
+
+    private fun makePathListForJob(files: FileItemSet): List<Path> =
+        files.map { it.path }.sortedBy { it.toUri() }
+
+    // A copy for a dialog: the selection is changed in place.
+    private fun FileItemSet.toFileItemSet(): FileItemSet = FileItemSet().apply { addAll(this@toFileItemSet) }
+
+    private fun showDialog(dialog: FileListDialog) {
+        sendEvent(FileListEvent.ShowDialog(dialog))
+    }
+
+    private fun sendEvent(event: FileListEvent) {
+        _events.trySend(event)
+    }
+
     override fun onCleared() {
         _fileListLiveData.close()
     }
 
     companion object {
         private val _pasteStateLiveData = MutableLiveData(PasteState())
+
+        // mftlrs: moved from FileListFragment.
+        private const val ACTION_VIEW_DOWNLOADS =
+            "me.zhanghai.android.files.intent.action.VIEW_DOWNLOADS"
+
+        private const val SEARCH_DELAY_MILLIS = 1000L
     }
 
     private class FileListSwitchMapLiveData(
@@ -644,9 +1162,60 @@ internal data class FileListUiState(
     }
 }
 
-// mftlrs: one-time events of the main screen.
+// mftlrs: one-time events of the main screen, executed by FileListFragment.
 internal sealed interface FileListEvent {
     data class ScrollTo(val position: ScrollPosition) : FileListEvent
 
     data class ShowError(val text: String) : FileListEvent // a toast, when there are files already
+
+    data class ShowToast(@StringRes val textRes: Int) : FileListEvent
+
+    data class ShowDialog(val dialog: FileListDialog) : FileListEvent
+
+    // The file name field selects the name without the extension.
+    data class SetCreateFileName(val name: String) : FileListEvent
+
+    data class OpenInNewTask(val path: Path) : FileListEvent
+
+    data class ViewFile(
+        val file: FileItem,
+        val withChooser: Boolean,
+        val files: List<FileItem>, // the list on the screen, for the image viewer
+    ) : FileListEvent
+
+    data class InstallApk(val uri: Uri) : FileListEvent
+
+    data class Share(val paths: List<Path>, val mimeTypes: List<MimeType>) : FileListEvent
+
+    data class CopyPath(val path: Path) : FileListEvent
+
+    data class OpenInTerminal(val path: Path) : FileListEvent
+
+    data class CreateShortcut(val path: Path, val mimeType: MimeType) : FileListEvent
+
+    // Finishes the activity with the picked paths.
+    data class Pick(val paths: LinkedHashSet<Path>, val pickOptions: PickOptions) : FileListEvent
+
+    data object Finish : FileListEvent
+}
+
+// mftlrs: the dialogs are still DialogFragments of FileListFragment.
+internal sealed interface FileListDialog {
+    data class NavigateToPath(val path: Path) : FileListDialog
+
+    data class ConfirmReplaceFile(val file: FileItem) : FileListDialog
+
+    data class ConfirmDeleteFiles(val files: FileItemSet) : FileListDialog
+
+    data class CreateArchive(val files: FileItemSet) : FileListDialog
+
+    data class RenameFile(val file: FileItem) : FileListDialog
+
+    data class OpenApk(val file: FileItem) : FileListDialog
+
+    data class Properties(val file: FileItem) : FileListDialog
+
+    data object CreateFile : FileListDialog
+
+    data object CreateDirectory : FileListDialog
 }
