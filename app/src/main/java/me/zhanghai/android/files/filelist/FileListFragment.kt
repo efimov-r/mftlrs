@@ -48,7 +48,6 @@ import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.app.clipboardManager
 import me.zhanghai.android.files.compat.checkSelfPermissionCompat
 import me.zhanghai.android.files.databinding.FileListFragmentBinding
-import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.fileproperties.FilePropertiesDialogFragment
 import me.zhanghai.android.files.navigation.NavigationItem
 import me.zhanghai.android.files.navigation.NavigationItemListLiveData
@@ -73,18 +72,9 @@ import me.zhanghai.android.files.util.valueCompat
 import me.zhanghai.android.files.util.viewModels
 
 // mftlrs: the logic and the screen state are in FileListViewModel. This fragment hosts the Compose
-// screen, executes the one-time events, and is the listener of the dialogs, the navigation and the
-// permission requests.
-class FileListFragment : Fragment(),
-    ConfirmReplaceFileDialogFragment.Listener, OpenApkDialogFragment.Listener,
-    ConfirmDeleteFilesDialogFragment.Listener, CreateArchiveDialogFragment.Listener,
-    RenameFileDialogFragment.Listener, CreateFileDialogFragment.Listener,
-    CreateDirectoryDialogFragment.Listener, NavigateToPathDialogFragment.Listener,
-    NavigationItem.Listener, ShowRequestAllFilesAccessRationaleDialogFragment.Listener,
-    ShowRequestNotificationPermissionRationaleDialogFragment.Listener,
-    ShowRequestNotificationPermissionInSettingsRationaleDialogFragment.Listener,
-    ShowRequestStoragePermissionRationaleDialogFragment.Listener,
-    ShowRequestStoragePermissionInSettingsRationaleDialogFragment.Listener {
+// screen with its dialogs, executes the one-time events, and is the listener of the navigation and
+// the permission requests.
+class FileListFragment : Fragment(), NavigationItem.Listener {
     private val requestAllFilesAccessLauncher = registerForActivityResult(
         RequestAllFilesAccessContract(), this::onRequestAllFilesAccessResult
     )
@@ -195,6 +185,11 @@ class FileListFragment : Fragment(),
                         onOpenChange = { setNavigationOpen(it) },
                     ) { screenInsets ->
                         Screen(state, screenInsets)
+                    }
+                    // mftlrs: were DialogFragments; each in its own window.
+                    state.dialog?.let { FileListDialogHost(it, viewModel) }
+                    state.permissionDialog?.let { dialog ->
+                        FileListPermissionDialogHost(dialog) { onPermissionDialogResult(dialog, it) }
                     }
                 }
             }
@@ -345,7 +340,7 @@ class FileListFragment : Fragment(),
             is FileListEvent.ScrollTo -> gridState.scrollTo(event.position)
             is FileListEvent.ShowError -> showToast(event.text)
             is FileListEvent.ShowToast -> showToast(event.textRes)
-            is FileListEvent.ShowDialog -> showDialog(event.dialog)
+            is FileListEvent.ShowProperties -> FilePropertiesDialogFragment.show(event.file, this)
             is FileListEvent.SetCreateFileName -> setCreateFileName(event.name)
             is FileListEvent.OpenInNewTask ->
                 startActivitySafe(createOpenInNewTaskIntent(event.path))
@@ -367,22 +362,6 @@ class FileListFragment : Fragment(),
             is FileListEvent.Pick ->
                 requireActivity().finishWithPickResult(event.paths, event.pickOptions)
             FileListEvent.Finish -> requireActivity().finish()
-        }
-    }
-
-    private fun showDialog(dialog: FileListDialog) {
-        when (dialog) {
-            is FileListDialog.NavigateToPath -> NavigateToPathDialogFragment.show(dialog.path, this)
-            is FileListDialog.ConfirmReplaceFile ->
-                ConfirmReplaceFileDialogFragment.show(dialog.file, this)
-            is FileListDialog.ConfirmDeleteFiles ->
-                ConfirmDeleteFilesDialogFragment.show(dialog.files, this)
-            is FileListDialog.CreateArchive -> CreateArchiveDialogFragment.show(dialog.files, this)
-            is FileListDialog.RenameFile -> RenameFileDialogFragment.show(dialog.file, this)
-            is FileListDialog.OpenApk -> OpenApkDialogFragment.show(dialog.file, this)
-            is FileListDialog.Properties -> FilePropertiesDialogFragment.show(dialog.file, this)
-            FileListDialog.CreateFile -> CreateFileDialogFragment.show(this)
-            FileListDialog.CreateDirectory -> CreateDirectoryDialogFragment.show(this)
         }
     }
 
@@ -424,49 +403,7 @@ class FileListFragment : Fragment(),
         }
     }
 
-    // mftlrs: results of the dialogs go to the view model.
-
-    override fun replaceFile(file: FileItem) {
-        viewModel.replaceFile(file)
-    }
-
-    override fun deleteFiles(files: FileItemSet) {
-        viewModel.deleteFiles(files)
-    }
-
-    override fun archive(
-        files: FileItemSet,
-        name: String,
-        format: Int,
-        filter: Int,
-        password: String?
-    ) {
-        viewModel.archive(files, name, format, filter, password)
-    }
-
-    override fun installApk(file: FileItem) {
-        viewModel.installApk(file)
-    }
-
-    override fun viewApk(file: FileItem) {
-        viewModel.viewApk(file)
-    }
-
-    override fun hasFileWithName(name: String): Boolean = viewModel.getFileWithName(name) != null
-
-    override fun renameFile(file: FileItem, newName: String) {
-        viewModel.renameFile(file, newName)
-    }
-
-    override fun createFile(name: String) {
-        viewModel.createFile(name)
-    }
-
-    override fun createDirectory(name: String) {
-        viewModel.createDirectory(name)
-    }
-
-    // NavigateToPathDialogFragment.Listener and NavigationItem.Listener.
+    // NavigationItem.Listener.
     override fun navigateTo(path: Path) {
         viewModel.navigateTo(path)
     }
@@ -493,7 +430,7 @@ class FileListFragment : Fragment(),
         }
         if (Environment::class.supportsExternalStorageManager()) {
             if (!Environment.isExternalStorageManager()) {
-                ShowRequestAllFilesAccessRationaleDialogFragment.show(this)
+                viewModel.showPermissionDialog(FileListPermissionDialog.ALL_FILES_ACCESS)
                 viewModel.isStorageAccessRequested = true
             }
         } else if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
@@ -502,7 +439,7 @@ class FileListFragment : Fragment(),
             if (shouldShowRequestPermissionRationale(
                     android.Manifest.permission.WRITE_EXTERNAL_STORAGE
                 )) {
-                ShowRequestStoragePermissionRationaleDialogFragment.show(this)
+                viewModel.showPermissionDialog(FileListPermissionDialog.STORAGE)
             } else {
                 requestStoragePermission()
             }
@@ -510,7 +447,28 @@ class FileListFragment : Fragment(),
         }
     }
 
-    override fun onShowRequestAllFilesAccessRationaleResult(shouldRequest: Boolean) {
+    // mftlrs: the result of FileListPermissionDialogHost, was the listeners of the DialogFragments.
+    private fun onPermissionDialogResult(dialog: FileListPermissionDialog, shouldRequest: Boolean) {
+        viewModel.dismissPermissionDialog()
+        when (dialog) {
+            FileListPermissionDialog.ALL_FILES_ACCESS ->
+                onShowRequestAllFilesAccessRationaleResult(shouldRequest)
+            FileListPermissionDialog.STORAGE ->
+                onShowRequestStoragePermissionRationaleResult(shouldRequest)
+            FileListPermissionDialog.STORAGE_IN_SETTINGS ->
+                onShowRequestStoragePermissionInSettingsRationaleResult(shouldRequest)
+            FileListPermissionDialog.NOTIFICATION ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    onShowRequestNotificationPermissionRationaleResult(shouldRequest)
+                }
+            FileListPermissionDialog.NOTIFICATION_IN_SETTINGS ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    onShowRequestNotificationPermissionInSettingsRationaleResult(shouldRequest)
+                }
+        }
+    }
+
+    private fun onShowRequestAllFilesAccessRationaleResult(shouldRequest: Boolean) {
         if (shouldRequest) {
             requestAllFilesAccess()
         } else {
@@ -532,7 +490,7 @@ class FileListFragment : Fragment(),
         }
     }
 
-    override fun onShowRequestStoragePermissionRationaleResult(shouldRequest: Boolean) {
+    private fun onShowRequestStoragePermissionRationaleResult(shouldRequest: Boolean) {
         if (shouldRequest) {
             requestStoragePermission()
         } else {
@@ -551,13 +509,13 @@ class FileListFragment : Fragment(),
         } else if (shouldShowRequestPermissionRationale(
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE
         )) {
-            ShowRequestStoragePermissionRationaleDialogFragment.show(this)
+            viewModel.showPermissionDialog(FileListPermissionDialog.STORAGE)
         } else {
-            ShowRequestStoragePermissionInSettingsRationaleDialogFragment.show(this)
+            viewModel.showPermissionDialog(FileListPermissionDialog.STORAGE_IN_SETTINGS)
         }
     }
 
-    override fun onShowRequestStoragePermissionInSettingsRationaleResult(shouldRequest: Boolean) {
+    private fun onShowRequestStoragePermissionInSettingsRationaleResult(shouldRequest: Boolean) {
         if (shouldRequest) {
             requestStoragePermissionInSettings()
         } else {
@@ -586,7 +544,7 @@ class FileListFragment : Fragment(),
                 if (shouldShowRequestPermissionRationale(
                         android.Manifest.permission.POST_NOTIFICATIONS
                     )) {
-                    ShowRequestNotificationPermissionRationaleDialogFragment.show(this)
+                    viewModel.showPermissionDialog(FileListPermissionDialog.NOTIFICATION)
                 } else {
                     requestNotificationPermission()
                 }
@@ -596,7 +554,7 @@ class FileListFragment : Fragment(),
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    override fun onShowRequestNotificationPermissionRationaleResult(shouldRequest: Boolean) {
+    private fun onShowRequestNotificationPermissionRationaleResult(shouldRequest: Boolean) {
         if (shouldRequest) {
             requestNotificationPermission()
         } else {
@@ -616,14 +574,14 @@ class FileListFragment : Fragment(),
         } else if (shouldShowRequestPermissionRationale(
             android.Manifest.permission.POST_NOTIFICATIONS
         )) {
-            ShowRequestNotificationPermissionRationaleDialogFragment.show(this)
+            viewModel.showPermissionDialog(FileListPermissionDialog.NOTIFICATION)
         } else {
-            ShowRequestNotificationPermissionInSettingsRationaleDialogFragment.show(this)
+            viewModel.showPermissionDialog(FileListPermissionDialog.NOTIFICATION_IN_SETTINGS)
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    override fun onShowRequestNotificationPermissionInSettingsRationaleResult(
+    private fun onShowRequestNotificationPermissionInSettingsRationaleResult(
         shouldRequest: Boolean
     ) {
         if (shouldRequest) {

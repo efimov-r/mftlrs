@@ -2,6 +2,11 @@
 
 На чём легко ошибиться и как правильно. Новые записи — сверху. Пока записи — по чтению кода (2026-11-15), не по реальным ошибкам.
 
+## Настройка типа архива хранит имя id из разметки
+- **Что случится:** после удаления `zipRadio`, `tarXzRadio`, `sevenZRadio` выбранный тип архива молча сбрасывается на ZIP или не собирается код
+- **Причина:** `Settings.CREATE_ARCHIVE_TYPE` — `ResourceIdSettingLiveData`: хранит имя ресурса (`"tarXzRadio"`) и читает через `getIdentifier`. Это были id `RadioButton` удалённой `create_archive_dialog.xml` (2026-11-20, этап 11)
+- **Как правильно:** id объявлены в `res/values/ids_mftlrs.xml`, `CreateArchiveType` сопоставляет их с типами. Не удалять и не переименовывать, пока настройку не переведут на свои значения с миграцией в `AppUpgraders`
+
 ## Нет задачи `testDebugUnitTest`
 - **Что случится:** `gradlew testDebugUnitTest` — `Task 'testDebugUnitTest' not found`
 - **Причина:** AGP 9 создаёт unit-тесты только для `testBuildType`, а он у нас `uiTest` (ради UI-тестов) (обнаружено 2026-11-20, этап 10c)

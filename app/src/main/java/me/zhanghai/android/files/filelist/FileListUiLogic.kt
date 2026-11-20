@@ -5,14 +5,22 @@
 
 package me.zhanghai.android.files.filelist
 
+import android.net.Uri
+import androidx.annotation.PluralsRes
+import androidx.annotation.StringRes
 import java8.nio.file.Path
+import java8.nio.file.Paths
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.provider.archive.isArchivePath
+import me.zhanghai.android.files.storage.createOrLog
 import me.zhanghai.android.files.util.Failure
 import me.zhanghai.android.files.util.Loading
 import me.zhanghai.android.files.util.Stateful
 import me.zhanghai.android.files.util.Success
+import me.zhanghai.android.files.util.asFileNameOrNull
+import me.zhanghai.android.files.util.asPathNameOrNull
+import java.net.URI
 
 // Логика главного экрана без LiveData и настроек: её вызывает FileListViewModel, проверяют
 // unit-тесты (src/test).
@@ -166,4 +174,89 @@ internal fun PasteState.add(copy: Boolean, files: Collection<FileItem>): Boolean
         this.copy = copy
     }
     return this.files.addAll(files) or changed
+}
+
+// Ввод в диалоге имени или пути
+internal sealed interface NameInput {
+    data object Unchanged : NameInput // как было — закрыть диалог без действия
+
+    data class Invalid(@StringRes val errorRes: Int) : NameInput
+
+    data class Valid(val name: String) : NameInput
+}
+
+// Было FileNameDialogFragment.isNameValid(); name — уже без пробелов по краям
+internal fun checkFileName(name: String, initialName: String?, hasFileWithName: (String) -> Boolean): NameInput =
+    when {
+        name == initialName -> NameInput.Unchanged
+        name.isEmpty() -> NameInput.Invalid(R.string.file_name_error_empty)
+        name.asFileNameOrNull() == null -> NameInput.Invalid(R.string.file_name_error_invalid)
+        hasFileWithName(name) -> NameInput.Invalid(R.string.file_name_error_already_exists)
+        else -> NameInput.Valid(name)
+    }
+
+// Было PathDialogFragment.isNameValid()
+internal fun checkPathName(name: String, initialName: String?): NameInput =
+    when {
+        name == initialName -> NameInput.Unchanged
+        name.isEmpty() -> NameInput.Invalid(R.string.file_list_path_error_empty)
+        name.asPathNameOrNull() == null || name.toPathOrNull() == null ->
+            NameInput.Invalid(R.string.file_list_path_error_invalid)
+        else -> NameInput.Valid(name)
+    }
+
+// Путь или URI из поля «Перейти к…»; было в PathDialogFragment
+internal fun String.toPathOrNull(): Path? {
+    val uri = URI::class.createOrLog(this)
+        // Also try to accept decoded path.
+        ?: Uri.parse(this).let {
+            URI::class.createOrLog(it.scheme, it.userInfo, it.host, it.port, it.path, it.query, it.fragment)
+        }
+    if (uri != null) {
+        try {
+            return Paths.get(uri)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    if (startsWith('/')) {
+        return Paths.get(this)
+    }
+    return null
+}
+
+// Имя архива по умолчанию: имя файла или общей папки; было в CreateArchiveDialogFragment
+internal fun defaultArchiveName(files: Collection<FileItem>): String? {
+    if (files.size == 1) {
+        return files.single().path.fileName.toString()
+    }
+    val parent = files.mapTo(mutableSetOf()) { it.path.parent }.singleOrNull()
+    return if (parent != null && parent.nameCount > 0) parent.fileName.toString() else null
+}
+
+// Текст подтверждения удаления; было в ConfirmDeleteFilesDialogFragment
+internal sealed interface DeleteMessage {
+    data class One(@StringRes val formatRes: Int, val name: String) : DeleteMessage
+
+    data class Many(@PluralsRes val formatRes: Int, val count: Int) : DeleteMessage
+}
+
+internal fun deleteMessage(files: Collection<FileItem>): DeleteMessage {
+    if (files.size == 1) {
+        val file = files.single()
+        val formatRes = if (file.attributesNoFollowLinks.isDirectory) {
+            R.string.file_delete_message_directory_format
+        } else {
+            R.string.file_delete_message_file_format
+        }
+        return DeleteMessage.One(formatRes, file.name)
+    }
+    val allDirectories = files.all { it.attributesNoFollowLinks.isDirectory }
+    val allFiles = files.none { it.attributesNoFollowLinks.isDirectory }
+    val formatRes = when {
+        allDirectories -> R.plurals.file_delete_message_multiple_directories_format
+        allFiles -> R.plurals.file_delete_message_multiple_files_format
+        else -> R.plurals.file_delete_message_multiple_mixed_format
+    }
+    return DeleteMessage.Many(formatRes, files.size)
 }

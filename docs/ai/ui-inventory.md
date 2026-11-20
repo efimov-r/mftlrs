@@ -10,11 +10,11 @@
 | Fragment полноэкранные | 17 (2 без UI) |
 | PreferenceFragment | 3 + база |
 | Вкладки свойств файла | 7 + база |
-| DialogFragment | 34 + 5 баз |
+| DialogFragment | 21 + 2 базы (13 диалогов главного экрана — на Compose с 2026-11-20) |
 | Свои Preference | 15 |
 | Адаптеры | 10 + 6 баз в `ui/` |
-| Свои View и помощники в `ui/` | 36 + 2 на Compose в `ui/compose/` |
-| Разметка `res/` | layout 47 + 1 в `layout-sw600dp-land`, menu 2, XML настроек 2 |
+| Свои View и помощники в `ui/` | 36 + 3 на Compose в `ui/compose/` |
+| Разметка `res/` | layout 40, menu 2, XML настроек 2 |
 
 Объём: Kotlin в пакете приложения — ~59 тыс. строк; пакеты с экранами (`filelist`, `storage`, `fileproperties`, `viewer`, `settings`, `navigation`, `ftpserver`, `about`) — ~17,5 тыс. вместе с ViewModel и моделями; `ui/` — ~4,3 тыс.; `layout`, `menu`, `xml` — ~4,6 тыс.
 
@@ -79,7 +79,7 @@
 
 | Fragment | Пакет | Layout | Примечание |
 |---|---|---|---|
-| `FileListFragment` | `filelist` | `file_list_fragment` (`ComposeView` с `FileListNavigation` и `FileListScreen`) | главный экран, ~1560 строк; `NavigationFragment` удалён 2026-11-20 |
+| `FileListFragment` | `filelist` | `file_list_fragment` (`ComposeView` с `FileListNavigation` и `FileListScreen`) | главный экран, ~600 строк: хост Compose, события, разрешения (логика — в `FileListViewModel`); `NavigationFragment` удалён 2026-11-20 |
 | `TextEditorFragment` | `viewer.text` | `text_editor_fragment` | |
 | `ImageViewerFragment` | `viewer.image` | `image_viewer_fragment` | ViewPager2 + `ImageViewerAdapter` |
 | `SettingsFragment` | `settings` | `settings_fragment` | обёртка над `SettingsPreferenceFragment` |
@@ -120,30 +120,17 @@
 | `FilePropertiesVideoTabFragment` | `video` | |
 | `FilePropertiesApkTabFragment` | `apk` | `PermissionList` |
 
-## Диалоги — DialogFragment (34)
+## Диалоги — DialogFragment (21)
 
 Наследуют `AppCompatDialogFragment`, внутри — `MaterialAlertDialogBuilder`.
 
-### Файлы — `filelist` (14)
-
-Все вызываются из `FileListFragment`, кроме `OpenFileAsDialogFragment` (через свою Activity).
+### Файлы — `filelist` (1)
 
 | Диалог | Что делает | Layout |
 |---|---|---|
-| `CreateFileDialogFragment` | новый файл | `name_dialog` |
-| `CreateDirectoryDialogFragment` | новая папка | `name_dialog` |
-| `CreateArchiveDialogFragment` | упаковать в архив | `create_archive_dialog` |
-| `RenameFileDialogFragment` | переименовать | `name_dialog` |
-| `NavigateToPathDialogFragment` | перейти по пути | `name_dialog` |
-| `ConfirmDeleteFilesDialogFragment` | подтвердить удаление | — |
-| `ConfirmReplaceFileDialogFragment` | подтвердить замену (режим выбора файла) | — |
-| `OpenApkDialogFragment` | APK: установить или открыть как архив | — |
-| `OpenFileAsDialogFragment` | открыть как: текст, картинка и т. д. | — |
-| `ShowRequestAllFilesAccessRationaleDialogFragment` | зачем доступ ко всем файлам | — |
-| `ShowRequestStoragePermissionRationaleDialogFragment` | зачем доступ к хранилищу | — |
-| `ShowRequestStoragePermissionInSettingsRationaleDialogFragment` | то же, отправка в системные настройки | — |
-| `ShowRequestNotificationPermissionRationaleDialogFragment` | зачем уведомления | — |
-| `ShowRequestNotificationPermissionInSettingsRationaleDialogFragment` | то же, отправка в системные настройки | — |
+| `OpenFileAsDialogFragment` | открыть как: текст, картинка и т. д.; через свою Activity | — |
+
+13 диалогов главного экрана — на Compose (`filelist/FileListDialogs.kt`, 2026-11-20), их `DialogFragment`, базы `NameDialogFragment`, `FileNameDialogFragment`, `PathDialogFragment`, `CreateArchiveTypeRadioGroup` и разметка `name_dialog`, `name_dialog_name_include`, `create_archive_dialog` удалены: новый файл и папка, переименование, архив, «Перейти к…», подтверждения удаления и замены, APK, пять объяснений перед запросом разрешений.
 
 ### Фоновые операции (3)
 
@@ -194,13 +181,10 @@
 | `RootStrategyPreference.DialogFragment` | `settings` | выбор режима root (вложенный класс) |
 | `LicensesDialogFragment` | `ui` | «Лицензии» в `AboutFragment` |
 
-### Абстрактные базы (7)
+### Абстрактные базы (4)
 
 | Класс | Пакет | Наследники |
 |---|---|---|
-| `NameDialogFragment` | `filelist` | `FileNameDialogFragment`, `PathDialogFragment` |
-| `FileNameDialogFragment` | `filelist` | `CreateFile`, `CreateDirectory`, `CreateArchive`, `RenameFile` |
-| `PathDialogFragment` | `filelist` | `NavigateToPath` |
 | `SetPrincipalDialogFragment` | `fileproperties.permission` | `SetOwner`, `SetGroup` |
 | `MaterialPreferenceDialogFragmentCompat` | `ui` | `MaterialListPreferenceDialogFragmentCompat`, `RootStrategyPreference.DialogFragment` |
 | `FilePropertiesTabFragment` | `fileproperties` | 7 вкладок |
@@ -267,6 +251,6 @@
 
 | Папка | Кол-во | Что |
 |---|---|---|
-| `res/layout/` | 43 | экраны, диалоги, элементы списков; у главного экрана — только `file_list_fragment` (`ComposeView`); `navigation_*` и `layout-sw600dp-land/` удалены 2026-11-20 |
+| `res/layout/` | 40 | экраны, диалоги, элементы списков; у главного экрана — только `file_list_fragment` (`ComposeView`); `navigation_*` и `layout-sw600dp-land/` удалены 2026-11-20, разметка диалогов главного экрана — тоже |
 | `res/menu/` | 2 | `text_editor`, `image_viewer`; все `file_list*` удалены — меню главного экрана на Compose |
 | `res/xml/` | 2 настроек | `settings.xml`, `ftp_server.xml`; ещё `shortcuts.xml`, `netework_security_config.xml` |

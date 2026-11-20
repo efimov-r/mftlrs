@@ -792,10 +792,15 @@ class FileListViewModel : ViewModel(), FileItemListener {
     }
 
     override fun showPropertiesDialog(file: FileItem) {
-        showDialog(FileListDialog.Properties(file))
+        sendEvent(FileListEvent.ShowProperties(file))
     }
 
-    // mftlrs: results of the dialogs, passed by FileListFragment.
+    // mftlrs: results of the dialogs in FileListDialogs.kt. The confirmations close the dialog
+    // themselves; the name dialogs return the error for the field, or null when closed.
+
+    fun dismissDialog() {
+        _uiState.update { it.copy(dialog = null) }
+    }
 
     fun replaceFile(file: FileItem) {
         pickFiles(fileItemSetOf(file))
@@ -806,25 +811,71 @@ class FileListViewModel : ViewModel(), FileItemListener {
         selectFiles(files, false)
     }
 
-    fun archive(files: FileItemSet, name: String, format: Int, filter: Int, password: String?) {
-        val archiveFile = currentPath.resolve(name)
-        FileJobService.archive(
-            makePathListForJob(files), archiveFile, format, filter, password, application
-        )
-        selectFiles(files, false)
+    fun onCreateFileOk(text: String): Int? =
+        onFileNameOk(text, null) {
+            FileJobService.create(currentPath.resolve(it), false, application)
+        }
+
+    fun onCreateDirectoryOk(text: String): Int? =
+        onFileNameOk(text, null) {
+            FileJobService.create(currentPath.resolve(it), true, application)
+        }
+
+    fun onRenameFileOk(file: FileItem, text: String): Int? =
+        onFileNameOk(text, file.name) {
+            FileJobService.rename(file.path, it, application)
+            selectFile(file, false)
+        }
+
+    // The extension of the type is added to the name; the password only for ZIP.
+    internal fun onCreateArchiveOk(
+        files: FileItemSet,
+        text: String,
+        type: CreateArchiveType,
+        password: String,
+    ): Int? =
+        onFileNameOk("${text.trim()}.${type.extension}", null) {
+            val archiveFile = currentPath.resolve(it)
+            val archivePassword = if (type.isPasswordSupported) password.takeIfNotEmpty() else null
+            FileJobService.archive(
+                makePathListForJob(files), archiveFile, type.format, type.filter, archivePassword,
+                application
+            )
+            selectFiles(files, false)
+        }
+
+    fun onNavigateToPathOk(initialPath: Path, text: String): Int? =
+        onNameInput(checkPathName(text.trim(), initialPath.toUserFriendlyString())) {
+            navigateTo(it.toPathOrNull()!!)
+        }
+
+    internal var createArchiveType: CreateArchiveType
+        get() = CreateArchiveType.ofSettingId(Settings.CREATE_ARCHIVE_TYPE.valueCompat)
+        set(value) {
+            Settings.CREATE_ARCHIVE_TYPE.putValue(value.settingId)
+        }
+
+    private fun onFileNameOk(name: String, initialName: String?, onValid: (String) -> Unit): Int? =
+        onNameInput(checkFileName(name.trim(), initialName) { getFileWithName(it) != null }, onValid)
+
+    private fun onNameInput(input: NameInput, onValid: (String) -> Unit): Int? {
+        when (input) {
+            NameInput.Unchanged -> dismissDialog()
+            is NameInput.Invalid -> return input.errorRes
+            is NameInput.Valid -> {
+                dismissDialog()
+                onValid(input.name)
+            }
+        }
+        return null
     }
 
-    fun renameFile(file: FileItem, newName: String) {
-        FileJobService.rename(file.path, newName, application)
-        selectFile(file, false)
+    internal fun showPermissionDialog(dialog: FileListPermissionDialog) {
+        _uiState.update { it.copy(permissionDialog = dialog) }
     }
 
-    fun createFile(name: String) {
-        FileJobService.create(currentPath.resolve(name), false, application)
-    }
-
-    fun createDirectory(name: String) {
-        FileJobService.create(currentPath.resolve(name), true, application)
+    fun dismissPermissionDialog() {
+        _uiState.update { it.copy(permissionDialog = null) }
     }
 
     fun getFileWithName(name: String): FileItem? {
@@ -904,7 +955,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
     private fun FileItemSet.toFileItemSet(): FileItemSet = FileItemSet().apply { addAll(this@toFileItemSet) }
 
     private fun showDialog(dialog: FileListDialog) {
-        sendEvent(FileListEvent.ShowDialog(dialog))
+        _uiState.update { it.copy(dialog = dialog) }
     }
 
     private fun sendEvent(event: FileListEvent) {
@@ -977,6 +1028,9 @@ internal data class FileListUiState(
     val bottomBar: BottomBar = BottomBar(),
     val isFabExpanded: Boolean = false,
     val isNavigationOpen: Boolean = false, // the modal navigation drawer
+    val dialog: FileListDialog? = null,
+    // Separate from dialog: may be shown on resume over another dialog.
+    val permissionDialog: FileListPermissionDialog? = null,
 ) {
     data class Content(
         val files: List<FileItem> = emptyList(), // filtered and sorted
@@ -1040,7 +1094,8 @@ internal sealed interface FileListEvent {
 
     data class ShowToast(@StringRes val textRes: Int) : FileListEvent
 
-    data class ShowDialog(val dialog: FileListDialog) : FileListEvent
+    // Still a DialogFragment, see FileListDialog.
+    data class ShowProperties(val file: FileItem) : FileListEvent
 
     // The file name field selects the name without the extension.
     data class SetCreateFileName(val name: String) : FileListEvent
@@ -1069,7 +1124,8 @@ internal sealed interface FileListEvent {
     data object Finish : FileListEvent
 }
 
-// mftlrs: the dialogs are still DialogFragments of FileListFragment.
+// mftlrs: the dialogs of the main screen in Compose (FileListDialogs.kt), were DialogFragments.
+// The properties dialog is still a DialogFragment (FileListEvent.ShowProperties).
 internal sealed interface FileListDialog {
     data class NavigateToPath(val path: Path) : FileListDialog
 
@@ -1083,9 +1139,17 @@ internal sealed interface FileListDialog {
 
     data class OpenApk(val file: FileItem) : FileListDialog
 
-    data class Properties(val file: FileItem) : FileListDialog
-
     data object CreateFile : FileListDialog
 
     data object CreateDirectory : FileListDialog
+}
+
+// mftlrs: the rationale dialogs of the permission requests, were ShowRequest*DialogFragment. The
+// result goes to FileListFragment, which has the permission launchers.
+internal enum class FileListPermissionDialog(@StringRes val messageRes: Int, @StringRes val confirmRes: Int) {
+    ALL_FILES_ACCESS(R.string.all_files_access_rationale_message, android.R.string.ok),
+    STORAGE(R.string.storage_permission_rationale_message, android.R.string.ok),
+    STORAGE_IN_SETTINGS(R.string.storage_permission_permanently_denied_message, R.string.open_settings),
+    NOTIFICATION(R.string.notification_permission_rationale_message, android.R.string.ok),
+    NOTIFICATION_IN_SETTINGS(R.string.notification_permission_permanently_denied_message, R.string.open_settings),
 }

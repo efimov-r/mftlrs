@@ -31,8 +31,8 @@
 - [x] 8. Тесты боковой панели — `FileListNavigationTest`, 12 тестов: пункты 53, 66–69, 71, 73; 72 (планшет) — руками
 - [ ] 9. Боковая панель на Compose один в один — готово (`FileListNavigation.kt`, View drawer удалены, UI-тесты 49 из 49 после этапа 10b); осталось: владельцу — чек-лист 66–73, планшет (72) — руками
 - [x] 10. Логика из `FileListFragment` — в `FileListViewModel`: 10a — состояние (`StateFlow<FileListUiState>`), 10b — действия и события (`Channel`), UI-тесты 49 из 49; 10c — unit-тесты, 41 из 41 ([testing.md](testing.md), «Unit-тесты»)
-- [ ] 11. 13 диалогов `filelist` — на Compose; «Свойства» — оценить
-- [ ] 12. Без `FileListFragment`: `FileListActivity.setContent`; release-сборка на телефоне; весь ручной [чек-лист](file-list-checklist.md) владельцем, один раз
+- [ ] 11. 13 диалогов `filelist` — на Compose: готово (`FileListDialogs.kt`, `MftlrsInputDialog`, unit-тесты 51 из 51); осталось: решить, переводить ли «Свойства» (~50 файлов `fileproperties`) или оставить `DialogFragment`
+- [ ] 12. Без `FileListFragment`: `FileListActivity.setContent`; весь набор UI-тестов — один прогон здесь, не раньше (решение владельца 2026-11-20); release-сборка на телефоне; весь ручной [чек-лист](file-list-checklist.md) владельцем, один раз
 
 ## Отложено
 

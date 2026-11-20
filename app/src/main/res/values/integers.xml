@@ -14,6 +14,6 @@
 
     <!-- mftlrs: scrollFlags_* and file_list_toolbar_scroll_flags removed, the file list toolbar is in Compose. -->
 
-    <!-- SevenZOutputFile requires SeekableByteChannel which requires Android N. -->
-    <integer name="create_archive_type_seven_z_visibility">@integer/visibility_gone</integer>
+    <!-- mftlrs: create_archive_type_seven_z_visibility removed (here and in values-v24), the create
+         archive dialog is in Compose and minSdk is 26. -->
 </resources>
