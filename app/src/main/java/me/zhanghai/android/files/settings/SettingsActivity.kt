@@ -18,7 +18,7 @@ import androidx.fragment.app.commit
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.WriteWith
 import me.zhanghai.android.files.app.AppActivity
-import me.zhanghai.android.files.theme.night.NightModeHelper.OnNightModeChangedListener
+import me.zhanghai.android.files.ui.theme.night.NightModeHelper.OnNightModeChangedListener
 import me.zhanghai.android.files.util.BundleParceler
 import me.zhanghai.android.files.util.ParcelableArgs
 import me.zhanghai.android.files.util.createIntent
@@ -26,7 +26,6 @@ import me.zhanghai.android.files.util.getArgsOrNull
 import me.zhanghai.android.files.util.putArgs
 import me.zhanghai.android.files.util.startActivitySafe
 
-// mftlrs: OnThemeChangedListener removed — the theme no longer changes at runtime.
 class SettingsActivity : AppActivity(), OnNightModeChangedListener {
     private var isRestarting = false
 

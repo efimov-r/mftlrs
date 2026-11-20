@@ -22,9 +22,7 @@ import me.zhanghai.android.files.databinding.BookmarkDirectoryListFragmentBindin
 import me.zhanghai.android.files.filelist.FileListActivity
 import me.zhanghai.android.files.navigation.BookmarkDirectories
 import me.zhanghai.android.files.navigation.BookmarkDirectory
-import me.zhanghai.android.files.navigation.EditBookmarkDirectoryDialogActivity
-import me.zhanghai.android.files.navigation.EditBookmarkDirectoryDialogFragment
-import me.zhanghai.android.files.ui.ScrollingViewOnApplyWindowInsetsListener
+import me.zhanghai.android.files.ui.view.ScrollingViewOnApplyWindowInsetsListener
 import me.zhanghai.android.files.util.createIntent
 import me.zhanghai.android.files.util.fadeToVisibilityUnsafe
 import me.zhanghai.android.files.util.getDrawable

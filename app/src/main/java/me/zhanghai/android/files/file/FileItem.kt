@@ -12,8 +12,6 @@ import java8.nio.file.Path
 import java8.nio.file.attribute.BasicFileAttributes
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.WriteWith
-import me.zhanghai.android.files.filelist.getCollationKeyForFileName
-import me.zhanghai.android.files.filelist.name
 import me.zhanghai.android.files.provider.common.AndroidFileTypeDetector
 import me.zhanghai.android.files.provider.common.isHidden
 import me.zhanghai.android.files.provider.common.readAttributes

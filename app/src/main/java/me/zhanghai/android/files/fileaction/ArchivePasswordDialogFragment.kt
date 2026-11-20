@@ -27,7 +27,7 @@ import me.zhanghai.android.files.compat.requireViewByIdCompat
 import me.zhanghai.android.files.databinding.ArchivePasswordDialogBinding
 import me.zhanghai.android.files.provider.archive.archiveAddPassword
 import me.zhanghai.android.files.provider.archive.archiveFile
-import me.zhanghai.android.files.ui.AllowSoftInputHackAlertDialogCustomView
+import me.zhanghai.android.files.ui.view.AllowSoftInputHackAlertDialogCustomView
 import me.zhanghai.android.files.util.ParcelableArgs
 import me.zhanghai.android.files.util.ParcelableParceler
 import me.zhanghai.android.files.util.ParcelableState

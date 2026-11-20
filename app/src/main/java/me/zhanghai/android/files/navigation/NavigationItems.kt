@@ -23,6 +23,8 @@ import me.zhanghai.android.files.compat.pathCompat
 import me.zhanghai.android.files.file.JavaFile
 import me.zhanghai.android.files.file.asFileSize
 import me.zhanghai.android.files.ftpserver.FtpServerActivity
+import me.zhanghai.android.files.settings.EditBookmarkDirectoryDialogActivity
+import me.zhanghai.android.files.settings.EditBookmarkDirectoryDialogFragment
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.settings.SettingsActivity
 import me.zhanghai.android.files.settings.StandardDirectoryListActivity

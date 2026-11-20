@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.databinding.TextEditorFragmentBinding
-import me.zhanghai.android.files.ui.ThemedFastScroller
+import me.zhanghai.android.files.ui.view.ThemedFastScroller
 import me.zhanghai.android.files.util.ActionState
 import me.zhanghai.android.files.util.DataState
 import me.zhanghai.android.files.util.ParcelableArgs

@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import me.zhanghai.android.files.theme.MftlrsTheme
+import me.zhanghai.android.files.ui.theme.MftlrsTheme
 import kotlin.math.abs
 import kotlin.math.roundToInt
 

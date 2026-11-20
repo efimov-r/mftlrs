@@ -8,7 +8,7 @@
 
 <resources>
 
-    <!-- mftlrs: exit confirmation on the main screen. -->
+    <!-- Exit confirmation on the main screen. -->
     <string name="file_list_exit_title">關閉 %1$s？</string>
     <string name="file_list_exit_minimize">最小化</string>
 

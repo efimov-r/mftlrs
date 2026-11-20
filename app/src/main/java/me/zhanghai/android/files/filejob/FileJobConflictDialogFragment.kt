@@ -32,12 +32,12 @@ import me.zhanghai.android.files.coil.AppIconPackageName
 import me.zhanghai.android.files.compat.requireViewByIdCompat
 import me.zhanghai.android.files.databinding.FileJobConflictDialogViewBinding
 import me.zhanghai.android.files.file.FileItem
+import me.zhanghai.android.files.file.appDirectoryPackageName
 import me.zhanghai.android.files.file.fileSize
 import me.zhanghai.android.files.file.formatShort
 import me.zhanghai.android.files.file.iconRes
 import me.zhanghai.android.files.file.lastModifiedInstant
-import me.zhanghai.android.files.filelist.appDirectoryPackageName
-import me.zhanghai.android.files.filelist.supportsThumbnail
+import me.zhanghai.android.files.file.supportsThumbnail
 import me.zhanghai.android.files.provider.common.isEncrypted
 import me.zhanghai.android.files.util.ParcelableArgs
 import me.zhanghai.android.files.util.ParcelableState

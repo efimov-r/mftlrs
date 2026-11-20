@@ -12,8 +12,8 @@
 | Вкладки свойств файла | 0 — на Compose с 2026-11-20 |
 | DialogFragment | 15 + 1 база (13 диалогов главного экрана и 6 «Свойств» — на Compose с 2026-11-20) |
 | Свои Preference | 15 |
-| Адаптеры | 4 + 5 баз в `ui/` |
-| Свои View и помощники в `ui/` | 34 + 5 на Compose в `ui/compose/` |
+| Адаптеры | 4 + 5 баз в `ui/view/` |
+| Свои View и помощники в `ui/view/` | 34 + 5 на Compose в `ui/compose/` |
 | Разметка `res/` | layout 29, menu 2, XML настроек 2 |
 
 Объём: Kotlin в пакете приложения — ~59 тыс. строк; пакеты с экранами (`filelist`, `storage`, `fileproperties`, `viewer`, `settings`, `navigation`, `ftpserver`, `about`) — ~17,5 тыс. вместе с ViewModel и моделями; `ui/` — ~4,3 тыс.; `layout`, `menu`, `xml` — ~4,6 тыс.
@@ -97,7 +97,7 @@
 
 ### Настройки — PreferenceFragment (3)
 
-Наследуют `ui/PreferenceFragmentCompat` (над `preferencex` от takisoft).
+Наследуют `ui/view/PreferenceFragmentCompat` (над `preferencex` от takisoft).
 
 | Fragment | Пакет | XML |
 |---|---|---|
@@ -119,7 +119,7 @@
 |---|---|---|
 | `OpenFileAsDialogFragment` | открыть как: текст, картинка и т. д.; через свою Activity | — |
 
-13 диалогов главного экрана — на Compose (`filelist/FileListDialogs.kt`, 2026-11-20), их `DialogFragment`, базы `NameDialogFragment`, `FileNameDialogFragment`, `PathDialogFragment`, `CreateArchiveTypeRadioGroup` и разметка `name_dialog`, `name_dialog_name_include`, `create_archive_dialog` удалены: новый файл и папка, переименование, архив, «Перейти к…», подтверждения удаления и замены, APK, пять объяснений перед запросом разрешений.
+13 диалогов главного экрана — на Compose (`filelist/ui/FileListDialogs.kt`, 2026-11-20), их `DialogFragment`, базы `NameDialogFragment`, `FileNameDialogFragment`, `PathDialogFragment`, `CreateArchiveTypeRadioGroup` и разметка `name_dialog`, `name_dialog_name_include`, `create_archive_dialog` удалены: новый файл и папка, переименование, архив, «Перейти к…», подтверждения удаления и замены, APK, пять объяснений перед запросом разрешений.
 
 ### Фоновые операции (3)
 
@@ -181,7 +181,7 @@
 
 ### Экранные (4)
 
-Список и сетка файлов главного экрана — на Compose (`filelist/FileListContent.kt`, `FileListItems.kt`), `FileListAdapter` удалён 2026-11-19; боковая панель — `filelist/FileListNavigation.kt`, `NavigationListAdapter` удалён 2026-11-20; списки «Свойств» — `LazyColumn`, `PermissionListAdapter`, `PrincipalListAdapter`, `UserListAdapter`, `GroupListAdapter`, `ModeBitListAdapter` удалены 2026-11-20.
+Список и сетка файлов главного экрана — на Compose (`filelist/ui/FileListContent.kt`, `FileListItems.kt`), `FileListAdapter` удалён 2026-11-19; боковая панель — `filelist/ui/FileListNavigation.kt`, `NavigationListAdapter` удалён 2026-11-20; списки «Свойств» — `LazyColumn`, `PermissionListAdapter`, `PrincipalListAdapter`, `UserListAdapter`, `GroupListAdapter`, `ModeBitListAdapter` удалены 2026-11-20.
 
 | Адаптер | Пакет | База | Где |
 |---|---|---|---|
@@ -190,7 +190,7 @@
 | `LanSmbServerListAdapter` | `storage` | `SimpleAdapter` | найденные SMB-серверы |
 | `ImageViewerAdapter` | `viewer.image` | `SimpleAdapter` | страницы просмотра картинок |
 
-### Базы в `ui/` (5)
+### Базы в `ui/view/` (5)
 
 `SimpleAdapter`, `ListAdapter`, `StaticAdapter`, `UnfilteredArrayAdapter`, `ViewPagerAdapter`; к ним — `ListDiffer`. `TabFragmentPagerAdapter` удалён вместе с вкладками «Свойств». `AnimatedListAdapter` (анимация появления строк) удалён вместе с настройкой «Анимация списка файлов».
 
@@ -198,7 +198,7 @@
 
 Почти всё — в `ui/`. Главный экран с боковой панелью — на Compose (`filelist/FileListNavigation.kt`, `FileListScreen.kt` и части, [compose.md](compose.md)); его View удалены: `NavigationRecyclerView`, `PersistentDrawerLayout`, `NavigationFrameLayout`, `IgnoreFitsSystemWindowsFullyDraggableDrawerContentLayout`, `DrawerLayoutOnBackPressedCallback`, `BreadcrumbLayout`, `ToolbarActionMode`, `PersistentBarLayoutToolbarActionMode`, `CrossfadeSubtitleToolbar`, `OverlayToolbar`, `OverlayToolbarActionMode`, `FixQueryChangeSearchView`, `ThemedSpeedDialView`, `SpeedDialViewOnBackPressedCallback`, `PersistentBarLayout`, `BottomBarLayout`, `CheckableItemBackground`, `AspectRatioFrameLayout`, `AppBarLayoutExpandHackListener`. С «Свойствами» удалены `DropDownView` (и `androidx.appcompat.widget.FixPaddingListPopupWindow`), `WrapFirstPageContentViewPager`.
 
-| Назначение | Классы в `ui/` |
+| Назначение | Классы в `ui/view/` |
 |---|---|
 | Панели и прокрутка других экранов | `CoordinatorAppBarLayout`, `FitsSystemWindowsAppBarLayout`, `CoordinatorScrollingFrameLayout`, `CoordinatorScrollingLinearLayout`, `ScrollingViewOnApplyWindowInsetsListener` |
 | Fast scroll | `ThemedFastScroller` (текстовый редактор) |

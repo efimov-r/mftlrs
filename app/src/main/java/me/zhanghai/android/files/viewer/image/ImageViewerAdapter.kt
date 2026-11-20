@@ -32,7 +32,7 @@ import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.provider.common.AndroidFileTypeDetector
 import me.zhanghai.android.files.provider.common.newInputStream
 import me.zhanghai.android.files.provider.common.readAttributes
-import me.zhanghai.android.files.ui.SimpleAdapter
+import me.zhanghai.android.files.ui.view.SimpleAdapter
 import me.zhanghai.android.files.util.fadeInUnsafe
 import me.zhanghai.android.files.util.fadeOutUnsafe
 import me.zhanghai.android.files.util.layoutInflater

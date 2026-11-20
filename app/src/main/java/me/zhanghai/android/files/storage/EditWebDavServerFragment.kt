@@ -26,7 +26,7 @@ import me.zhanghai.android.files.provider.webdav.client.Authority
 import me.zhanghai.android.files.provider.webdav.client.NoneAuthentication
 import me.zhanghai.android.files.provider.webdav.client.PasswordAuthentication
 import me.zhanghai.android.files.provider.webdav.client.Protocol
-import me.zhanghai.android.files.ui.UnfilteredArrayAdapter
+import me.zhanghai.android.files.ui.view.UnfilteredArrayAdapter
 import me.zhanghai.android.files.util.ActionState
 import me.zhanghai.android.files.util.ParcelableArgs
 import me.zhanghai.android.files.util.args

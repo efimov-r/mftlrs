@@ -12,7 +12,15 @@ import java8.nio.file.Path
 import java8.nio.file.Paths
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.file.FileItem
+import me.zhanghai.android.files.file.isArchiveFile
+import me.zhanghai.android.files.file.name
+import me.zhanghai.android.files.filelist.data.FileItemSet
+import me.zhanghai.android.files.filelist.data.PasteState
+import me.zhanghai.android.files.filelist.data.PickOptions
+import me.zhanghai.android.files.filelist.ui.FileListBottomBarAction
+import me.zhanghai.android.files.filelist.ui.FileListSelectionAction
 import me.zhanghai.android.files.provider.archive.isArchivePath
+import me.zhanghai.android.files.settings.FileSortOptions
 import me.zhanghai.android.files.storage.createOrLog
 import me.zhanghai.android.files.util.Failure
 import me.zhanghai.android.files.util.Loading

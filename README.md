@@ -51,7 +51,7 @@ APK появится в `app/build/outputs/apk/debug/`.
 mftlrs основан на [Material Files](https://github.com/zhanghai/MaterialFiles), Copyright (C) 2018 Hai Zhang, лицензия GNU General Public License v3.0.
 
 - Копирайты оригинала в исходных файлах сохранены.
-- В заголовке файлов upstream, изменённых для mftlrs, есть строка `Modified for mftlrs`, а сами правки помечены комментариями `mftlrs:`.
+- В заголовке файлов Material Files, изменённых для mftlrs, есть строка `Modified for mftlrs` с годом. Изменения от Material Files больше не подтягиваются: mftlrs развивается отдельно.
 - Автор Material Files не отвечает за ошибки в mftlrs.
 
 ## Лицензия

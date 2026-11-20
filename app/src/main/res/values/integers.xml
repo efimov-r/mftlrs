@@ -11,9 +11,4 @@
     <integer name="visibility_visible">0</integer>
     <integer name="visibility_invisible">1</integer>
     <integer name="visibility_gone">2</integer>
-
-    <!-- mftlrs: scrollFlags_* and file_list_toolbar_scroll_flags removed, the file list toolbar is in Compose. -->
-
-    <!-- mftlrs: create_archive_type_seven_z_visibility removed (here and in values-v24), the create
-         archive dialog is in Compose and minSdk is 26. -->
 </resources>

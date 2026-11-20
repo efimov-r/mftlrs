@@ -10,7 +10,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="ImpliedQuantity,MissingQuantity">
 
-    <!-- mftlrs: exit confirmation on the main screen. -->
+    <!-- Exit confirmation on the main screen. -->
     <string name="file_list_exit_title">Fermer %1$s ?</string>
     <string name="file_list_exit_minimize">Réduire</string>
 

@@ -8,7 +8,7 @@ package me.zhanghai.android.files.storage
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import me.zhanghai.android.files.databinding.LanSmbServerItemBinding
-import me.zhanghai.android.files.ui.SimpleAdapter
+import me.zhanghai.android.files.ui.view.SimpleAdapter
 import me.zhanghai.android.files.util.layoutInflater
 
 class LanSmbServerListAdapter(

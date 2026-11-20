@@ -12,10 +12,7 @@
     <color name="dark_50_percent">#80000000</color>
     <color name="dark_70_percent">#B3000000</color>
 
-    <!--
-      ~ mftlrs: Material Design 2 colors (system window scrim, surface, black night mode) removed;
-      ~ color_primary is the notification accent — mftlrs palette.
-      -->
+    <!-- color_primary is the notification accent — mftlrs palette. -->
     <color name="color_primary_light">@color/mftlrs_light_primary</color>
     <color name="color_primary_dark">@color/mftlrs_dark_primary</color>
     <color name="color_primary">@color/color_primary_light</color>
@@ -23,7 +20,7 @@
     <color name="activity_icon_tint">@color/secondary_text_default_material_light</color>
 
     <color name="shortcut_icon_background">#F5F5F5</color>
-    <!-- mftlrs: launcher icon background and shortcut icon glyphs, independent of the theme. -->
+    <!-- Launcher icon background and shortcut icon glyphs, independent of the theme. -->
     <color name="launcher_icon_color">#12876A</color>
 
     <color name="file_icon_light_blue">#4B86F0</color>

@@ -29,9 +29,9 @@ import me.zhanghai.android.files.file.isApk
 import me.zhanghai.android.files.file.isImage
 import me.zhanghai.android.files.file.isMedia
 import me.zhanghai.android.files.file.isPdf
+import me.zhanghai.android.files.file.isRemotePath
 import me.zhanghai.android.files.file.isVideo
 import me.zhanghai.android.files.file.lastModifiedInstant
-import me.zhanghai.android.files.filelist.isRemotePath
 import me.zhanghai.android.files.provider.common.AndroidFileTypeDetector
 import me.zhanghai.android.files.provider.common.newInputStream
 import me.zhanghai.android.files.provider.content.resolver.ResolverException

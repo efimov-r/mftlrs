@@ -32,7 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.file.FileItem
-import me.zhanghai.android.files.filelist.name
+import me.zhanghai.android.files.file.name
 import me.zhanghai.android.files.fileproperties.apk.FilePropertiesApkTab
 import me.zhanghai.android.files.fileproperties.apk.isApkTabAvailable
 import me.zhanghai.android.files.fileproperties.audio.FilePropertiesAudioTab

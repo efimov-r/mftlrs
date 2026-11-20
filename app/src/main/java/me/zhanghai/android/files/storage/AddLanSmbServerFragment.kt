@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.databinding.AddLanSmbServerFragmentBinding
-import me.zhanghai.android.files.ui.StaticAdapter
+import me.zhanghai.android.files.ui.view.StaticAdapter
 import me.zhanghai.android.files.util.Failure
 import me.zhanghai.android.files.util.Loading
 import me.zhanghai.android.files.util.Stateful

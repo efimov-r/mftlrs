@@ -12,7 +12,7 @@ import androidx.annotation.StyleRes
 import com.takisoft.preferencex.PreferenceFragmentCompat
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.filejob.FileJobService
-import me.zhanghai.android.files.ui.MaterialPreferenceDialogFragmentCompat
+import me.zhanghai.android.files.ui.view.MaterialPreferenceDialogFragmentCompat
 import rikka.preference.SimpleMenuPreference
 
 class RootStrategyPreference : SimpleMenuPreference {

@@ -14,7 +14,6 @@ import java8.nio.file.Path
 abstract class NavigationItem {
     abstract val id: Long
 
-    // mftlrs: public for painterResource() in Compose (FileListNavigation); was getIcon(context).
     @get:DrawableRes
     abstract val iconRes: Int?
 

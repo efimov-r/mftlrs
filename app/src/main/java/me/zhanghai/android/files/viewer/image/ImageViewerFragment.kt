@@ -27,7 +27,7 @@ import me.zhanghai.android.files.R
 import me.zhanghai.android.files.databinding.ImageViewerFragmentBinding
 import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.provider.common.delete
-import me.zhanghai.android.files.ui.DepthPageTransformer
+import me.zhanghai.android.files.ui.view.DepthPageTransformer
 import me.zhanghai.android.files.util.ParcelableArgs
 import me.zhanghai.android.files.util.ParcelableListParceler
 import me.zhanghai.android.files.util.ParcelableState

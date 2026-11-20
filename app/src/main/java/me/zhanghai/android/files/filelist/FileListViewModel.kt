@@ -41,17 +41,47 @@ import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.MimeType
 import me.zhanghai.android.files.file.asMimeTypeOrNull
+import me.zhanghai.android.files.file.createDummyArchiveRoot
 import me.zhanghai.android.files.file.extension
 import me.zhanghai.android.files.file.isApk
+import me.zhanghai.android.files.file.isArchiveFile
+import me.zhanghai.android.files.file.isListable
+import me.zhanghai.android.files.file.listablePath
+import me.zhanghai.android.files.file.name
+import me.zhanghai.android.files.file.toUserFriendlyString
 import me.zhanghai.android.files.filejob.FileJobService
-import me.zhanghai.android.files.filelist.FileSortOptions.By
-import me.zhanghai.android.files.filelist.FileSortOptions.Order
+import me.zhanghai.android.files.filelist.data.BreadcrumbData
+import me.zhanghai.android.files.filelist.data.BreadcrumbLiveData
+import me.zhanghai.android.files.filelist.data.CreateArchiveType
+import me.zhanghai.android.files.filelist.data.FileItemSet
+import me.zhanghai.android.files.filelist.data.FileListLiveData
+import me.zhanghai.android.files.filelist.data.FileSortOptionsLiveData
+import me.zhanghai.android.files.filelist.data.FileViewSortPathSpecificLiveData
+import me.zhanghai.android.files.filelist.data.FileViewTypeLiveData
+import me.zhanghai.android.files.filelist.data.PasteState
+import me.zhanghai.android.files.filelist.data.PickOptions
+import me.zhanghai.android.files.filelist.data.SearchFileListLiveData
+import me.zhanghai.android.files.filelist.data.SearchState
+import me.zhanghai.android.files.filelist.data.TrailLiveData
+import me.zhanghai.android.files.filelist.data.fileItemSetOf
+import me.zhanghai.android.files.filelist.ui.FileItemListener
+import me.zhanghai.android.files.filelist.ui.FileListBottomBarAction
+import me.zhanghai.android.files.filelist.ui.FileListFabAction
+import me.zhanghai.android.files.filelist.ui.FileListSelectionAction
+import me.zhanghai.android.files.filelist.ui.FileListTopBarAction
+import me.zhanghai.android.files.filelist.ui.ScrollPosition
+import me.zhanghai.android.files.filelist.ui.isFileSelectable
 import me.zhanghai.android.files.navigation.BookmarkDirectories
 import me.zhanghai.android.files.navigation.BookmarkDirectory
 import me.zhanghai.android.files.provider.archive.archiveRefresh
 import me.zhanghai.android.files.provider.archive.createArchiveRootPath
 import me.zhanghai.android.files.provider.archive.isArchivePath
 import me.zhanghai.android.files.provider.linux.isLinuxPath
+import me.zhanghai.android.files.settings.FileSortOptions
+import me.zhanghai.android.files.settings.FileSortOptions.By
+import me.zhanghai.android.files.settings.FileSortOptions.Order
+import me.zhanghai.android.files.settings.FileViewType
+import me.zhanghai.android.files.settings.OpenApkDefaultAction
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.util.CloseableLiveData
 import me.zhanghai.android.files.util.Failure
@@ -64,7 +94,7 @@ import me.zhanghai.android.files.util.valueCompat
 import java.io.Closeable
 
 // TODO: Use SavedStateHandle to save state.
-// mftlrs: also the actions of the main screen, which were in FileListFragment (removed);
+// The state and the actions of the main screen;
 // FileListActivity executes the one-time events.
 class FileListViewModel : ViewModel(), FileItemListener {
     private val trailLiveData = TrailLiveData()
@@ -73,8 +103,8 @@ class FileListViewModel : ViewModel(), FileItemListener {
     val pendingState: Parcelable?
         get() = trailLiveData.valueCompat.pendingState
 
-    // mftlrs: the scroll position of the list, updated by FileListActivity; saved in the trail
-    // when navigating away, as the state of GridLayoutManager was.
+    // The scroll position of the list, updated by FileListActivity; saved in the trail
+    // when navigating away.
     var scrollPosition = ScrollPosition(0, 0)
 
     fun navigateTo(path: Path) {
@@ -208,7 +238,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
 
     override fun selectFiles(files: FileItemSet, selected: Boolean) {
         val selectedFiles = _selectedFilesLiveData.valueCompat
-        // mftlrs: the logic is in FileListUiLogic.kt, for unit tests.
+        // The logic is in FileListUiLogic.kt, for unit tests.
         if (selectedFiles.select(files, selected)) {
             _selectedFilesLiveData.value = selectedFiles
         }
@@ -239,7 +269,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
 
     fun addToPasteState(copy: Boolean, files: FileItemSet) {
         val pasteState = _pasteStateLiveData.valueCompat
-        // mftlrs: the logic is in FileListUiLogic.kt, for unit tests.
+        // The logic is in FileListUiLogic.kt, for unit tests.
         if (pasteState.add(copy, files)) {
             _pasteStateLiveData.value = pasteState
         }
@@ -268,8 +298,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
             _isRequestingNotificationPermissionLiveData.value = value
         }
 
-    // mftlrs: the screen state for Compose, computed here instead of in the observers of
-    // FileListFragment. No strings: Compose builds the text. The live data above are observed only
+    // The screen state for Compose. No strings: Compose builds the text. The live data above are observed only
     // while the screen collects the state, otherwise FileListLiveData would reload in background.
     private val _uiState = MutableStateFlow(FileListUiState())
     internal val uiState: StateFlow<FileListUiState> = flow {
@@ -295,7 +324,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), _uiState.value)
 
-    // mftlrs: one-time events for FileListActivity.
+    // One-time events for FileListActivity.
     private val _events = Channel<FileListEvent>(Channel.BUFFERED)
     internal val events: Flow<FileListEvent> = _events.receiveAsFlow()
 
@@ -433,7 +462,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
         _uiState.update { it.copy(bottomBar = bottomBar ?: it.bottomBar.copy(isVisible = false)) }
     }
 
-    // mftlrs: was in FileListFragment.onActivityCreated(): the start path and the pick mode from
+    // The start path and the pick mode from
     // the intent of FileListActivity.
     fun start(intent: Intent) {
         if (hasTrail) {
@@ -499,7 +528,6 @@ class FileListViewModel : ViewModel(), FileItemListener {
         }
     }
 
-    // mftlrs: the search was a SearchView in the options menu of FileListFragment.
     private var searchJob: Job? = null
 
     fun expandSearch() {
@@ -541,7 +569,6 @@ class FileListViewModel : ViewModel(), FileItemListener {
         }
     }
 
-    // mftlrs: was FileListFragment.onOptionsItemSelected().
     internal fun onTopBarAction(action: FileListTopBarAction) {
         when (action) {
             FileListTopBarAction.VIEW_LIST -> viewType = FileViewType.LIST
@@ -585,7 +612,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
         }
     }
 
-    // mftlrs: alphabetic shortcuts of the removed menus; a hidden or disabled item doesn't react.
+    // Alphabetic shortcuts; a hidden or disabled item doesn't react.
     fun onKeyShortcut(keyCode: Int): Boolean {
         val state = _uiState.value
         val bottomBar = state.bottomBar
@@ -625,7 +652,6 @@ class FileListViewModel : ViewModel(), FileItemListener {
         return true
     }
 
-    // mftlrs: was FileListFragment.onOverlayActionModeMenuItemClicked().
     internal fun onSelectionAction(action: FileListSelectionAction) {
         val files = selectedFiles
         when (action) {
@@ -795,7 +821,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
         showDialog(FileListDialog.Properties(file))
     }
 
-    // mftlrs: results of the dialogs in FileListDialogs.kt. The confirmations close the dialog
+    // Results of the dialogs in FileListDialogs.kt. The confirmations close the dialog
     // themselves; the name dialogs return the error for the field, or null when closed.
 
     fun dismissDialog() {
@@ -969,7 +995,6 @@ class FileListViewModel : ViewModel(), FileItemListener {
     companion object {
         private val _pasteStateLiveData = MutableLiveData(PasteState())
 
-        // mftlrs: moved from FileListFragment.
         private const val ACTION_VIEW_DOWNLOADS =
             "me.zhanghai.android.files.intent.action.VIEW_DOWNLOADS"
 
@@ -1020,7 +1045,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
     }
 }
 
-// mftlrs: the main screen state; each part goes to its own composable.
+// The main screen state; each part goes to its own composable.
 internal data class FileListUiState(
     val content: Content = Content(),
     val topBar: TopBar = TopBar(),
@@ -1086,7 +1111,7 @@ internal data class FileListUiState(
     }
 }
 
-// mftlrs: one-time events of the main screen, executed by FileListActivity.
+// One-time events of the main screen, executed by FileListActivity.
 internal sealed interface FileListEvent {
     data class ScrollTo(val position: ScrollPosition) : FileListEvent
 
@@ -1121,7 +1146,7 @@ internal sealed interface FileListEvent {
     data object Finish : FileListEvent
 }
 
-// mftlrs: the dialogs of the main screen in Compose (FileListDialogs.kt), were DialogFragments.
+// The dialogs of the main screen (FileListDialogs.kt).
 internal sealed interface FileListDialog {
     data class Properties(val file: FileItem) : FileListDialog // FilePropertiesDialog
 
@@ -1143,7 +1168,7 @@ internal sealed interface FileListDialog {
     data object CreateDirectory : FileListDialog
 }
 
-// mftlrs: the rationale dialogs of the permission requests, were ShowRequest*DialogFragment. The
+// The rationale dialogs of the permission requests. The
 // result goes to FileListPermissions, which has the permission launchers.
 internal enum class FileListPermissionDialog(@StringRes val messageRes: Int, @StringRes val confirmRes: Int) {
     ALL_FILES_ACCESS(R.string.all_files_access_rationale_message, android.R.string.ok),

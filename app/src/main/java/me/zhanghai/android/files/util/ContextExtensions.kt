@@ -56,8 +56,6 @@ val Context.activity: Activity?
         }
     }
 
-// mftlrs: getAnimation() removed together with the file list animation.
-
 fun Context.getBoolean(@BoolRes id: Int): Boolean = resources.getBoolean(id)
 
 @Dimension
@@ -209,8 +207,6 @@ val Context.hasW960Dp: Boolean
 
 val Context.isLightTheme: Boolean
     get() = getBooleanByAttr(androidx.appcompat.R.attr.isLightTheme)
-
-// mftlrs: isMaterial3Theme removed — Material 3 only.
 
 val Context.isOrientationLandscape: Boolean
     get() = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE

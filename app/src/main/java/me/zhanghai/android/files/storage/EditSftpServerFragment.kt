@@ -27,7 +27,7 @@ import me.zhanghai.android.files.filelist.FileListActivity
 import me.zhanghai.android.files.provider.sftp.client.Authority
 import me.zhanghai.android.files.provider.sftp.client.PasswordAuthentication
 import me.zhanghai.android.files.provider.sftp.client.PublicKeyAuthentication
-import me.zhanghai.android.files.ui.UnfilteredArrayAdapter
+import me.zhanghai.android.files.ui.view.UnfilteredArrayAdapter
 import me.zhanghai.android.files.util.ActionState
 import me.zhanghai.android.files.util.ParcelableArgs
 import me.zhanghai.android.files.util.args

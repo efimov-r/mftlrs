@@ -11,6 +11,9 @@ import java8.nio.file.attribute.FileTime
 import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.MimeType
 import me.zhanghai.android.files.file.asMimeType
+import me.zhanghai.android.files.file.getCollationKeyForFileName
+import me.zhanghai.android.files.file.name
+import me.zhanghai.android.files.filelist.data.PickOptions
 import me.zhanghai.android.files.provider.archive.createArchiveRootPath
 import me.zhanghai.android.files.provider.linux.LinuxFileSystemProvider
 import java.text.Collator

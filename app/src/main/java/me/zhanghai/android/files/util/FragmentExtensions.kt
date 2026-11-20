@@ -44,8 +44,6 @@ fun Fragment.finish() {
     requireActivity().finish()
 }
 
-// mftlrs: getAnimation() removed together with the file list animation.
-
 fun Fragment.getBoolean(@BoolRes id: Int): Boolean = requireContext().getBoolean(id)
 
 @ColorInt

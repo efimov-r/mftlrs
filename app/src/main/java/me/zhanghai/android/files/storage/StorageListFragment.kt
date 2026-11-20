@@ -19,7 +19,7 @@ import com.h6ah4i.android.widget.advrecyclerview.draggable.RecyclerViewDragDropM
 import com.h6ah4i.android.widget.advrecyclerview.utils.WrapperAdapterUtils
 import me.zhanghai.android.files.databinding.StorageListFragmentBinding
 import me.zhanghai.android.files.settings.Settings
-import me.zhanghai.android.files.ui.ScrollingViewOnApplyWindowInsetsListener
+import me.zhanghai.android.files.ui.view.ScrollingViewOnApplyWindowInsetsListener
 import me.zhanghai.android.files.util.createIntent
 import me.zhanghai.android.files.util.fadeToVisibilityUnsafe
 import me.zhanghai.android.files.util.getDrawable

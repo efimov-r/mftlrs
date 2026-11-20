@@ -14,7 +14,7 @@ import me.zhanghai.android.files.R
 import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.formatLong
 import me.zhanghai.android.files.file.isImage
-import me.zhanghai.android.files.filelist.name
+import me.zhanghai.android.files.file.name
 import me.zhanghai.android.files.fileproperties.Equipment
 import me.zhanghai.android.files.fileproperties.FileLocationItems
 import me.zhanghai.android.files.fileproperties.FilePropertiesTab

@@ -1,6 +1,6 @@
 # Архитектура
 
-Как устроен код: где что лежит и как работает. Описано состояние upstream 1.7.5 с правками форка; правки в коде помечены комментарием `mftlrs:`, недоделанное — `TODO(mftlrs)`. Пути — от `app/src/main/java/me/zhanghai/android/files/`, если не указано иное. Строки кода и библиотеки по функциям — [features.md](features.md).
+Как устроен код: где что лежит и как работает. Основа — upstream 1.7.5, с 2026-11-21 код развивается независимо; недоделанное помечено `TODO(mftlrs)`. Пути — от `app/src/main/java/me/zhanghai/android/files/`, если не указано иное. Строки кода и библиотеки по функциям — [features.md](features.md).
 
 ## Обзор
 
@@ -28,7 +28,7 @@ FileJobService (копирование, удаление, архивы…) и Ft
   2. отладка WebView в debug;
   3. Coil (`coil/CoilInitializer.kt`);
   4. установка провайдеров ФС (`provider/FileSystemProviders.kt`), фоновая инициализация jcifs (NetBIOS, SMB1), назначение authenticator'ов сетевым клиентам;
-  5. апгрейд настроек со старых версий (`app/AppUpgrader.kt`, `AppUpgraders.kt`);
+  5. миграции настроек по `versionCode` (`app/AppUpgrader.kt`; сейчас миграций нет — upstream-миграции 1.1.0–1.7.2 удалены 2026-11-21);
   6. принудительная инициализация LiveData на главном потоке;
   7. цвет темы и ночной режим;
   8. каналы уведомлений.
@@ -40,8 +40,8 @@ FileJobService (копирование, удаление, архивы…) и Ft
 | Компонент | Зачем |
 |---|---|
 | `filelist.FileListActivity` | лаунчер (поддержка Android TV убрана); `VIEW` папок и архивов (список MIME в манифесте); системный выбор файла: `GET_CONTENT`, `OPEN_DOCUMENT`, `CREATE_DOCUMENT`; свои действия `VIEW_DOWNLOADS` (ярлык) |
-| `filelist.OpenFileActivity` | действие `…intent.action.OPEN_FILE` — открыть файл по пути (из ярлыков на рабочем столе) |
-| `filelist.EditFileActivity`, `OpenFileAsDialogActivity` | пункты «Изменить» и «Открыть как» в системном chooser |
+| `fileaction.OpenFileActivity` | действие `…intent.action.OPEN_FILE` — открыть файл по пути (из ярлыков на рабочем столе; в ярлыке — полное имя класса, после переноса класса старые ярлыки не открываются) |
+| `fileaction.EditFileActivity`, `OpenFileAsDialogActivity` | пункты «Изменить» и «Открыть как» в системном chooser |
 | `viewer.text.TextEditorActivity` | `VIEW` для `text/*`, JSON, XML, YAML, скриптов |
 | `viewer.image.ImageViewerActivity` | `VIEW` для `image/*` |
 | `viewer.saveas.SaveAsActivity` | `VIEW` с `content://` и `SEND` — сохранить присланный файл |
@@ -93,8 +93,16 @@ FileJobService (копирование, удаление, архивы…) и Ft
 
 ## Главный экран — `filelist/`
 
+Три уровня:
+
+- `filelist/` — `FileListActivity`, `FileListViewModel` (с `FileListUiState`, `FileListEvent`, `FileListDialog`), `FileListUiLogic.kt` (чистые расчёты), `FileListIntents.kt`, `FileListPermissions.kt`;
+- `filelist/ui/` — всё на Compose: `FileListRoot`, `FileListScreen`, `FileListContent`, `FileListItems`, `FileListTopBar`, `FileListBreadcrumbs`, `FileListBottomBar`, `FileListFab`, `FileListNavigation`, `FileListDialogs`, `ExitConfirmation`, `FileItemListener`;
+- `filelist/data/` — данные экрана: `FileListLiveData`, `SearchFileListLiveData`, `TrailData`/`TrailLiveData`, `BreadcrumbData`/`BreadcrumbLiveData`, `FileItemSet`, `PasteState`, `PickOptions`, `SearchState`, `CreateArchiveType`, LiveData вида и сортировки.
+
+Снаружи `filelist/` используют только `FileListActivity` — как экран выбора папки или файла (`settings/`, `storage/`, `viewer/saveas/`). Общее, что раньше лежало в `filelist/`: расширения `Path` и `FileItem` (`name`, `toUserFriendlyString`, `isRemotePath`…), `PathObserver` — в `file/`; `FileSortOptions`, `FileViewType`, `OpenApkDefaultAction` — в `settings/`; `OpenFileActivity`, `EditFileActivity`, «Открыть как» — в `fileaction/`.
+
 - `FileListActivity` — без фрагментов и View (этап 12 — [compose-migration.md](compose-migration.md)), MVVM; плюс контракты выбора файла и папки внутри приложения (`OpenFileContract`, `CreateFileContract`, `OpenDirectoryContract`):
-  - `setContent { FileListRoot(...) }` (`filelist/FileListRoot.kt`): боковая панель `FileListNavigation`, внутри неё `FileListScreen` — раскладка из слотов; отступы под системные панели — `windowInsets` из слушателя insets на `android.R.id.content` (там же флаги `layoutInStatusBar`, `layoutInNavigation`);
+  - `setContent { FileListRoot(...) }` (`filelist/ui/FileListRoot.kt`): боковая панель `FileListNavigation`, внутри неё `FileListScreen` — раскладка из слотов; отступы под системные панели — `windowInsets` из слушателя insets на `android.R.id.content` (там же флаги `layoutInStatusBar`, `layoutInNavigation`);
   - `FileListRoot` собирает `FileListViewModel.uiState` через `collectAsStateWithLifecycle`, каждая часть (`Content`, `TopBar`, `SelectionBar`, `BottomBar`) — в свой composable; действия Compose вызывают методы ViewModel напрямую, `FileItemListener` списка реализует ViewModel;
   - «Назад» — 6 `BackHandler` в `FileListRoot` в порядке очереди (срабатывает первым последний): подтверждение выхода (`FileListExitConfirmation`, выключено в режиме выбора), вверх по крошкам, поиск, выделение, FAB, боковая панель;
   - в Activity — только состояния элементов Compose: `LazyGridState` списка (позицию прокрутки отдаёт ViewModel через `snapshotFlow` → `scrollPosition`, она уходит в `TrailData` при переходе), `TextFieldState` поля имени файла и флаг его фокуса; при повороте и выгрузке процесса — `onSaveInstanceState` (с ними — флаги FAB и боковой панели);
@@ -110,7 +118,7 @@ FileJobService (копирование, удаление, архивы…) и Ft
 ## Боковая панель — `navigation/`
 
 - Состав — `NavigationItems.kt`, `navigationItems`: видимые хранилища → тома SD и USB (API 30+) → «Добавить хранилище» → стандартные папки (Alarms, DCIM, Documents, Download, Movies, Music, Notifications, Pictures, Podcasts, Ringtones; QQ, TIM, WeChat — только до Android 11) → закладки → меню (FTP-сервер, Настройки, О программе).
-- Показывает список `FileListNavigation` (Compose, `filelist/FileListNavigation.kt`) из `NavigationItemListLiveData`; действия идут в `NavigationItem.Listener` (реализует `FileListActivity`): `navigateTo`, `navigateToRoot`, `launchIntent`, `closeNavigationDrawer`. `NavigationRoot` — пункты, которые сбрасывают историю. Иконка пункта — `NavigationItem.iconRes` (vector, `painterResource`).
+- Показывает список `FileListNavigation` (Compose, `filelist/ui/FileListNavigation.kt`) из `NavigationItemListLiveData`; действия идут в `NavigationItem.Listener` (реализует `FileListActivity`): `navigateTo`, `navigateToRoot`, `launchIntent`, `closeNavigationDrawer`. `NavigationRoot` — пункты, которые сбрасывают историю. Иконка пункта — `NavigationItem.iconRes` (vector, `painterResource`).
 - Телефон — `ModalNavigationDrawer`: свайп с любого места экрана, «Назад» — `BackHandler` в `FileListRoot` (последний в очереди, срабатывает первым). Планшет в ландшафте (`Configuration.isPersistentNavigation`: `sw600dp`, ландшафт) — панель рядом с экраном, видимость — настройка `FILE_LIST_PERSISTENT_DRAWER_OPEN`, ☰ её переключает.
 - **Для редизайна без drawer:** данные (`navigationItems`, `BookmarkDirectories`, `StandardDirectoriesLiveData`, `NavigationRootMapLiveData`) от drawer'а не зависят и годятся для нового экрана; привязка к drawer'у — `FileListNavigation`, `FileListUiState.isNavigationOpen`, `setNavigationOpen()` и `closeNavigationDrawer()` в `FileListActivity`.
 
@@ -145,10 +153,10 @@ Apache FtpServer (`FtpServer.kt`) с файловой системой `Provider
 - `Settings.kt` — все настройки как `SettingLiveData` (`SettingLiveDatas.kt`: Boolean, String, Integer, Enum, ResourceId, ParcelValue). Ключи и значения по умолчанию — `res/values/donottranslate_prefs.xml`.
 - Сложные значения (хранилища, закладки, сортировка, пути) — `ParcelValueSettingLiveData`: объект → Parcel → Base64 → строка в SharedPreferences.
 - Настройки отдельных папок — `PathSettings.kt`, отдельный файл SharedPreferences.
-- Экран — `SettingsPreferenceFragment` по `res/xml/settings.xml`; свои Preference — в `settings/` и `theme/custom/ThemeColorPreference.kt`.
-- Миграции при обновлении версии — `app/AppUpgrader.kt` и `AppUpgraders.kt`, по `versionCode`.
+- Экран — `SettingsPreferenceFragment` по `res/xml/settings.xml`; свои Preference — в `settings/`. Там же значения настроек `FileSortOptions`, `FileViewType`, `OpenApkDefaultAction` и редактор закладки `EditBookmarkDirectoryDialogActivity`/`Fragment` (открывается из списка закладок и боковой панели).
+- Миграции при обновлении версии — `app/AppUpgrader.kt`, по `versionCode`; сейчас их нет.
 
-## Темы — `theme/`, `colorpicker/`
+## Темы — `ui/theme/`
 
 - **В mftlrs две фиксированные темы — светлая и тёмная** (2026-11-15). Палитра — `values/colors_mftlrs.xml` (роли Material 3, `mftlrs_light_*`, `mftlrs_dark_*`), темы — `values/themes_mftlrs.xml`: `Theme.Mftlrs.Material3.Light`, `.Dark`, `.DayNight` (в `values-night/themes_mftlrs.xml` указывает на `.Dark`). Upstream-тема `Theme.MaterialFiles.Material3` наследует `.DayNight`, просмотрщик картинок (`…Material3.Immersive`) — `.Dark`.
 - Манифест ссылается прямо на `Theme.MaterialFiles.Material3`, `.Material3.Translucent`, `.Material3.Immersive`; подмены темы во время работы нет.

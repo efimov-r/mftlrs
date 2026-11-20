@@ -13,7 +13,7 @@ import me.zhanghai.android.files.compat.setTintCompat
 import me.zhanghai.android.files.navigation.StandardDirectoriesLiveData
 import me.zhanghai.android.files.navigation.StandardDirectory
 import me.zhanghai.android.files.navigation.getExternalStorageDirectory
-import me.zhanghai.android.files.ui.PreferenceFragmentCompat
+import me.zhanghai.android.files.ui.view.PreferenceFragmentCompat
 import me.zhanghai.android.files.util.getColorByAttr
 import me.zhanghai.android.files.util.valueCompat
 

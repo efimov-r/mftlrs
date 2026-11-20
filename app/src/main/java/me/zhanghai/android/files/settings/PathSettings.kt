@@ -8,8 +8,6 @@ package me.zhanghai.android.files.settings
 import androidx.core.content.res.ResourcesCompat
 import java8.nio.file.Path
 import me.zhanghai.android.files.R
-import me.zhanghai.android.files.filelist.FileSortOptions
-import me.zhanghai.android.files.filelist.FileViewType
 
 object PathSettings {
     private const val NAME_SUFFIX = "path"

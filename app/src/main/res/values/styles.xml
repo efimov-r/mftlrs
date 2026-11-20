@@ -6,8 +6,6 @@
   ~ Modified for mftlrs, 2026.
   -->
 
-<!-- mftlrs: Material Design 2-only styles removed (switch, shape, navigation view). -->
-<!-- mftlrs: TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Small removed, the file list toolbar is in Compose. -->
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <!--

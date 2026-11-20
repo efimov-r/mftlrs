@@ -6,7 +6,7 @@
 package me.zhanghai.android.files.fileproperties
 
 import java8.nio.file.Path
-import me.zhanghai.android.files.filelist.PathObserver
+import me.zhanghai.android.files.file.PathObserver
 import me.zhanghai.android.files.util.CloseableLiveData
 
 abstract class PathObserverLiveData<T>(protected val path: Path) : CloseableLiveData<T>() {

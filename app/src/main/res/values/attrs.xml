@@ -13,5 +13,4 @@
     <declare-styleable name="AspectRatioFrameLayout">
         <attr name="aspectRatio" format="float" />
     </declare-styleable>
-    <!-- mftlrs: NavigationViewExtra removed with NavigationListAdapter (drawer in Compose). -->
 </resources>

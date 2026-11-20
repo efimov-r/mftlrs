@@ -8,10 +8,10 @@
 
 <resources>
 
-    <!-- mftlrs: brand name, the same in all languages; not in values-*. -->
+    <!-- Brand name, the same in all languages; not in values-*. -->
     <string name="app_name" translatable="false">mftlrs</string>
 
-    <!-- mftlrs: exit confirmation on the main screen. -->
+    <!-- Exit confirmation on the main screen. -->
     <string name="file_list_exit_title">Close %1$s?</string>
     <string name="file_list_exit_minimize">Minimize</string>
 
@@ -804,7 +804,7 @@
     <string name="about_author_name_title">Hai Zhang</string>
     <string name="about_author_github_title">Follow on GitHub</string>
     <string name="about_author_twitter_title">Follow on Twitter</string>
-    <!-- mftlrs: replaces the "Author" section; about_author_* above are kept for upstream merges. -->
+    <!-- The project this app is based on. -->
     <string name="about_based_on_title">Based on</string>
     <string name="about_based_on_project_name" translatable="false">Material Files</string>
 

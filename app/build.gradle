@@ -6,12 +6,9 @@
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-parcelize'
-// mftlrs: Compose for the new main screen.
 apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 apply from: '../signing.gradle'
-
-// mftlrs: Firebase (google-services and crashlytics plugins) removed; crash reports will use ACRA.
 
 android {
     namespace 'me.zhanghai.android.files'
@@ -20,10 +17,9 @@ android {
     compileSdkMinor = 2
     ndkVersion '30.0.16248370'
     defaultConfig {
-        // mftlrs: own applicationId; namespace and Kotlin package stay upstream's. Keep in sync
-        // with android:targetPackage in res/xml/shortcuts.xml.
+        // Keep in sync with android:targetPackage in res/xml/shortcuts.xml.
         applicationId 'io.github.efimov_r.mftlrs'
-        // mftlrs: 26 instead of upstream's 23 — adaptive icons everywhere, no baked PNG icons.
+        // Adaptive icons everywhere, no baked PNG icons.
         minSdk 26
         // Not supporting the ACCESS_LOCAL_NETWORK runtime permission yet.
         //noinspection OldTargetApi
@@ -45,7 +41,6 @@ android {
     buildFeatures {
         aidl true
         buildConfig true
-        // mftlrs: Compose for the new main screen.
         compose true
         resValues true
         viewBinding true
@@ -73,7 +68,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // mftlrs: without a release key (signing.properties or STORE_FILE etc.), sign with the
+            // Without a release key (signing.properties or STORE_FILE etc.), sign with the
             // debug key so that a local release build can still be installed over the debug one.
             signingConfig signingConfigs.release.storeFile != null ? signingConfigs.release
                     : signingConfigs.debug
@@ -150,7 +145,6 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.2.0'
     implementation 'com.google.android.material:material:1.14.0'
-    // mftlrs: Compose for the new main screen.
     implementation platform('androidx.compose:compose-bom:2026.09.00')
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.activity:activity-compose:1.13.0' // setContent and BackHandler in FileListActivity
@@ -207,7 +201,7 @@ dependencies {
     }
     implementation platform('io.coil-kt:coil-bom:2.7.0')
     implementation 'io.coil-kt:coil'
-    // mftlrs: Coil for Compose, same Coil 2 as the custom fetchers in coil/.
+    // Coil for Compose, same Coil 2 as the custom fetchers in coil/.
     implementation 'io.coil-kt:coil-compose'
     implementation 'io.coil-kt:coil-gif'
     implementation 'io.coil-kt:coil-svg'
@@ -231,17 +225,15 @@ dependencies {
     // Also a dependency of jCIFS-NG.
     implementation 'org.slf4j:slf4j-android:1.7.36'
 
-    // mftlrs: unit tests of the main screen logic on the JVM; only for the uiTest build type
+    // Unit tests of the main screen logic on the JVM; only for the uiTest build type
     // (testBuildType): testUiTestUnitTest.
     testImplementation 'junit:junit:4.13.2'
 
-    // mftlrs: UI tests on a device. UI Automator finds elements through accessibility, so the same
-    // tests work for the Views screen and for its Compose replacement.
+    // UI tests on a device. UI Automator finds elements through accessibility.
     androidTestImplementation 'androidx.test:core-ktx:1.6.1'
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test.ext:junit-ktx:1.2.1'
     androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
 
-    // mftlrs: Firebase Analytics and Crashlytics removed.
     // TODO(mftlrs): add ACRA (ch.acra:acra-dialog + acra-mail) for crash reports with user consent.
 }

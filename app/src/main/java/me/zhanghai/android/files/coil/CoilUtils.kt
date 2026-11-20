@@ -14,7 +14,7 @@ import coil.size.Size
 import coil.size.isOriginal
 import coil.size.pxOrElse
 import java8.nio.file.Path
-import me.zhanghai.android.files.filelist.isRemotePath
+import me.zhanghai.android.files.file.isRemotePath
 
 val Bitmap.Config.isHardware: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && this == Bitmap.Config.HARDWARE

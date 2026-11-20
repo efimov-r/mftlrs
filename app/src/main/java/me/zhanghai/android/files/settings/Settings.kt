@@ -13,16 +13,13 @@ import java8.nio.file.Paths
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.compat.EnvironmentCompat2
-import me.zhanghai.android.files.filelist.FileSortOptions
-import me.zhanghai.android.files.filelist.FileViewType
-import me.zhanghai.android.files.filelist.OpenApkDefaultAction
 import me.zhanghai.android.files.navigation.BookmarkDirectory
 import me.zhanghai.android.files.navigation.StandardDirectorySettings
 import me.zhanghai.android.files.provider.root.RootStrategy
 import me.zhanghai.android.files.storage.FileSystemRoot
 import me.zhanghai.android.files.storage.PrimaryStorageVolume
 import me.zhanghai.android.files.storage.Storage
-import me.zhanghai.android.files.theme.night.NightMode
+import me.zhanghai.android.files.ui.theme.night.NightMode
 import java.io.File
 
 object Settings {
@@ -99,14 +96,11 @@ object Settings {
             R.string.pref_key_ftp_server_writable, R.bool.pref_default_value_ftp_server_writable
         )
 
-    // mftlrs: THEME_COLOR, MATERIAL_DESIGN_3 and BLACK_NIGHT_MODE removed — two fixed themes.
     val NIGHT_MODE: SettingLiveData<NightMode> =
         EnumSettingLiveData(
             R.string.pref_key_night_mode, R.string.pref_default_value_night_mode,
             NightMode::class.java
         )
-
-    // mftlrs: FILE_LIST_ANIMATION removed — no file list animation.
 
     val FILE_NAME_ELLIPSIZE: SettingLiveData<TextUtils.TruncateAt> =
         EnumSettingLiveData(

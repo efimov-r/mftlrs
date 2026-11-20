@@ -6,7 +6,7 @@
   ~ Modified for mftlrs, 2026.
   -->
 
-<!-- mftlrs: mftlrs palette instead of the baseline Material 3 colors. -->
+<!-- mftlrs palette instead of the baseline Material 3 colors. -->
 <selector
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"

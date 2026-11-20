@@ -14,10 +14,6 @@ import android.widget.Toast
 import androidx.annotation.AnyRes
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.IOException
-import java.io.InterruptedIOException
 import java8.nio.file.CopyOption
 import java8.nio.file.DirectoryIteratorException
 import java8.nio.file.FileAlreadyExistsException
@@ -31,8 +27,6 @@ import java8.nio.file.SimpleFileVisitor
 import java8.nio.file.StandardCopyOption
 import java8.nio.file.StandardOpenOption
 import java8.nio.file.attribute.BasicFileAttributes
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.runBlocking
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.app.BackgroundActivityStarter
@@ -43,8 +37,8 @@ import me.zhanghai.android.files.file.MimeType
 import me.zhanghai.android.files.file.asFileSize
 import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.file.loadFileItem
-import me.zhanghai.android.files.filelist.OpenFileAsDialogActivity
-import me.zhanghai.android.files.filelist.OpenFileAsDialogFragment
+import me.zhanghai.android.files.fileaction.OpenFileAsDialogActivity
+import me.zhanghai.android.files.fileaction.OpenFileAsDialogFragment
 import me.zhanghai.android.files.provider.archive.archiveFile
 import me.zhanghai.android.files.provider.archive.archiver.ArchiveWriter
 import me.zhanghai.android.files.provider.archive.createArchiveRootPath
@@ -96,6 +90,12 @@ import me.zhanghai.android.files.util.putArgs
 import me.zhanghai.android.files.util.showToast
 import me.zhanghai.android.files.util.toEnumSet
 import me.zhanghai.android.files.util.withChooser
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.IOException
+import java.io.InterruptedIOException
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 fun FileJob.getString(@StringRes stringRes: Int): String {
     return service.getString(stringRes)

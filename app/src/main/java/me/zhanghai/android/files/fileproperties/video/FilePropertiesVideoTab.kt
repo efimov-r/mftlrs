@@ -15,7 +15,7 @@ import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.format
 import me.zhanghai.android.files.file.formatLong
 import me.zhanghai.android.files.file.isVideo
-import me.zhanghai.android.files.filelist.name
+import me.zhanghai.android.files.file.name
 import me.zhanghai.android.files.fileproperties.FileLocationItems
 import me.zhanghai.android.files.fileproperties.FilePropertiesTab
 import me.zhanghai.android.files.fileproperties.FilePropertyItem

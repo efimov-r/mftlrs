@@ -12,7 +12,6 @@
 
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
-    <!-- mftlrs: Android TV support (leanback, LEANBACK_LAUNCHER, banner) removed. -->
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -45,7 +44,7 @@
       ~ resizable.
       ~ TODO: Remove this attribute once Samsung respects the default value for it.
       -->
-    <!-- mftlrs: supportsRtl="false" - RTL translations are removed, the layout is always LTR. -->
+    <!-- supportsRtl="false": no RTL translations, the layout is always LTR. -->
     <application
         android:allowBackup="true"
         android:enableOnBackInvokedCallback="true"
@@ -146,7 +145,7 @@
           ~ Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK. Not sure why though.
           -->
         <activity
-            android:name="me.zhanghai.android.files.filelist.OpenFileActivity"
+            android:name="me.zhanghai.android.files.fileaction.OpenFileActivity"
             android:documentLaunchMode="always"
             android:excludeFromRecents="true"
             android:exported="true"
@@ -159,14 +158,14 @@
         </activity>
 
         <activity
-            android:name="me.zhanghai.android.files.filelist.EditFileActivity"
+            android:name="me.zhanghai.android.files.fileaction.EditFileActivity"
             android:autoRemoveFromRecents="true"
             android:icon="@drawable/edit_icon"
             android:label="@string/file_edit_title"
             android:theme="@style/Theme.MaterialFiles.Material3.Translucent" />
 
         <activity
-            android:name="me.zhanghai.android.files.filelist.OpenFileAsDialogActivity"
+            android:name="me.zhanghai.android.files.fileaction.OpenFileAsDialogActivity"
             android:autoRemoveFromRecents="true"
             android:icon="@drawable/open_as_icon"
             android:label="@string/file_open_as_title"
@@ -228,7 +227,7 @@
             android:theme="@style/Theme.MaterialFiles.Material3" />
 
         <activity
-            android:name="me.zhanghai.android.files.navigation.EditBookmarkDirectoryDialogActivity"
+            android:name="me.zhanghai.android.files.settings.EditBookmarkDirectoryDialogActivity"
             android:label="@string/navigation_edit_bookmark_directory_title"
             android:theme="@style/Theme.MaterialFiles.Material3.Translucent" />
 

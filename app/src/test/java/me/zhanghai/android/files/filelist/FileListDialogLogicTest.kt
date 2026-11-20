@@ -6,6 +6,7 @@
 package me.zhanghai.android.files.filelist
 
 import me.zhanghai.android.files.R
+import me.zhanghai.android.files.filelist.data.CreateArchiveType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

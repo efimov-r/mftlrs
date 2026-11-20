@@ -17,8 +17,8 @@ import androidx.preference.Preference
 import com.takisoft.preferencex.PreferenceActivityResultListener
 import com.takisoft.preferencex.PreferenceFragmentCompat
 import java8.nio.file.Path
+import me.zhanghai.android.files.file.toUserFriendlyString
 import me.zhanghai.android.files.filelist.FileListActivity
-import me.zhanghai.android.files.filelist.toUserFriendlyString
 import me.zhanghai.android.files.navigation.NavigationRootMapLiveData
 import me.zhanghai.android.files.util.startActivityForResultSafe
 import me.zhanghai.android.files.util.valueCompat

@@ -8,12 +8,13 @@
 
 ## Дальше
 
-- [ ] Добавить удалённый `upstream`: `git remote add upstream https://github.com/zhanghai/MaterialFiles.git`
+- [ ] Решить, переименовывать ли корневой пакет `me.zhanghai.android.files` — владелец спросит отдельно ([decisions.md](decisions.md), «Независимость от upstream»)
+- [ ] Отвязать репозиторий на GitHub от сети форков MaterialFiles — делает владелец (Settings → Danger Zone → Leave fork network)
 - [ ] Подключить ACRA с диалогом отправки — [decisions.md](decisions.md); Firebase уже вырезан, места под ACRA помечены `TODO(mftlrs)` — [architecture.md](architecture.md), «Отчёты о падениях»
 - [ ] Скриншоты в `fastlane/.../images/` — после редизайна (сейчас upstream). Firebase, `applicationId`, название и атрибуция — сделано
 - [ ] Включить в настройках репозитория на GitHub Private vulnerability reporting (Settings → Security) — на него ссылается `SECURITY.md`
 - [ ] Решить, коммитить ли `gradle/gradle-daemon-jvm.properties`
-- [ ] Обсудить хранение настроек: сложные значения (хранилища, закладки, сортировка, пути) лежат в SharedPreferences как Parcel → Base64, любое изменение этих классов без миграции молча сбрасывает настройки — [gotchas.md](gotchas.md), «Настройки хранятся как Parcel»
+- [ ] Обсудить хранение настроек до первого релиза: сложные значения (хранилища, закладки, сортировка, пути) лежат в SharedPreferences как Parcel → Base64, любое изменение этих классов без миграции молча сбрасывает настройки — [gotchas.md](gotchas.md), «Настройки хранятся как Parcel»
 - [ ] TODO: какие ещё изменения интерфейса — от владельца
 
 ## Главный экран на Compose
@@ -21,7 +22,7 @@
 Перенос один в один, без редизайна; после каждого этапа приложение собирается и работает. Этапы 0–7 — экран внутри `FileListFragment`, 8–12 — вся `FileListActivity`: боковая панель, MVVM, диалоги, без фрагментов. Подробный план, ловушки и журнал — [compose-migration.md](compose-migration.md); решения — [decisions.md](decisions.md), «Главный экран на Compose» и «Вся `FileListActivity` на Compose, MVVM». Ручной чек-лист владелец проходит один раз — в самом конце, после этапа 12 (решение 2026-11-19); «осталось владельцу» в этапах ниже — его пункты.
 
 - [ ] 0. Эталон: UI-тесты — 37 зелёных ([testing.md](testing.md), «Что покрыто»; не покрыто: режимы выбора 54–60 и галочки в меню «Вид и сортировка»). Осталось: пройти [file-list-checklist.md](file-list-checklist.md) руками на текущей сборке, поправить пункты под реальное поведение
-- [ ] 1. Элементы списка и сетки `FileListItem` / `FileGridItem` — код готов (`filelist/FileListItems.kt`); осталось: владельцу сверить превью в Android Studio с телефоном
+- [ ] 1. Элементы списка и сетки `FileListItem` / `FileGridItem` — код готов (`filelist/ui/FileListItems.kt`); осталось: владельцу сверить превью в Android Studio с телефоном
 - [ ] 2. `MftlrsFastScrollbar` — код готов (`ui/compose/MftlrsFastScrollbar.kt`, упрощённая: всегда видна, без подсказки); проверка на устройстве — после подключения на этапе 3
 - [ ] 3. Список подключён (`FileListContent.kt`), UI-тесты 37 из 37; осталось: владельцу пройти чек-лист 11–28, 29–36, 41–44, 63–64 на телефоне
 - [ ] 4. Верхняя панель: 4a — тулбар, меню, поиск — готово (`FileListTopBar.kt`, UI-тесты 37 из 37), владельцу — чек-лист 2–10, 15, 17–21, 48–53, 65; 4b — хлебные крошки — готово (`FileListBreadcrumbs.kt`, UI-тесты 37 из 37), владельцу — чек-лист 2, 4, 9; 4c — панель выделения — готово (в `FileListTopBar.kt`, UI-тесты 37 из 37), владельцу — чек-лист 29–36, 54–60

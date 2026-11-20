@@ -12,7 +12,7 @@ import com.h6ah4i.android.widget.advrecyclerview.utils.AbstractDraggableItemView
 import me.zhanghai.android.files.compat.foregroundCompat
 import me.zhanghai.android.files.compat.isTransformedTouchPointInViewCompat
 import me.zhanghai.android.files.databinding.StorageItemBinding
-import me.zhanghai.android.files.ui.SimpleAdapter
+import me.zhanghai.android.files.ui.view.SimpleAdapter
 import me.zhanghai.android.files.util.layoutInflater
 
 class StorageListAdapter(

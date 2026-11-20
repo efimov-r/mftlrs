@@ -34,10 +34,17 @@ import me.zhanghai.android.files.R
 import me.zhanghai.android.files.app.AppActivity
 import me.zhanghai.android.files.app.clipboardManager
 import me.zhanghai.android.files.file.MimeType
+import me.zhanghai.android.files.file.toUserFriendlyString
+import me.zhanghai.android.files.filelist.data.PickOptions
+import me.zhanghai.android.files.filelist.ui.FileListRoot
+import me.zhanghai.android.files.filelist.ui.ScrollPosition
+import me.zhanghai.android.files.filelist.ui.isPersistentNavigation
+import me.zhanghai.android.files.filelist.ui.scrollPosition
+import me.zhanghai.android.files.filelist.ui.scrollTo
 import me.zhanghai.android.files.navigation.NavigationItem
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.terminal.Terminal
-import me.zhanghai.android.files.theme.MftlrsTheme
+import me.zhanghai.android.files.ui.theme.MftlrsTheme
 import me.zhanghai.android.files.util.asFileName
 import me.zhanghai.android.files.util.copyText
 import me.zhanghai.android.files.util.createInstallPackageIntent
@@ -50,22 +57,22 @@ import me.zhanghai.android.files.util.showToast
 import me.zhanghai.android.files.util.startActivitySafe
 import me.zhanghai.android.files.util.valueCompat
 
-// mftlrs: no FileListFragment; the whole screen is FileListRoot in Compose, the logic and the screen
+// The whole screen is FileListRoot in Compose, the logic and the screen
 // state are in FileListViewModel. This activity executes the one-time events, keeps the states of
 // Compose elements and is the listener of the navigation; permissions are in FileListPermissions.
 class FileListActivity : AppActivity(), NavigationItem.Listener {
     private val viewModel by viewModels<FileListViewModel>()
 
-    // mftlrs: registers its launchers on creation.
+    // Registers its launchers on creation.
     private val permissions = FileListPermissions(this) { viewModel }
 
-    // mftlrs: only the states of Compose elements are kept here: the scroll position of
+    // Only the states of Compose elements are kept here: the scroll position of
     // FileListContent and the file name of FileListBottomBar.
     private val gridState = LazyGridState()
     private val createFileNameState = TextFieldState()
     private var isCreateFileNameFocusRequested by mutableStateOf(false)
 
-    // mftlrs: system window insets for FileListScreen, which was done by fitsSystemWindows views.
+    // System window insets for FileListScreen.
     private var windowInsets by mutableStateOf(Insets.NONE)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,7 +100,7 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
                 )
             }
         }
-        // mftlrs: was on screenLayout in FileListFragment. Not on the ComposeView: Compose may replace
+        // Not on the ComposeView: Compose may replace
         // its insets listener.
         findViewById<View>(android.R.id.content).apply {
             // Was set by DrawerLayout and PersistentDrawerLayout with fitsSystemWindows: the screen
@@ -119,7 +126,7 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
         viewModel.setFabExpanded(savedInstanceState?.getBoolean(STATE_FAB_EXPANDED) == true)
         setNavigationOpen(savedInstanceState?.getBoolean(STATE_NAVIGATION_OPEN) == true)
 
-        // mftlrs: the start path and the pick mode are read from the intent by the view model.
+        // The start path and the pick mode are read from the intent by the view model.
         viewModel.start(intent)
         viewModel.pickOptionsLiveData.observe(this) { initCreateFileName(it) }
         lifecycleScope.launch {
@@ -143,7 +150,6 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
 
         val state = viewModel.uiState.value
         outState.putParcelable(STATE_SCROLL_POSITION, gridState.scrollPosition)
-        // mftlrs: the EditText, the speed dial and DrawerLayout saved these themselves.
         outState.putString(STATE_CREATE_FILE_NAME, createFileNameState.text.toString())
         outState.putBoolean(STATE_FAB_EXPANDED, state.isFabExpanded)
         outState.putBoolean(STATE_NAVIGATION_OPEN, state.isNavigationOpen)
@@ -156,7 +162,7 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
         return super.onKeyUp(keyCode, event)
     }
 
-    // mftlrs: one-time events of FileListViewModel.
+    // One-time events of FileListViewModel.
     private fun onEvent(event: FileListEvent) {
         when (event) {
             is FileListEvent.ScrollTo -> gridState.scrollTo(event.position)
@@ -192,7 +198,7 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
         }
     }
 
-    // mftlrs: the modal navigation drawer; the persistent one is FILE_LIST_PERSISTENT_DRAWER_OPEN.
+    // The modal navigation drawer; the persistent one is FILE_LIST_PERSISTENT_DRAWER_OPEN.
     private fun setNavigationOpen(open: Boolean) {
         viewModel.setNavigationOpen(open && !resources.configuration.isPersistentNavigation)
     }
@@ -201,7 +207,7 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
         clipboardManager.copyText(path.toUserFriendlyString(), this)
     }
 
-    // mftlrs: was in updateBottomToolbar(); the file name field is a Compose state kept here.
+    // The file name field is a Compose state kept here.
     private fun initCreateFileName(pickOptions: PickOptions?) {
         if (pickOptions?.mode != PickOptions.Mode.CREATE_FILE ||
             viewModel.isCreateFileNameEditInitialized) {
@@ -212,7 +218,7 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
         viewModel.isCreateFileNameEditInitialized = true
     }
 
-    // mftlrs: was setText() and setSelection() on the EditText; the base name is selected.
+    // The base name is selected.
     private fun setCreateFileName(fileName: String) {
         createFileNameState.edit {
             replace(0, length, fileName)
@@ -241,7 +247,7 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
     }
 
     companion object {
-        // mftlrs: states of Compose elements across recreation.
+        // States of Compose elements across recreation.
         private const val STATE_SCROLL_POSITION = "scrollPosition"
         private const val STATE_CREATE_FILE_NAME = "createFileName"
         private const val STATE_FAB_EXPANDED = "fabExpanded"

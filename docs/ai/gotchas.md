@@ -5,7 +5,7 @@
 ## Настройка типа архива хранит имя id из разметки
 - **Что случится:** после удаления `zipRadio`, `tarXzRadio`, `sevenZRadio` выбранный тип архива молча сбрасывается на ZIP или не собирается код
 - **Причина:** `Settings.CREATE_ARCHIVE_TYPE` — `ResourceIdSettingLiveData`: хранит имя ресурса (`"tarXzRadio"`) и читает через `getIdentifier`. Это были id `RadioButton` удалённой `create_archive_dialog.xml` (2026-11-20, этап 11)
-- **Как правильно:** id объявлены в `res/values/ids_mftlrs.xml`, `CreateArchiveType` сопоставляет их с типами. Не удалять и не переименовывать, пока настройку не переведут на свои значения с миграцией в `AppUpgraders`
+- **Как правильно:** id объявлены в `res/values/ids_mftlrs.xml`, `CreateArchiveType` сопоставляет их с типами. Не удалять и не переименовывать, пока настройку не переведут на свои значения (после первого релиза — с миграцией в `app/AppUpgrader.kt`)
 
 ## Нет задачи `testDebugUnitTest`
 - **Что случится:** `gradlew testDebugUnitTest` — `Task 'testDebugUnitTest' not found`
@@ -62,45 +62,30 @@
 - **Причина:** Gradle после прогона удаляет APK, которые ставил для тестов. Если тестовый build type — `debug`, это та же debug-сборка, что стоит на устройстве
 - **Как правильно:** тесты — только в build type `uiTest` с суффиксом `.uitest` (`testBuildType 'uiTest'` в `app/build.gradle`); не переключать `testBuildType` на `debug`. У `uiTest` свои `app_provider_authority` и `file_provider_authority` в `resValue` — без них установка рядом с debug падает с `INSTALL_FAILED_CONFLICTING_PROVIDER` ([testing.md](testing.md))
 
-## Слияние с upstream: удалённые локали и RTL
-- **Что случится:** конфликт «удалено у нас — изменено у upstream» в 11 папках `values-*` (`strings.xml`, `mime_types.xml`); при выборе версии upstream язык возвращается в настройки без строк mftlrs. Конфликт в `AndroidManifest.xml` по `supportsRtl`; если вернуть `true`, интерфейс в системе с арабским, персидским или ивритом снова зеркалится, а RTL никто не проверяет
-- **Причина:** 2026-11-15 удалены `values-eu`, `-gl`, `-is`, `-lt`, `-ca`, `-nb`, `-da`, `-fi`, `-ar`, `-fa`, `-iw` и выключен RTL ([decisions.md](decisions.md), «Переводы»); upstream продолжает обновлять эти локали через Transifex
-- **Как правильно:** разрешать удалением (`git rm -r app/src/main/res/values-eu` и т. д.); после слияния этих 11 папок быть не должно, а в манифесте — `android:supportsRtl="false"`. Код учёта RTL удалён; после слияния поиск по `isLayoutDirectionRtl`, `AutoMirrorDrawable`, `layoutDirectionCompat`, `LAYOUT_DIRECTION_RTL`, `autoMirrored` должен быть пустым
-
 ## Цвет верхней панели списка файлов не зависит от `colorAppBarSurface`
-- **Что случится:** правка `colorAppBarSurface` в теме не меняет панель главного экрана; при слиянии с upstream — конфликты «удалено у нас — изменено у upstream» в `file_list_fragment_app_bar_include.xml` и других `_include` главного экрана, `PersistentBarLayout`, `BottomBarLayout`, `values-sw600dp/integers.xml`
+- **Что случится:** правка `colorAppBarSurface` в теме не меняет панель главного экрана
 - **Причина:** главный экран на Compose (`FileListScreen`): фон панели и крошек — `colorScheme.surfaceContainer`, панель не прячется при прокрутке, панель выделения — свой фон `surfaceContainer` в `FileListTopBar` (2026-11-19, этапы 4–7)
-- **Как правильно:** цвет панели менять в `FileListScreen` и `FileListTopBar`; удалённые файлы оставлять удалёнными, правки upstream в них переносить по смыслу в Compose-файлы `filelist/`
+- **Как правильно:** цвет панели менять в `filelist/ui/FileListScreen.kt` и `FileListTopBar.kt`
 
 ## `gradlew` без `JAVA_HOME`
 - **Что случится:** `ERROR: JAVA_HOME is not set and no 'java' command could be found`
 - **Причина:** JDK не в PATH
 - **Как правильно:** подходит JDK из Android Studio: в PowerShell `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"` в той же команде перед `.\gradlew.bat`
 
-## Слияние с upstream: удалённые темы и настройки
-- **Что случится:** конфликты «удалено у нас — изменено у upstream» в `themes.xml`, `themes_custom.xml`, `theme/custom/`, `colorpicker/`, `ui/AnimatedListAdapter.kt`, `anim/list_item.xml`; при неаккуратном разрешении возвращаются Material Design 2, выбор цвета, цвета из обоев, анимация списка файлов или строки удалённых настроек
-- **Причина:** в mftlrs только Material 3 с фиксированной палитрой ([decisions.md](decisions.md), «Две фиксированные темы»), а upstream продолжает развивать MD2, выбор цвета и Material You. Анимация списка файлов и её настройка удалены (2026-11-15). `FileListAdapter`, `file_item_list.xml`, `file_item_grid.xml`, `menu/file_item.xml` удалены (2026-11-19) — список на Compose (`FileListContent.kt`, `FileListItems.kt`)
-- **Как правильно:** удалённые файлы оставлять удалёнными; правки upstream в общих файлах (`themes_material3.xml`, `styles*.xml` и др.) переносить, но без веток MD2, `isMaterial3Theme` и `bindViewHolderAnimation`; правки upstream в `FileListAdapter` и разметке элементов — переносить по смыслу в `FileListItems.kt`; новые строки `settings_theme_color*`, `settings_material_design_3_title`, `settings_black_night_mode`, `settings_file_list_animation_title` в локалях не принимать. После слияния — поиск по `ThemeColor`, `MATERIAL_DESIGN_3`, `isMaterial3Theme`, `DynamicColors`, `FILE_LIST_ANIMATION`, `AnimatedListAdapter` должен быть пустым
-
 ## Смена цвета иконки — в нескольких местах
 - **Что случится:** иконка в приложении одного цвета, а иконка в магазине или исходники `art/` — другого
 - **Причина:** цвет записан в `values/colors.xml` (`launcher_icon_color`), в `art/launcher_icon.svg` и 4 SVG ярлыков, в `art/generate-png.sh` (фон иконки для магазина); PNG для магазинов выгружаются отдельно
 - **Как правильно:** поменять цвет во всех местах, затем в `art/` запустить `generate-png.sh` и `deploy-png.sh` (bash, Inkscape 1.4 в PATH; на Windows — `C:\Program Files\Inkscape\bin`). Скрипты upstream были под Inkscape 1.0 — команды `FileSave`, `EditDelete` в 1.4 не работают, скрипт переписан. Передний слой рисуется из `art/launcher_icon_foreground.svg` — при правке формы папки в `launcher_icon.svg` поправить и его. `featureGraphic.png` — сплошная заливка цветом (ImageMagick: `magick -size 1024x500 xc:<цвет>`)
 
-## `app_name` в локалях вернётся при слиянии с upstream
-- **Что случится:** на каком-то языке приложение снова называется «Material Files» (или переводом); lint предупреждает о переводе непереводимой строки
-- **Причина:** в форке `app_name` — только в `values/strings.xml` с `translatable="false"`, из всех локалей строка удалена. У upstream она есть в каждой локали. Если upstream меняет эту строку или соседние (новый перевод названия, файл перегенерирован из Transifex), git даёт конфликт; выбор при разрешении «взять версию upstream» возвращает строку
-- **Как правильно:** при конфликте в `values-*/strings.xml` оставлять удаление `app_name`; после слияния искать `name="app_name"` — должен остаться один результат, в `values/`
-
 ## Смена `applicationId` задевает не только `build.gradle`
 - **Что случится:** ярлыки в лаунчере не открываются
 - **Причина:** в `res/xml/shortcuts.xml` `android:targetPackage` записан строкой. (Вторая причина — `google-services.json`, привязанный к пакету, — ушла вместе с Firebase 2026-11-15)
-- **Как правильно:** менять `applicationId` вместе с `targetPackage` в `shortcuts.xml`. Authority провайдеров и `BuildConfig.APPLICATION_ID` подтянутся сами. `namespace` и Kotlin-пакет не трогать. Строки действий `me.zhanghai.android.files.intent.action.*` можно оставить — это просто имена
+- **Как правильно:** менять `applicationId` вместе с `targetPackage` в `shortcuts.xml`. Authority провайдеров и `BuildConfig.APPLICATION_ID` подтянутся сами. `namespace` и Kotlin-пакет от `applicationId` не зависят — их переименование отдельный вопрос ([decisions.md](decisions.md)). Строки действий `me.zhanghai.android.files.intent.action.*` можно оставить — это просто имена
 
 ## Настройки хранятся как Parcel — классы моделей менять осторожно
-- **Что случится:** после обновления у пользователя молча пропадают серверы, закладки, сортировка, папка по умолчанию — подставляются значения по умолчанию
-- **Причина:** `ParcelValueSettingLiveData` пишет объект в Parcel → Base64 → SharedPreferences. Порядок и состав полей `Storage` и наследников, `BookmarkDirectory`, `FileSortOptions`, `Path`-классов, а также имена классов (`readParcelable` пишет полное имя) — часть формата хранения. Ошибка чтения проглатывается
-- **Как правильно:** при изменении таких классов — миграция в `app/AppUpgraders.kt` по `versionCode` (как upstream делал для 1.1.0+) и поднять `versionCode`. Kotlin-пакеты не переименовывать
+- **Что случится:** после обновления у пользователя молча пропадают серверы с паролями, закладки, стандартные папки, сортировка (общая и по папкам), папка по умолчанию, домашняя папка FTP-сервера — подставляются значения по умолчанию. Ошибки нет, приложение работает
+- **Причина:** `ParcelValueSettingLiveData` (`settings/SettingLiveDatas.kt`) пишет объект через `Parcel.writeValue` → байты → Base64 → строка в SharedPreferences, читает обратно `readValue(appClassLoader)`. В байтах лежат полное имя класса (`me.zhanghai.android.files.settings.FileSortOptions`) и поля подряд, без имён: порядок, типы и состав полей `Storage` и наследников, `BookmarkDirectory`, `StandardDirectorySettings`, `FileSortOptions`, `Path`-классов (у пути внутри ещё и имя класса его файловой системы) — это формат хранения. Переименовали класс, перенесли в другой пакет, добавили, убрали или переставили поле — старые байты не читаются; `getValue` ловит исключение и молча отдаёт значение по умолчанию, а при следующей записи старое значение затирается. Те же настройки отдельных папок — `settings/PathSettings.kt`, отдельный файл SharedPreferences. Формат `Parcel` ещё и не обещан стабильным между версиями Android (upstream обходил разницу в Android 13 — длину перед значением)
+- **Как правильно:** до первого релиза пользователей нет — классы меняем свободно, у себя на телефоне настройки сбросятся (так было при переносе `FileSortOptions` в `settings/` 2026-11-21). После релиза — при любом таком изменении миграция в `app/AppUpgrader.kt` по `versionCode` (прочитать старые байты, записать новые) и поднять `versionCode`; примеры — удалённый `AppUpgraders.kt` в истории git. Надёжнее перейти на формат с именами полей (JSON, kotlinx.serialization) до релиза — задача в [todo.md](todo.md)
 
 ## Импорты NIO — из `java8.nio`, не из `java.nio`
 - **Что случится:** код компилируется, но провайдеры не работают или типы не сходятся

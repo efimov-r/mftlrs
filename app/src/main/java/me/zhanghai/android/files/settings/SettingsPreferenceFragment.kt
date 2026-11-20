@@ -9,9 +9,9 @@ package me.zhanghai.android.files.settings
 import android.os.Build
 import android.os.Bundle
 import me.zhanghai.android.files.R
-import me.zhanghai.android.files.theme.night.NightMode
-import me.zhanghai.android.files.theme.night.NightModeHelper
-import me.zhanghai.android.files.ui.PreferenceFragmentCompat
+import me.zhanghai.android.files.ui.theme.night.NightMode
+import me.zhanghai.android.files.ui.theme.night.NightModeHelper
+import me.zhanghai.android.files.ui.view.PreferenceFragmentCompat
 
 class SettingsPreferenceFragment : PreferenceFragmentCompat() {
     private lateinit var localePreference: LocalePreference
@@ -38,7 +38,6 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         // this, always use an instance method reference.
         // https://stackoverflow.com/a/27524543
         //Settings.NIGHT_MODE.observe(viewLifecycleOwner) { NightModeHelper.sync() }
-        // mftlrs: theme color, Material Design 3 and black night mode settings removed.
         Settings.NIGHT_MODE.observe(viewLifecycleOwner, this::onNightModeChanged)
     }
 

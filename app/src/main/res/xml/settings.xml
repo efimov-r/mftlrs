@@ -16,8 +16,6 @@
             android:key="@string/pref_key_locale"
             android:title="@string/settings_locale_title" />
 
-        <!-- mftlrs: theme color, Material Design 3 and black night mode settings removed: two fixed
-          ~ themes, light and dark (themes_mftlrs.xml). -->
         <rikka.preference.SimpleMenuPreference
             android:key="@string/pref_key_night_mode"
             android:title="@string/settings_night_mode_title"
@@ -25,8 +23,6 @@
             android:entries="@array/settings_night_mode_entries"
             android:entryValues="@array/pref_entry_values_night_mode"
             app:useSimpleSummaryProvider="true" />
-
-        <!-- mftlrs: file list animation setting removed. -->
 
         <rikka.preference.SimpleMenuPreference
             android:key="@string/pref_key_file_name_ellipsize"

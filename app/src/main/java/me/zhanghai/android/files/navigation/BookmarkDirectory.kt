@@ -9,7 +9,7 @@ import android.os.Parcelable
 import java8.nio.file.Path
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.WriteWith
-import me.zhanghai.android.files.filelist.name
+import me.zhanghai.android.files.file.name
 import me.zhanghai.android.files.util.ParcelableParceler
 import me.zhanghai.android.files.util.takeIfNotEmpty
 import java.util.Random

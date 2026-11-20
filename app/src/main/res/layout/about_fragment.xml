@@ -13,7 +13,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <me.zhanghai.android.files.ui.CoordinatorAppBarLayout
+    <me.zhanghai.android.files.ui.view.CoordinatorAppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?colorAppBarSurface"
@@ -26,9 +26,9 @@
             android:layout_width="match_parent"
             android:layout_height="?actionBarSize"
             app:popupTheme="?actionBarPopupTheme" />
-    </me.zhanghai.android.files.ui.CoordinatorAppBarLayout>
+    </me.zhanghai.android.files.ui.view.CoordinatorAppBarLayout>
 
-    <me.zhanghai.android.files.ui.CoordinatorScrollingFrameLayout
+    <me.zhanghai.android.files.ui.view.CoordinatorScrollingFrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -245,8 +245,6 @@
                                 android:textColor="?android:textColorSecondary" />
                         </LinearLayout>
 
-                        <!-- mftlrs: the upstream "Author" section (name, GitHub, Twitter) is replaced by
-                          ~ one "Based on" item linking to the upstream project. -->
                         <me.zhanghai.android.foregroundcompat.ForegroundLinearLayout
                             android:id="@+id/basedOnLayout"
                             android:layout_width="match_parent"
@@ -298,5 +296,5 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
-    </me.zhanghai.android.files.ui.CoordinatorScrollingFrameLayout>
+    </me.zhanghai.android.files.ui.view.CoordinatorScrollingFrameLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

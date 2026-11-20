@@ -7,8 +7,7 @@
 
 <resources>
 
-    <!-- mftlrs: values of the CREATE_ARCHIVE_TYPE setting (stored by name), which were the ids of
-         the RadioButtons in the removed create_archive_dialog.xml. See CreateArchiveType. -->
+    <!-- Values of the CREATE_ARCHIVE_TYPE setting (stored by name). See CreateArchiveType. -->
     <item name="zipRadio" type="id" />
     <item name="tarXzRadio" type="id" />
     <item name="sevenZRadio" type="id" />

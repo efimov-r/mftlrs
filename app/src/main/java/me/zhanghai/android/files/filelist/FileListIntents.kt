@@ -19,6 +19,12 @@ import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.MimeType
 import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.file.isImage
+import me.zhanghai.android.files.file.name
+import me.zhanghai.android.files.fileaction.EditFileActivity
+import me.zhanghai.android.files.fileaction.OpenFileActivity
+import me.zhanghai.android.files.fileaction.OpenFileAsDialogActivity
+import me.zhanghai.android.files.fileaction.OpenFileAsDialogFragment
+import me.zhanghai.android.files.filelist.data.PickOptions
 import me.zhanghai.android.files.provider.archive.isArchivePath
 import me.zhanghai.android.files.provider.linux.isLinuxPath
 import me.zhanghai.android.files.util.create

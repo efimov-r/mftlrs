@@ -8,7 +8,6 @@
 
 <resources>
 
-    <!-- mftlrs: Material Design 2 and black night mode colors removed. -->
     <color name="color_primary">@color/color_primary_dark</color>
 
     <color name="activity_icon_tint">@color/secondary_text_default_material_dark</color>

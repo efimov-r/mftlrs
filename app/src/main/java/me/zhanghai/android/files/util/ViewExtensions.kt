@@ -160,7 +160,7 @@ fun View.fadeToVisibilityUnsafe(visible: Boolean, force: Boolean = false, gone: 
 suspend fun View.slideIn(gravity: Int, force: Boolean = false) {
     isVisible = true
     animate().run {
-        // mftlrs: RTL is disabled (supportsRtl="false"), the layout is always LTR.
+        // RTL is disabled (supportsRtl="false"), the layout is always LTR.
         when (Gravity.getAbsoluteGravity(gravity, View.LAYOUT_DIRECTION_LTR)) {
             Gravity.LEFT, Gravity.RIGHT -> translationX(0f)
             Gravity.TOP, Gravity.BOTTOM -> translationY(0f)
@@ -183,7 +183,7 @@ suspend fun View.slideInUnsafe(gravity: Int, force: Boolean = false) {
 @SuppressLint("RtlHardcoded")
 suspend fun View.slideOut(gravity: Int, force: Boolean = false, gone: Boolean = false) {
     animate().run {
-        // mftlrs: RTL is disabled (supportsRtl="false"), the layout is always LTR.
+        // RTL is disabled (supportsRtl="false"), the layout is always LTR.
         when (Gravity.getAbsoluteGravity(gravity, View.LAYOUT_DIRECTION_LTR)) {
             Gravity.LEFT -> translationX((-right).toFloat())
             Gravity.RIGHT -> translationX(((parent as View).width - left).toFloat())

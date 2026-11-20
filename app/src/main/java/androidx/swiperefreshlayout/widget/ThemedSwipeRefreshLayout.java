@@ -34,7 +34,6 @@ public class ThemedSwipeRefreshLayout extends SwipeRefreshLayout {
 
     private void init() {
         Context context = getContext();
-        // mftlrs: Material 3 only.
         int surfaceColor = ContextExtensionsKt.getColorByAttr(context,
                 com.google.android.material.R.attr.colorSurface);
         @SuppressLint("PrivateResource")

@@ -8,7 +8,7 @@ package me.zhanghai.android.files.app
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import me.zhanghai.android.files.theme.night.NightModeHelper
+import me.zhanghai.android.files.ui.theme.night.NightModeHelper
 
 abstract class AppActivity : AppCompatActivity() {
     private var isDelegateCreated = false
@@ -22,8 +22,6 @@ abstract class AppActivity : AppCompatActivity() {
         }
         return delegate
     }
-
-    // mftlrs: no theme substitution — activities use the Material 3 themes from the manifest.
 
     override fun onSupportNavigateUp(): Boolean {
         if (!super.onSupportNavigateUp()) {
