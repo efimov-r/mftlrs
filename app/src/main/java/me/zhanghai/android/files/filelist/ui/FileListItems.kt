@@ -8,17 +8,20 @@ package me.zhanghai.android.files.filelist.ui
 import android.text.TextUtils
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,11 +32,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,23 +42,34 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import coil.compose.AsyncImage
 import coil.imageLoader
 import me.zhanghai.android.files.R
@@ -77,7 +89,8 @@ import me.zhanghai.android.files.provider.common.isEncrypted
 import me.zhanghai.android.files.ui.theme.MftlrsTheme
 
 // Элементы списка и сетки главного экрана — перенос удалённых file_item_list.xml, file_item_grid.xml и
-// FileListAdapter; ripple, выделение и приглушение упрощены по сравнению с ними
+// FileListAdapter; ripple, выделение и приглушение упрощены по сравнению с ними. Тап — открыть, в режиме
+// выбора — отметить; долгое нажатие и правая кнопка мыши — контекстное меню
 
 private const val DISABLED_ALPHA = 0.38f // android:disabledAlpha темы Material 3
 private const val CHECKED_ALPHA = 0.12f // CheckableItemBackground: colorPrimary с alpha 0,12
@@ -88,23 +101,23 @@ private const val OUTLINE_ALPHA = 0.12f // material_on_surface_stroke
 internal fun FileListItem(
     file: FileItem,
     isChecked: Boolean,
-    hasSelection: Boolean,
+    isSelectionMode: Boolean,
+    selectedCount: Int,
     pickOptions: PickOptions?,
     nameEllipsize: TextUtils.TruncateAt,
     listener: FileItemListener,
     modifier: Modifier = Modifier,
 ) {
     val ui = rememberFileItemUi(file)
-    val actions = rememberFileItemActions(file, isChecked, hasSelection, pickOptions, listener)
+    val actions = rememberFileItemActions(file, isChecked, isSelectionMode, selectedCount, pickOptions, listener)
 
     FileListItemContent(
         ui = ui,
         isChecked = isChecked,
+        isSelectionMode = isSelectionMode,
         isEnabled = actions.isEnabled,
         nameEllipsize = nameEllipsize,
         onClick = actions.onClick,
-        onLongClick = actions.onLongClick,
-        onIconClick = actions.onIconClick,
         menuItems = actions.menuItems,
         modifier = modifier,
     )
@@ -114,21 +127,21 @@ internal fun FileListItem(
 internal fun FileGridItem(
     file: FileItem,
     isChecked: Boolean,
-    hasSelection: Boolean,
+    isSelectionMode: Boolean,
+    selectedCount: Int,
     pickOptions: PickOptions?,
     listener: FileItemListener,
     modifier: Modifier = Modifier,
 ) {
     val ui = rememberFileItemUi(file)
-    val actions = rememberFileItemActions(file, isChecked, hasSelection, pickOptions, listener)
+    val actions = rememberFileItemActions(file, isChecked, isSelectionMode, selectedCount, pickOptions, listener)
 
     FileGridItemContent(
         ui = ui,
         isChecked = isChecked,
+        isSelectionMode = isSelectionMode,
         isEnabled = actions.isEnabled,
         onClick = actions.onClick,
-        onLongClick = actions.onLongClick,
-        onIconClick = actions.onIconClick,
         menuItems = actions.menuItems,
         modifier = modifier,
     )
@@ -172,15 +185,14 @@ private data class FileItemUi(
 
 private class FileItemMenuItem(
     @StringRes val titleRes: Int,
-    val onClick: () -> Unit,
+    val formatArg: Int? = null, // для строки с %d
+    val onClick: (() -> Unit)?, // null — пункт неактивен
 )
 
 private class FileItemActions(
     val isEnabled: Boolean,
     val onClick: () -> Unit,
-    val onLongClick: () -> Unit,
-    val onIconClick: () -> Unit,
-    val menuItems: List<FileItemMenuItem>,
+    val menuItems: List<FileItemMenuItem>, // пустой — меню не открывается
 )
 
 @Composable
@@ -226,33 +238,49 @@ private fun rememberFileItemUi(file: FileItem): FileItemUi {
 private fun rememberFileItemActions(
     file: FileItem,
     isChecked: Boolean,
-    hasSelection: Boolean,
+    isSelectionMode: Boolean,
+    selectedCount: Int,
     pickOptions: PickOptions?,
     listener: FileItemListener,
-): FileItemActions = remember(file, isChecked, hasSelection, pickOptions, listener) {
+): FileItemActions = remember(file, isChecked, isSelectionMode, selectedCount, pickOptions, listener) {
     val select = { selectFile(file, isChecked, pickOptions, listener) }
     val open = { listener.openFile(file) }
+    val isSelectable = isFileSelectable(file, pickOptions)
 
     FileItemActions(
-        isEnabled = isFileSelectable(file, pickOptions) || file.attributes.isDirectory,
-        onClick = if (hasSelection) select else open,
-        onLongClick = if (hasSelection) open else select,
-        onIconClick = select,
-        menuItems = fileItemMenuItems(file, pickOptions != null, listener),
+        isEnabled = isSelectable || file.attributes.isDirectory,
+        onClick = if (isSelectionMode) select else open,
+        // На одном из нескольких отмеченных — меню для всех; на единственном — обычное, без «Выбрать»
+        menuItems = if (isSelectionMode && isChecked && selectedCount > 1) {
+            selectionMenuItems(selectedCount)
+        } else {
+            fileItemMenuItems(file, isSelectable && !isChecked, pickOptions != null, listener, select)
+        },
     )
 }
 
-// Пункты меню ⋮ и условия их видимости (из удалённых menu/file_item.xml и FileListAdapter)
+// TODO(mftlrs): меню для всех выделенных — долгое нажатие на отмеченный элемент, когда отмечено несколько; пункты
+//  решит владелец, пока только неактивный заголовок «Выбрано: N»
+private fun selectionMenuItems(selectedCount: Int): List<FileItemMenuItem> =
+    listOf(FileItemMenuItem(R.string.file_list_select_title_format, selectedCount, onClick = null))
+
+// Контекстное меню элемента: «Выбрать», затем пункты и условия видимости из удалённых menu/file_item.xml и
+// FileListAdapter
 private fun fileItemMenuItems(
     file: FileItem,
+    isSelectable: Boolean,
     hasPickOptions: Boolean,
     listener: FileItemListener,
+    select: () -> Unit,
 ): List<FileItemMenuItem> {
     val path = file.path
     val isReadOnly = path.fileSystem.isReadOnly
     val isArchivePath = path.isArchivePath
 
     return buildList {
+        if (isSelectable) {
+            add(FileItemMenuItem(R.string.select, onClick = select))
+        }
         add(FileItemMenuItem(R.string.file_item_action_open_with) { listener.openFileWith(file) })
         if (!hasPickOptions && !isReadOnly) {
             add(FileItemMenuItem(R.string.cut) { listener.cutFile(file) })
@@ -281,157 +309,286 @@ private fun fileItemMenuItems(
     }
 }
 
-// Строка списка
+// Строка списка; в режиме выбора слева флажок, строка сдвигается вправо
 @Composable
 private fun FileListItemContent(
     ui: FileItemUi,
     isChecked: Boolean,
+    isSelectionMode: Boolean,
     isEnabled: Boolean,
     nameEllipsize: TextUtils.TruncateAt,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    onIconClick: () -> Unit,
     menuItems: List<FileItemMenuItem>,
     modifier: Modifier = Modifier,
 ) {
     var isThumbnailLoaded by remember(ui.thumbnail) { mutableStateOf(false) }
 
-    Row(
-        modifier = modifier
-            .fileItemClickable(isChecked, isEnabled, onClick, onLongClick, MaterialTheme.colorScheme.primary)
-            .fillMaxWidth()
-            .height(dimensionResource(R.dimen.two_line_list_item_height)),
-        verticalAlignment = Alignment.CenterVertically,
+    FileItemContainer(
+        isChecked = isChecked,
+        isSelectionMode = isSelectionMode,
+        isEnabled = isEnabled,
+        onClick = onClick,
+        menuItems = menuItems,
+        modifier = modifier,
     ) {
-        FileItemIcon(
-            ui = ui,
-            isChecked = isChecked,
-            isEnabled = isEnabled,
-            onClick = onIconClick,
-            modifier = Modifier.padding(
-                start = dimensionResource(R.dimen.screen_edge_margin_minus_4dp),
-                end = dimensionResource(R.dimen.content_start_from_screen_edge_margin_minus_44dp),
-            ),
-            isIconVisible = !isThumbnailLoaded, // миниатюра загрузилась — значок типа скрыт
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(dimensionResource(R.dimen.two_line_list_item_height)),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (ui.thumbnail != null) {
-                AsyncImage(
-                    model = ui.thumbnail,
-                    contentDescription = null,
-                    imageLoader = LocalContext.current.imageLoader,
-                    modifier = Modifier.matchParentSize(),
-                    contentScale = ContentScale.Crop,
-                    onSuccess = { isThumbnailLoaded = true },
+            AnimatedVisibility(visible = isSelectionMode) { // появляется с расширением: строка уезжает вправо
+                Checkbox(
+                    checked = isChecked,
+                    onCheckedChange = null, // переключает тап по всему элементу
+                    modifier = Modifier.padding(start = dimensionResource(R.dimen.screen_edge_margin)),
                 )
             }
-        }
 
-        Column(modifier = Modifier.weight(1f)) {
-            FileItemName(
-                name = ui.name,
-                ellipsize = nameEllipsize,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            if (ui.description != null) {
-                Text(
-                    text = ui.description,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        }
-
-        FileItemMenuButton(
-            isEnabled = isEnabled,
-            menuItems = menuItems,
-            modifier = Modifier.padding(
-                start = dimensionResource(
-                    R.dimen.content_start_from_screen_edge_margin_minus_36dp_considering_at_least_8dp
+            FileItemIcon(
+                ui = ui,
+                modifier = Modifier.padding(
+                    start = dimensionResource(R.dimen.screen_edge_margin_minus_4dp),
+                    end = dimensionResource(R.dimen.content_start_from_screen_edge_margin_minus_44dp),
                 ),
-                end = dimensionResource(R.dimen.screen_edge_margin_minus_12dp_at_least_8dp),
-            ),
-        )
+                isIconVisible = !isThumbnailLoaded, // миниатюра загрузилась — значок типа скрыт
+            ) {
+                if (ui.thumbnail != null) {
+                    AsyncImage(
+                        model = ui.thumbnail,
+                        contentDescription = null,
+                        imageLoader = LocalContext.current.imageLoader,
+                        modifier = Modifier.matchParentSize(),
+                        contentScale = ContentScale.Crop,
+                        onSuccess = { isThumbnailLoaded = true },
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = dimensionResource(R.dimen.screen_edge_margin)),
+            ) {
+                FileItemName(
+                    name = ui.name,
+                    ellipsize = nameEllipsize,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                if (ui.description != null) {
+                    Text(
+                        text = ui.description,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
     }
 }
 
-// Плитка сетки
+// Плитка сетки; в режиме выбора флажок в левом верхнем углу превью
 @Composable
 private fun FileGridItemContent(
     ui: FileItemUi,
     isChecked: Boolean,
+    isSelectionMode: Boolean,
     isEnabled: Boolean,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    onIconClick: () -> Unit,
     menuItems: List<FileItemMenuItem>,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fileItemClickable(isChecked, isEnabled, onClick, onLongClick, MaterialTheme.colorScheme.primary)
-            .fillMaxWidth(),
+    FileItemContainer(
+        isChecked = isChecked,
+        isSelectionMode = isSelectionMode,
+        isEnabled = isEnabled,
+        onClick = onClick,
+        menuItems = menuItems,
+        modifier = modifier,
     ) {
-        val screenEdgeMargin = dimensionResource(R.dimen.screen_edge_margin)
-        FileGridThumbnail(
-            ui = ui,
-            modifier = Modifier
-                .padding(start = screenEdgeMargin, top = screenEdgeMargin, end = screenEdgeMargin)
-                .fillMaxWidth()
-                .aspectRatio(GRID_THUMBNAIL_ASPECT_RATIO),
-        )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            val screenEdgeMargin = dimensionResource(R.dimen.screen_edge_margin)
+            Box(
+                modifier = Modifier
+                    .padding(start = screenEdgeMargin, top = screenEdgeMargin, end = screenEdgeMargin)
+                    .fillMaxWidth()
+                    .aspectRatio(GRID_THUMBNAIL_ASPECT_RATIO),
+            ) {
+                FileGridThumbnail(
+                    ui = ui,
+                    modifier = Modifier.matchParentSize(),
+                )
+                FileGridCheckbox(
+                    isVisible = isSelectionMode,
+                    isChecked = isChecked,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(4.dp),
+                )
+            }
 
-        Row(
-            modifier = Modifier
-                .padding(bottom = dimensionResource(R.dimen.screen_edge_margin_minus_8dp))
-                .fillMaxWidth()
-                .height(dimensionResource(R.dimen.single_line_list_item_height)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val edgeMargin = dimensionResource(R.dimen.screen_edge_margin_minus_12dp)
-            FileItemIcon(
-                ui = ui,
-                isChecked = isChecked,
-                isEnabled = isEnabled,
-                onClick = onIconClick,
-                modifier = Modifier.padding(start = edgeMargin),
-            )
+            Row(
+                modifier = Modifier
+                    .padding(bottom = dimensionResource(R.dimen.screen_edge_margin_minus_8dp))
+                    .fillMaxWidth()
+                    .height(dimensionResource(R.dimen.single_line_list_item_height)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val edgeMargin = dimensionResource(R.dimen.screen_edge_margin_minus_12dp)
+                FileItemIcon(
+                    ui = ui,
+                    modifier = Modifier.padding(start = edgeMargin),
+                )
 
-            Text(
-                text = ui.name,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+                Text(
+                    text = ui.name,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
 
-            FileItemMenuButton(
-                isEnabled = isEnabled,
-                menuItems = menuItems,
-                modifier = Modifier.padding(end = edgeMargin),
-            )
+                Spacer( // как иконка слева: имя по центру под превью
+                    modifier = Modifier
+                        .padding(end = edgeMargin)
+                        .size(dimensionResource(R.dimen.touch_target_size)),
+                )
+            }
         }
     }
 }
 
-// Клик и долгое нажатие по всему элементу, фон выделения; недоступный элемент приглушён целиком
-private fun Modifier.fileItemClickable(
+// Флажок в углу превью, на подложке: виден и поверх картинки. Отдельно: внутри Column взялся бы
+// ColumnScope.AnimatedVisibility
+@Composable
+private fun FileGridCheckbox(
+    isVisible: Boolean,
     isChecked: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    AnimatedVisibility(
+        visible = isVisible,
+        modifier = modifier,
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        Checkbox(
+            checked = isChecked,
+            onCheckedChange = null, // переключает тап по всему элементу
+            modifier = Modifier.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp)),
+        )
+    }
+}
+
+// Элемент целиком: тап, контекстное меню в месте нажатия (долгое нажатие, правая кнопка мыши), фон выделения;
+// недоступный приглушён целиком. В режиме выбора для TalkBack и тестов — отмечен или нет. testTag — контракт
+// UI-тестов (docs/ai/testing.md)
+@Composable
+private fun FileItemContainer(
+    isChecked: Boolean,
+    isSelectionMode: Boolean,
     isEnabled: Boolean,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    primaryColor: Color,
+    menuItems: List<FileItemMenuItem>,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    var pressPosition by remember { mutableStateOf(Offset.Zero) }
+    var menuOffset by remember { mutableStateOf(IntOffset.Zero) }
+    var isMenuExpanded by remember { mutableStateOf(false) }
+    // Пункты на момент открытия: после «Выбрать» пункты меняются, и закрывающееся меню прыгало бы
+    var shownMenuItems by remember { mutableStateOf(emptyList<FileItemMenuItem>()) }
+    val currentMenuItems by rememberUpdatedState(menuItems)
+    val openMenu = remember {
+        {
+            if (currentMenuItems.isNotEmpty()) {
+                shownMenuItems = currentMenuItems
+                menuOffset = pressPosition.round()
+                isMenuExpanded = true
+            }
+        }
+    }
+    val checkedColor = MaterialTheme.colorScheme.primary.copy(alpha = CHECKED_ALPHA)
+
+    Box(
+        modifier = modifier
+            .testTag("fileItem")
+            .alpha(if (isEnabled) 1f else DISABLED_ALPHA)
+            .background(if (isChecked) checkedColor else Color.Transparent)
+            .semantics {
+                if (isSelectionMode) {
+                    toggleableState = ToggleableState(isChecked)
+                }
+            }
+            .contextMenuPointer(
+                isEnabled = isEnabled,
+                onPress = { pressPosition = it },
+                onSecondaryClick = openMenu,
+            )
+            .combinedClickable(
+                enabled = isEnabled,
+                onLongClick = openMenu,
+                onClick = onClick,
+            ),
+    ) {
+        content()
+
+        Box(modifier = Modifier.offset { menuOffset }) { // точка нажатия — якорь меню
+            DropdownMenu(
+                expanded = isMenuExpanded,
+                onDismissRequest = { isMenuExpanded = false },
+            ) {
+                shownMenuItems.forEach { item ->
+                    val formatArg = item.formatArg
+                    val onItemClick = item.onClick
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                if (formatArg != null) {
+                                    stringResource(item.titleRes, formatArg)
+                                } else {
+                                    stringResource(item.titleRes)
+                                }
+                            )
+                        },
+                        onClick = {
+                            isMenuExpanded = false
+                            onItemClick?.invoke()
+                        },
+                        enabled = onItemClick != null,
+                    )
+                }
+            }
+        }
+    }
+}
+
+// Запоминает место нажатия: там откроется меню. Правая кнопка мыши открывает меню, а до клика нажатие не доходит
+private fun Modifier.contextMenuPointer(
+    isEnabled: Boolean,
+    onPress: (Offset) -> Unit,
+    onSecondaryClick: () -> Unit,
 ): Modifier =
-    this
-        .alpha(if (isEnabled) 1f else DISABLED_ALPHA)
-        .background(if (isChecked) primaryColor.copy(alpha = CHECKED_ALPHA) else Color.Transparent)
-        .combinedClickable(
-            enabled = isEnabled,
-            onLongClick = onLongClick,
-            onClick = onClick,
-        )
+    pointerInput(isEnabled) {
+        if (!isEnabled) return@pointerInput
+
+        awaitEachGesture {
+            val down = awaitPointerEvent(PointerEventPass.Initial)
+            if (down.type != PointerEventType.Press) return@awaitEachGesture
+            onPress(down.changes.first().position)
+            if (!down.buttons.isSecondaryPressed) return@awaitEachGesture
+
+            down.changes.forEach { it.consume() }
+            do {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                event.changes.forEach { it.consume() }
+            } while (event.changes.any { it.pressed })
+            onSecondaryClick()
+        }
+    }
 
 // Превью 1,78 : 1 — значок папки, миниатюра с контуром или значок типа по центру
 @Composable
@@ -503,30 +660,17 @@ private fun FileGridThumbnail(
     }
 }
 
-// Иконка 48 dp: значок типа, миниатюра (extra), значок приложения, бейдж ссылки или шифрования,
-// галочка выделения. Тап — переключить выделение, без ripple (как iconLayout)
+// Иконка 48 dp: значок типа, миниатюра (extra), значок приложения, бейдж ссылки или шифрования
 @Composable
 private fun FileItemIcon(
     ui: FileItemUi,
-    isChecked: Boolean,
-    isEnabled: Boolean,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isIconVisible: Boolean = true,
     thumbnail: @Composable BoxScope.() -> Unit = {},
 ) {
-    val badgeSize = dimensionResource(R.dimen.badge_size)
-
     Box(
         modifier = modifier
-            .testTag("iconLayout") // контракт UI-тестов: тап по иконке
             .size(dimensionResource(R.dimen.touch_target_size))
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                enabled = isEnabled,
-                onClick = onClick,
-            )
             .padding(dimensionResource(R.dimen.touch_target_large_icon_padding)),
     ) {
         if (isIconVisible) {
@@ -558,17 +702,8 @@ private fun FileItemIcon(
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .size(badgeSize)
+                    .size(dimensionResource(R.dimen.badge_size))
                     .background(MaterialTheme.colorScheme.surface, CircleShape), // badge_background_18dp
-            )
-        }
-        if (isChecked) {
-            Image(
-                painter = painterResource(R.drawable.checkable_badge_icon_18dp),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(badgeSize),
             )
         }
     }
@@ -597,49 +732,6 @@ private fun FileItemName(
         maxLines = 1,
         style = style,
     )
-}
-
-// Кнопка ⋮ с выпадающим меню; testTag — контракт UI-тестов (docs/ai/testing.md)
-@Composable
-private fun FileItemMenuButton(
-    isEnabled: Boolean,
-    menuItems: List<FileItemMenuItem>,
-    modifier: Modifier = Modifier,
-) {
-    var isExpanded by remember { mutableStateOf(false) }
-
-    Box(modifier = modifier) {
-        val color = MaterialTheme.colorScheme.onSurfaceVariant // ?colorControlNormal
-        IconButton(
-            onClick = { isExpanded = true },
-            modifier = Modifier.testTag("menuButton"),
-            enabled = isEnabled,
-            colors = IconButtonDefaults.iconButtonColors( // недоступный элемент уже приглушён целиком
-                contentColor = color,
-                disabledContentColor = color,
-            ),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.more_vertical_icon_white_24dp),
-                contentDescription = null,
-            )
-        }
-
-        DropdownMenu(
-            expanded = isExpanded,
-            onDismissRequest = { isExpanded = false },
-        ) {
-            menuItems.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(item.titleRes)) },
-                    onClick = {
-                        isExpanded = false
-                        item.onClick()
-                    },
-                )
-            }
-        }
-    }
 }
 
 private val previewFile = FileItemUi(
@@ -676,31 +768,37 @@ private fun PreviewListItems() {
             FileListItemContent(
                 ui = previewDirectory,
                 isChecked = false,
+                isSelectionMode = false,
                 isEnabled = true,
                 nameEllipsize = TextUtils.TruncateAt.END,
                 onClick = {},
-                onLongClick = {},
-                onIconClick = {},
-                menuItems = previewMenuItems,
-            )
-            FileListItemContent(
-                ui = previewFile,
-                isChecked = true,
-                isEnabled = true,
-                nameEllipsize = TextUtils.TruncateAt.MIDDLE,
-                onClick = {},
-                onLongClick = {},
-                onIconClick = {},
                 menuItems = previewMenuItems,
             )
             FileListItemContent(
                 ui = previewFile,
                 isChecked = false,
+                isSelectionMode = false,
                 isEnabled = false,
                 nameEllipsize = TextUtils.TruncateAt.END,
                 onClick = {},
-                onLongClick = {},
-                onIconClick = {},
+                menuItems = previewMenuItems,
+            )
+            FileListItemContent(
+                ui = previewDirectory,
+                isChecked = false,
+                isSelectionMode = true,
+                isEnabled = true,
+                nameEllipsize = TextUtils.TruncateAt.END,
+                onClick = {},
+                menuItems = previewMenuItems,
+            )
+            FileListItemContent(
+                ui = previewFile,
+                isChecked = true,
+                isSelectionMode = true,
+                isEnabled = true,
+                nameEllipsize = TextUtils.TruncateAt.MIDDLE,
+                onClick = {},
                 menuItems = previewMenuItems,
             )
         }
@@ -710,27 +808,47 @@ private fun PreviewListItems() {
 @Composable
 private fun PreviewGridItems() {
     Surface {
-        Row {
-            FileGridItemContent(
-                ui = previewDirectory,
-                isChecked = false,
-                isEnabled = true,
-                onClick = {},
-                onLongClick = {},
-                onIconClick = {},
-                menuItems = previewMenuItems,
-                modifier = Modifier.width(180.dp),
-            )
-            FileGridItemContent(
-                ui = previewFile,
-                isChecked = true,
-                isEnabled = true,
-                onClick = {},
-                onLongClick = {},
-                onIconClick = {},
-                menuItems = previewMenuItems,
-                modifier = Modifier.width(180.dp),
-            )
+        Column {
+            Row {
+                FileGridItemContent(
+                    ui = previewDirectory,
+                    isChecked = false,
+                    isSelectionMode = false,
+                    isEnabled = true,
+                    onClick = {},
+                    menuItems = previewMenuItems,
+                    modifier = Modifier.width(180.dp),
+                )
+                FileGridItemContent(
+                    ui = previewFile,
+                    isChecked = false,
+                    isSelectionMode = false,
+                    isEnabled = true,
+                    onClick = {},
+                    menuItems = previewMenuItems,
+                    modifier = Modifier.width(180.dp),
+                )
+            }
+            Row {
+                FileGridItemContent(
+                    ui = previewDirectory,
+                    isChecked = false,
+                    isSelectionMode = true,
+                    isEnabled = true,
+                    onClick = {},
+                    menuItems = previewMenuItems,
+                    modifier = Modifier.width(180.dp),
+                )
+                FileGridItemContent(
+                    ui = previewFile,
+                    isChecked = true,
+                    isSelectionMode = true,
+                    isEnabled = true,
+                    onClick = {},
+                    menuItems = previewMenuItems,
+                    modifier = Modifier.width(180.dp),
+                )
+            }
         }
     }
 }

@@ -78,12 +78,17 @@ internal fun filterAndSortFiles(
     return result
 }
 
-// Пункты панели выделения: были menu/file_list_select.xml и file_list_pick.xml
+// Пункты панели выделения: были menu/file_list_select.xml и file_list_pick.xml. Режим выбора без
+// выделенных — только «Выбрать все»
 internal fun selectionBarActions(
     files: Collection<FileItem>,
     pickOptions: PickOptions?,
     currentPath: Path,
 ): List<FileListSelectionAction> {
+    if (files.isEmpty()) {
+        val canSelectMultiple = pickOptions == null || pickOptions.allowMultiple
+        return if (canSelectMultiple) listOf(FileListSelectionAction.SELECT_ALL) else emptyList()
+    }
     if (pickOptions != null) {
         val isOpen = when (pickOptions.mode) {
             PickOptions.Mode.OPEN_FILE, PickOptions.Mode.OPEN_DIRECTORY -> true

@@ -80,18 +80,20 @@ class FileListScreenTest {
         }
     }
 
-    /** 29, 34: долгое нажатие выделяет файл, «Назад» снимает выделение. */
+    /** 29, 34: кнопка ✓ включает режим выбора с флажками, «Назад» выключает его. */
     @Test
-    fun longClick_selectsFile_backClearsSelection() {
+    fun selectButton_showsCheckboxes_backExits() {
         sandbox.file("alpha.txt")
         sandbox.file("beta.txt")
 
         screen.launch().use {
-            screen.waitForText("beta.txt").longClick()
-            screen.assertShown(screen.selectedTitle(1))
+            screen.assertNotCheckable("beta.txt")
+            screen.startSelectionMode()
+            screen.assertChecked("beta.txt", false)
 
             screen.pressBack()
-            screen.assertGone(screen.selectedTitle(1))
+            screen.assertGone(screen.selectedTitle(0))
+            screen.assertNotCheckable("beta.txt")
             screen.assertShown("alpha.txt") // осталась та же папка
         }
     }

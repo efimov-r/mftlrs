@@ -154,6 +154,14 @@ class FileListScreen : ExternalResource() {
         assertTrue("Не пропало с экрана: $description", pollUntil { !device.hasObject(selector) })
     }
 
+    /** На экране ровно [count] объектов с текстом [text] (например, заголовок панели и такой же пункт меню). */
+    fun assertTextCount(text: String, count: Int) {
+        assertTrue(
+            "«$text» на экране не $count раз",
+            pollUntil { device.findObjects(By.text(text)).size == count },
+        )
+    }
+
     /** Без ожидания: вызывать, когда экран уже показан (например, после [assertShown] соседнего элемента). */
     fun assertAbsent(text: String) {
         assertAbsent(By.text(text), text)
@@ -223,28 +231,55 @@ class FileListScreen : ExternalResource() {
         clickDescription(string(R.string.file_list_action_view_sort))
     }
 
-    /** Элемент списка целиком: самый маленький контейнер, где есть и имя, и кнопка меню ⋮. */
+    /** Элемент списка или сетки целиком (`testTag("fileItem")`), где есть имя. */
     fun fileRow(name: String): UiObject2 {
         var row: UiObject2? = null
-        waitUntil("Нет элемента списка $name") {
-            row = smallestContaining(name, MENU_BUTTON)
-            row != null
-        }
+        pollUntil { findFileRow(name).also { row = it } != null }
+        assertNotNull("Нет элемента списка $name. Кликабельное на экране: ${describeClickable()}", row)
         return row!!
     }
+
+    private fun findFileRow(name: String): UiObject2? =
+        device.findObjects(FILE_ITEM)
+            .filter { it.text == name || it.hasObject(By.text(name)) }
+            .minByOrNull { it.visibleBounds.width() * it.visibleBounds.height() }
 
     /** Тап по элементу списка, а не по другому тексту с тем же именем (например, по полю поиска). */
     fun clickFile(name: String) {
         fileRow(name).click()
     }
 
+    /** Контекстное меню элемента — долгое нажатие. */
     fun openFileMenu(name: String) {
-        fileRow(name).findObject(MENU_BUTTON).click()
+        fileRow(name).longClick()
     }
 
-    /** Тап по иконке файла — выделение. */
-    fun clickFileIcon(name: String) {
-        fileRow(name).findObject(ICON).click()
+    /** Кнопка ✓ на верхней панели — режим выбора без выделенных. */
+    fun startSelectionMode() {
+        clickDescription(string(R.string.select))
+        assertShown(selectedTitle(0))
+    }
+
+    /** Режим выбора и тап по каждому из [names]. */
+    fun selectFiles(vararg names: String) {
+        startSelectionMode()
+        names.forEach { clickFile(it) }
+        assertShown(selectedTitle(names.size))
+    }
+
+    /** В режиме выбора у элемента флажок, отмеченный или нет ([checked]). */
+    fun assertChecked(name: String, checked: Boolean) {
+        val isExpected = pollUntil {
+            val row = findFileRow(name)
+            row != null && row.isCheckable && row.isChecked == checked
+        }
+        assertTrue("$name: флажок не ${if (checked) "отмечен" else "снят"}", isExpected)
+    }
+
+    /** Вне режима выбора флажков нет: элемент не отмечаемый. */
+    fun assertNotCheckable(name: String) {
+        val isExpected = pollUntil { findFileRow(name)?.isCheckable == false }
+        assertTrue("$name: есть флажок вне режима выбора", isExpected)
     }
 
     fun clickFab() {
@@ -357,8 +392,7 @@ class FileListScreen : ExternalResource() {
 
         /** Поле ввода; у поля поиска в SearchView класс — AutoCompleteTextView. Новый объект: BySelector изменяемый. */
         fun editText(): BySelector = By.clazz(Pattern.compile("android\\.widget\\.(EditText|AutoCompleteTextView)"))
-        private val MENU_BUTTON: BySelector = By.res(Pattern.compile("(.+:id/)?menuButton"))
-        private val ICON: BySelector = By.res(Pattern.compile("(.+:id/)?iconLayout"))
+        private val FILE_ITEM: BySelector = By.res(Pattern.compile("(.+:id/)?fileItem"))
         private val FAB: BySelector = By.res(Pattern.compile("(.+:id/)?sd_main_fab"))
 
         // Контейнер навигации: testTag("navigation") панели в Compose (на Views был id navigationFragment)

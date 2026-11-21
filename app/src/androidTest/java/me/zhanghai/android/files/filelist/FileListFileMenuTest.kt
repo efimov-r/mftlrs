@@ -11,7 +11,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Меню ⋮ элемента списка — пункт 27 docs/ai/file-list-checklist.md. */
+/** Контекстное меню элемента списка (долгое нажатие) — пункт 27 docs/ai/file-list-checklist.md. */
 @RunWith(AndroidJUnit4::class)
 class FileListFileMenuTest {
     @get:Rule
@@ -21,6 +21,7 @@ class FileListFileMenuTest {
 
     private val alwaysShown
         get() = listOf(
+            R.string.select,
             R.string.file_item_action_open_with,
             R.string.share,
             R.string.file_item_action_copy_path,

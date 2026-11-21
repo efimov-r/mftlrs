@@ -107,6 +107,7 @@ internal enum class FileListTopBarAction {
     NAVIGATE_UP,
     NAVIGATE_TO,
     REFRESH,
+    SELECT, // включить режим выбора
     SELECT_ALL,
     SHOW_HIDDEN_FILES,
     SHARE,
@@ -250,6 +251,13 @@ private fun MainBar(
                 descriptionRes = R.string.search,
                 onClick = onSearchExpand,
             )
+            if (state.canSelectMultiple) {
+                BarIcon(
+                    iconRes = R.drawable.check_box_icon_control_normal_24dp,
+                    descriptionRes = R.string.select,
+                    onClick = { onAction(FileListTopBarAction.SELECT) },
+                )
+            }
             ViewSortMenu(state, onAction)
         }
         OverflowMenu(state, onAction)
@@ -510,7 +518,7 @@ private fun OverflowMenu(
             TextItem(R.string.file_list_action_navigate_up) { select(FileListTopBarAction.NAVIGATE_UP) }
             TextItem(R.string.file_list_action_navigate_to) { select(FileListTopBarAction.NAVIGATE_TO) }
             TextItem(R.string.refresh) { select(FileListTopBarAction.REFRESH) }
-            if (state.isSelectAllVisible) {
+            if (state.canSelectMultiple) {
                 TextItem(R.string.select_all) { select(FileListTopBarAction.SELECT_ALL) }
             }
             CheckItem(R.string.file_list_action_show_hidden_files, state.showHiddenFiles) {

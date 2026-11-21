@@ -236,12 +236,49 @@ class FileListViewModel : ViewModel(), FileItemListener {
         selectFiles(fileItemSetOf(file), selected)
     }
 
+    // Selecting a file starts the selection mode.
     override fun selectFiles(files: FileItemSet, selected: Boolean) {
+        if (selected) {
+            startSelectionMode()
+        }
         val selectedFiles = _selectedFilesLiveData.valueCompat
         // The logic is in FileListUiLogic.kt, for unit tests.
         if (selectedFiles.select(files, selected)) {
             _selectedFilesLiveData.value = selectedFiles
         }
+    }
+
+    // An action on files deselects them; when it deselects the last ones, the selection mode ends.
+    private fun deselectAfterAction(files: FileItemSet) {
+        val selectedFiles = _selectedFilesLiveData.valueCompat
+        if (!selectedFiles.select(files, false)) {
+            return
+        }
+        _selectedFilesLiveData.value = selectedFiles
+        if (selectedFiles.isEmpty()) {
+            stopSelectionMode()
+        }
+    }
+
+    // The selection mode: checkboxes on the items, the selection bar over the top bar. Started by the
+    // button on the top bar or by selecting a file; stays on with nothing selected until closed.
+    private val _selectionModeLiveData = MutableLiveData(false)
+    val isSelectionMode: Boolean
+        get() = _selectionModeLiveData.valueCompat
+
+    fun startSelectionMode() {
+        if (isSelectionMode) {
+            return
+        }
+        _selectionModeLiveData.value = true
+    }
+
+    fun stopSelectionMode() {
+        clearSelectedFiles()
+        if (!isSelectionMode) {
+            return
+        }
+        _selectionModeLiveData.value = false
     }
 
     fun replaceSelectedFiles(files: FileItemSet) {
@@ -313,6 +350,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
             }
             launch { pickOptionsLiveData.asFlow().collect { onPickOptionsChanged(it) } }
             launch { selectedFilesLiveData.asFlow().collect { onSelectedFilesChanged(it) } }
+            launch { _selectionModeLiveData.asFlow().collect { onSelectionModeChanged(it) } }
             launch { pasteStateLiveData.asFlow().collect { updateBottomBar() } }
             launch { Settings.FILE_NAME_ELLIPSIZE.asFlow().collect { onFileNameEllipsizeChanged(it) } }
             launch { fileListLiveData.asFlow().collect { onFileListChanged(it) } }
@@ -427,7 +465,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
                 content = it.content.copy(pickOptions = pickOptions),
                 topBar = it.topBar.copy(
                     pickOptions = pickOptions,
-                    isSelectAllVisible = pickOptions == null || pickOptions.allowMultiple,
+                    canSelectMultiple = pickOptions == null || pickOptions.allowMultiple,
                 ),
             )
         }
@@ -442,14 +480,19 @@ class FileListViewModel : ViewModel(), FileItemListener {
         _uiState.update { it.copy(content = it.content.copy(selectedPaths = selectedPaths)) }
     }
 
+    private fun onSelectionModeChanged(selectionMode: Boolean) {
+        updateSelectionBar()
+        _uiState.update { it.copy(content = it.content.copy(isSelectionMode = selectionMode)) }
+    }
+
     // Was FileListFragment.updateOverlayToolbar(). When hidden, the bar fades out with its old
     // title and actions.
     private fun updateSelectionBar() {
-        val files = selectedFiles
-        if (files.isEmpty()) {
+        if (!isSelectionMode) {
             _uiState.update { it.copy(selectionBar = it.selectionBar.copy(isVisible = false)) }
             return
         }
+        val files = selectedFiles
         val actions = selectionBarActions(files, pickOptions, currentPath)
         val selectionBar = FileListUiState.SelectionBar(true, files.size, actions)
         _uiState.update { it.copy(selectionBar = selectionBar) }
@@ -593,6 +636,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
             FileListTopBarAction.NAVIGATE_TO ->
                 showDialog(FileListDialog.NavigateToPath(currentPath))
             FileListTopBarAction.REFRESH -> reload()
+            FileListTopBarAction.SELECT -> startSelectionMode()
             FileListTopBarAction.SELECT_ALL -> selectAllFiles()
             FileListTopBarAction.SHOW_HIDDEN_FILES ->
                 Settings.FILE_LIST_SHOW_HIDDEN_FILES.putValue(
@@ -644,7 +688,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
             KeyEvent.KEYCODE_L -> FileListTopBarAction.NAVIGATE_TO
             KeyEvent.KEYCODE_R -> FileListTopBarAction.REFRESH
             KeyEvent.KEYCODE_A ->
-                if (state.topBar.isSelectAllVisible) FileListTopBarAction.SELECT_ALL else null
+                if (state.topBar.canSelectMultiple) FileListTopBarAction.SELECT_ALL else null
             KeyEvent.KEYCODE_H -> FileListTopBarAction.SHOW_HIDDEN_FILES
             else -> null
         } ?: return false
@@ -834,7 +878,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
 
     fun deleteFiles(files: FileItemSet) {
         FileJobService.delete(makePathListForJob(files), application)
-        selectFiles(files, false)
+        deselectAfterAction(files)
     }
 
     fun onCreateFileOk(text: String): Int? =
@@ -867,7 +911,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
                 makePathListForJob(files), archiveFile, type.format, type.filter, archivePassword,
                 application
             )
-            selectFiles(files, false)
+            deselectAfterAction(files)
         }
 
     fun onNavigateToPathOk(initialPath: Path, text: String): Int? =
@@ -929,22 +973,22 @@ class FileListViewModel : ViewModel(), FileItemListener {
 
     private fun cutFiles(files: FileItemSet) {
         addToPasteState(false, files)
-        selectFiles(files, false)
+        deselectAfterAction(files)
     }
 
     private fun copyFiles(files: FileItemSet) {
         addToPasteState(true, files)
-        selectFiles(files, false)
+        deselectAfterAction(files)
     }
 
     private fun extractFiles(files: FileItemSet) {
         copyFiles(files.mapTo(fileItemSetOf()) { it.createDummyArchiveRoot() })
-        selectFiles(files, false)
+        deselectAfterAction(files)
     }
 
     private fun shareFiles(files: FileItemSet) {
         sendEvent(FileListEvent.Share(files.map { it.path }, files.map { it.mimeType }))
-        selectFiles(files, false)
+        deselectAfterAction(files)
     }
 
     private fun share(path: Path, mimeType: MimeType) {
@@ -952,6 +996,7 @@ class FileListViewModel : ViewModel(), FileItemListener {
     }
 
     private fun selectAllFiles() {
+        startSelectionMode() // also in an empty directory
         val pickOptions = pickOptions
         val files = _uiState.value.content.files
             .filterTo(fileItemSetOf()) { isFileSelectable(it, pickOptions) }
@@ -1064,6 +1109,7 @@ internal data class FileListUiState(
         val errorText: String? = null,
         val isEmpty: Boolean = false,
         val viewType: FileViewType = FileViewType.LIST,
+        val isSelectionMode: Boolean = false, // checkboxes on the items
         val selectedPaths: Set<Path> = emptySet(),
         val pickOptions: PickOptions? = null,
         val nameEllipsize: TextUtils.TruncateAt = TextUtils.TruncateAt.END,
@@ -1077,7 +1123,7 @@ internal data class FileListUiState(
         val viewType: FileViewType = FileViewType.LIST,
         val sortOptions: FileSortOptions = FileSortOptions(By.NAME, Order.ASCENDING, true),
         val isViewSortPathSpecific: Boolean = false,
-        val isSelectAllVisible: Boolean = true,
+        val canSelectMultiple: Boolean = true, // the selection button and "Select all"
         val showHiddenFiles: Boolean = false,
     )
 

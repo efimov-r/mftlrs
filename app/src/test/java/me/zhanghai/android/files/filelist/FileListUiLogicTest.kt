@@ -168,6 +168,17 @@ class FileListUiLogicTest {
         assertEquals(listOf(CREATE), selectionBarActions(selected, pickOptions(PickOptions.Mode.CREATE_FILE), dir))
     }
 
+    @Test
+    fun selectionBar_nothingSelected_onlySelectAll() {
+        assertEquals(listOf(SELECT_ALL), selectionBarActions(emptyList(), null, dir))
+        assertEquals(listOf(SELECT_ALL), selectionBarActions(emptyList(), null, archiveDir))
+        assertEquals(
+            listOf(SELECT_ALL),
+            selectionBarActions(emptyList(), pickOptions(PickOptions.Mode.OPEN_FILE, allowMultiple = true), dir),
+        )
+        assertEquals(emptyList<Any>(), selectionBarActions(emptyList(), pickOptions(PickOptions.Mode.OPEN_FILE), dir))
+    }
+
     // Нижняя панель
 
     private fun pasteState(copy: Boolean, vararg files: FileItem): PasteState =

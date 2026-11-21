@@ -51,7 +51,7 @@ internal fun FileListRoot(
     FileListExitConfirmation(enabled = state.topBar.pickOptions == null)
     BackHandler(enabled = breadcrumbData != null && breadcrumbData.selectedIndex > 0) { viewModel.navigateUp() }
     BackHandler(enabled = state.topBar.isSearchExpanded) { viewModel.collapseSearch() }
-    BackHandler(enabled = state.selectionBar.isVisible) { viewModel.clearSelectedFiles() }
+    BackHandler(enabled = state.selectionBar.isVisible) { viewModel.stopSelectionMode() }
     BackHandler(enabled = state.isFabExpanded) { viewModel.setFabExpanded(false) }
     BackHandler(enabled = state.isNavigationOpen) { onNavigationOpenChange(false) }
 
@@ -78,7 +78,7 @@ internal fun FileListRoot(
                     onSearchQueryChange = { viewModel.onSearchQueryChange(it) },
                     onSearchSubmit = { viewModel.onSearchSubmit(it) },
                     onAction = { viewModel.onTopBarAction(it) },
-                    onSelectionClose = { viewModel.clearSelectedFiles() },
+                    onSelectionClose = { viewModel.stopSelectionMode() },
                     onSelectionAction = { viewModel.onSelectionAction(it) },
                 )
             },

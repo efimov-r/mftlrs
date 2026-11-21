@@ -97,8 +97,7 @@ class FileListPasteTest {
     }
 
     private fun selectAndClick(name: String, actionTitle: Int) {
-        screen.waitForText(name).longClick()
-        screen.assertShown(screen.selectedTitle(1))
+        screen.selectFiles(name)
         screen.clickDescription(screen.string(actionTitle))
     }
 }

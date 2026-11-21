@@ -114,8 +114,6 @@ private fun FileGrid(
     bottomPadding: Dp,
     listener: FileItemListener,
 ) {
-    val hasSelection = state.selectedPaths.isNotEmpty()
-
     LazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
         modifier = Modifier.fillMaxSize(),
@@ -128,7 +126,8 @@ private fun FileGrid(
                 FileViewType.LIST -> FileListItem(
                     file = file,
                     isChecked = isChecked,
-                    hasSelection = hasSelection,
+                    isSelectionMode = state.isSelectionMode,
+                    selectedCount = state.selectedPaths.size,
                     pickOptions = state.pickOptions,
                     nameEllipsize = state.nameEllipsize,
                     listener = listener,
@@ -136,7 +135,8 @@ private fun FileGrid(
                 FileViewType.GRID -> FileGridItem(
                     file = file,
                     isChecked = isChecked,
-                    hasSelection = hasSelection,
+                    isSelectionMode = state.isSelectionMode,
+                    selectedCount = state.selectedPaths.size,
                     pickOptions = state.pickOptions,
                     listener = listener,
                 )
