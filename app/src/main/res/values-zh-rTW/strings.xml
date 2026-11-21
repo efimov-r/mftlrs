@@ -283,6 +283,7 @@
     <string name="file_list_paste_extract_title_format">解開 %1$,d</string>
     <string name="file_list_paste_action_extract_here">在這裡解開</string>
     <string name="file_list_empty">無檔案</string>
+    <string name="file_list_action_create">新增</string>
     <string name="file_list_action_create_file">檔案</string>
     <string name="file_list_action_create_directory">資料夾</string>
 

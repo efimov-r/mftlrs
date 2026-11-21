@@ -94,6 +94,8 @@ internal enum class FileListSelectionAction(
 
 // Пункты меню панели, вместо id из menu/file_list.xml
 internal enum class FileListTopBarAction {
+    CREATE_FILE,
+    CREATE_DIRECTORY,
     VIEW_LIST,
     VIEW_GRID,
     SORT_BY_NAME,
@@ -246,6 +248,7 @@ private fun MainBar(
                 subtitle = subtitleText(state.subtitle),
                 modifier = Modifier.weight(1f),
             )
+            CreateMenu(onAction)
             BarIcon(
                 iconRes = R.drawable.search_icon_control_normal_24dp,
                 descriptionRes = R.string.search,
@@ -433,6 +436,36 @@ private fun SearchField(
     }
 }
 
+// «+»: создать файл или папку в текущей папке
+@Composable
+private fun CreateMenu(onAction: (FileListTopBarAction) -> Unit) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    fun select(action: FileListTopBarAction) {
+        isExpanded = false
+        onAction(action)
+    }
+
+    Box {
+        BarIcon(
+            iconRes = R.drawable.add_icon_white_24dp,
+            descriptionRes = R.string.file_list_action_create,
+            onClick = { isExpanded = true },
+        )
+        DropdownMenu(
+            expanded = isExpanded,
+            onDismissRequest = { isExpanded = false },
+        ) {
+            IconItem(R.string.file_list_action_create_file, R.drawable.file_icon_white_24dp) {
+                select(FileListTopBarAction.CREATE_FILE)
+            }
+            IconItem(R.string.file_list_action_create_directory, R.drawable.directory_icon_white_24dp) {
+                select(FileListTopBarAction.CREATE_DIRECTORY)
+            }
+        }
+    }
+}
+
 // «Вид и сортировка»: группы с одним выбором и флажки, между группами — разделитель
 @Composable
 private fun ViewSortMenu(
@@ -541,6 +574,24 @@ private fun TextItem(
     DropdownMenuItem(
         text = { Text(stringResource(textRes)) },
         onClick = onClick,
+    )
+}
+
+@Composable
+private fun IconItem(
+    @StringRes textRes: Int,
+    @DrawableRes iconRes: Int,
+    onClick: () -> Unit,
+) {
+    DropdownMenuItem(
+        text = { Text(stringResource(textRes)) },
+        onClick = onClick,
+        leadingIcon = {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+            )
+        },
     )
 }
 

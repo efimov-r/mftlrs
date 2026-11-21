@@ -371,6 +371,7 @@
     <string name="file_list_paste_extract_title_format">Видобування %1$,d</string>
     <string name="file_list_paste_action_extract_here">Видобути тут</string>
     <string name="file_list_empty">Нема файлів</string>
+    <string name="file_list_action_create">Створити</string>
     <string name="file_list_action_create_file">Файл</string>
     <string name="file_list_action_create_directory">Тека</string>
 

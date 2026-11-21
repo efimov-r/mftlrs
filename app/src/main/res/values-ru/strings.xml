@@ -371,6 +371,7 @@
     <string name="file_list_paste_extract_title_format">Извлечение %1$,d</string>
     <string name="file_list_paste_action_extract_here">Извлечь здесь</string>
     <string name="file_list_empty">Нет файлов</string>
+    <string name="file_list_action_create">Создать</string>
     <string name="file_list_action_create_file">Файл</string>
     <string name="file_list_action_create_directory">Папка</string>
 

@@ -313,6 +313,7 @@
     <string name="file_list_paste_extract_title_format">Εξαγωγή %1$,d</string>
     <string name="file_list_paste_action_extract_here">Εξαγωγή εδώ</string>
     <string name="file_list_empty">Χωρίς αρχεία</string>
+    <string name="file_list_action_create">Δημιουργία</string>
     <string name="file_list_action_create_file">Αρχείο</string>
     <string name="file_list_action_create_directory">Φάκελος</string>
 

@@ -270,6 +270,7 @@
     <string name="file_list_paste_extract_title_format">%1$,d çıkartılıyor</string>
     <string name="file_list_paste_action_extract_here">Buraya çıkart</string>
     <string name="file_list_empty">Dosya yok</string>
+    <string name="file_list_action_create">Oluştur</string>
     <string name="file_list_action_create_file">Dosya</string>
     <string name="file_list_action_create_directory">Klasör</string>
 

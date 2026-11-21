@@ -369,6 +369,7 @@
     <string name="file_list_paste_extract_title_format">Rozbalování %1$,d</string>
     <string name="file_list_paste_action_extract_here">Rozbalit zde</string>
     <string name="file_list_empty">Žádné soubory</string>
+    <string name="file_list_action_create">Vytvořit</string>
     <string name="file_list_action_create_file">Soubor</string>
     <string name="file_list_action_create_directory">Složka</string>
 

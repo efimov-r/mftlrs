@@ -285,6 +285,7 @@
     <string name="file_list_paste_extract_title_format">%1$,d 件を展開中</string>
     <string name="file_list_paste_action_extract_here">ここに展開</string>
     <string name="file_list_empty">ファイルがありません</string>
+    <string name="file_list_action_create">作成</string>
     <string name="file_list_action_create_file">ファイル</string>
     <string name="file_list_action_create_directory">フォルダ</string>
 

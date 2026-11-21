@@ -341,6 +341,7 @@
     <string name="file_list_paste_extract_title_format">Extrayendo %1$,d</string>
     <string name="file_list_paste_action_extract_here">Extraer aquí</string>
     <string name="file_list_empty">Sin archivos</string>
+    <string name="file_list_action_create">Crear</string>
     <string name="file_list_action_create_file">Archivo</string>
     <string name="file_list_action_create_directory">Carpeta</string>
 

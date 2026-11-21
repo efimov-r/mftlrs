@@ -285,6 +285,7 @@
     <string name="file_list_paste_extract_title_format">Mengekstrak %1$,d</string>
     <string name="file_list_paste_action_extract_here">Ekstrak di sini</string>
     <string name="file_list_empty">Tidak ada berkas</string>
+    <string name="file_list_action_create">Buat</string>
     <string name="file_list_action_create_file">Berkas</string>
     <string name="file_list_action_create_directory">Folder</string>
 

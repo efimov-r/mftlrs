@@ -269,6 +269,7 @@
     <string name="file_list_paste_extract_title_format">Đang giải nén %1$,d</string>
     <string name="file_list_paste_action_extract_here">Giải nén vào đây</string>
     <string name="file_list_empty">Không có tệp</string>
+    <string name="file_list_action_create">Tạo</string>
     <string name="file_list_action_create_file">Tệp</string>
     <string name="file_list_action_create_directory">Thư mục</string>
 

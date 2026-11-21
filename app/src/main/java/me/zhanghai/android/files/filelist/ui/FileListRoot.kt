@@ -52,7 +52,6 @@ internal fun FileListRoot(
     BackHandler(enabled = breadcrumbData != null && breadcrumbData.selectedIndex > 0) { viewModel.navigateUp() }
     BackHandler(enabled = state.topBar.isSearchExpanded) { viewModel.collapseSearch() }
     BackHandler(enabled = state.selectionBar.isVisible) { viewModel.stopSelectionMode() }
-    BackHandler(enabled = state.isFabExpanded) { viewModel.setFabExpanded(false) }
     BackHandler(enabled = state.isNavigationOpen) { onNavigationOpenChange(false) }
 
     FileListNavigation(
@@ -111,11 +110,8 @@ internal fun FileListRoot(
             },
             fab = { bottomPadding, endPadding ->
                 FileListFab(
-                    isExpanded = state.isFabExpanded,
                     bottomPadding = bottomPadding,
                     endPadding = endPadding,
-                    onExpandedChange = { viewModel.setFabExpanded(it) },
-                    onAction = { viewModel.onFabAction(it) },
                 )
             },
         )

@@ -123,7 +123,6 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
             ?.let { createFileNameState.setTextAndPlaceCursorAtEnd(it) }
         savedInstanceState?.getParcelableSafe<ScrollPosition>(STATE_SCROLL_POSITION)
             ?.let { gridState.scrollTo(it) }
-        viewModel.setFabExpanded(savedInstanceState?.getBoolean(STATE_FAB_EXPANDED) == true)
         setNavigationOpen(savedInstanceState?.getBoolean(STATE_NAVIGATION_OPEN) == true)
 
         // The start path and the pick mode are read from the intent by the view model.
@@ -151,7 +150,6 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
         val state = viewModel.uiState.value
         outState.putParcelable(STATE_SCROLL_POSITION, gridState.scrollPosition)
         outState.putString(STATE_CREATE_FILE_NAME, createFileNameState.text.toString())
-        outState.putBoolean(STATE_FAB_EXPANDED, state.isFabExpanded)
         outState.putBoolean(STATE_NAVIGATION_OPEN, state.isNavigationOpen)
     }
 
@@ -250,7 +248,6 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
         // States of Compose elements across recreation.
         private const val STATE_SCROLL_POSITION = "scrollPosition"
         private const val STATE_CREATE_FILE_NAME = "createFileName"
-        private const val STATE_FAB_EXPANDED = "fabExpanded"
         private const val STATE_NAVIGATION_OPEN = "navigationOpen"
 
         fun createViewIntent(path: Path): Intent =

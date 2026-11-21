@@ -282,8 +282,9 @@ class FileListScreen : ExternalResource() {
         assertTrue("$name: есть флажок вне режима выбора", isExpected)
     }
 
-    fun clickFab() {
-        waitFor(FAB, "FAB").click()
+    /** Меню «+» на верхней панели: «Файл», «Папка». */
+    fun openCreateMenu() {
+        clickDescription(string(R.string.file_list_action_create))
     }
 
     /** Поле ввода: поиск, имя в диалоге. */
@@ -393,7 +394,6 @@ class FileListScreen : ExternalResource() {
         /** Поле ввода; у поля поиска в SearchView класс — AutoCompleteTextView. Новый объект: BySelector изменяемый. */
         fun editText(): BySelector = By.clazz(Pattern.compile("android\\.widget\\.(EditText|AutoCompleteTextView)"))
         private val FILE_ITEM: BySelector = By.res(Pattern.compile("(.+:id/)?fileItem"))
-        private val FAB: BySelector = By.res(Pattern.compile("(.+:id/)?sd_main_fab"))
 
         // Контейнер навигации: testTag("navigation") панели в Compose (на Views был id navigationFragment)
         private val NAVIGATION: BySelector = By.res(Pattern.compile("(.+:id/)?navigation(Fragment)?"))

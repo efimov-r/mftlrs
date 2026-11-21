@@ -12,7 +12,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Создание файлов и папок через FAB — пункты 45–47 docs/ai/file-list-checklist.md. */
+/** Создание файлов и папок через «+» на верхней панели — пункты 45–47 docs/ai/file-list-checklist.md. */
 @RunWith(AndroidJUnit4::class)
 class FileListCreateTest {
     @get:Rule
@@ -21,22 +21,22 @@ class FileListCreateTest {
     private val sandbox get() = screen.sandbox
 
     @Test
-    fun fab_createsDirectory() {
+    fun createMenu_createsDirectory() {
         sandbox.file("existing.txt")
 
         screen.launch().use {
-            createWithFab(R.string.file_list_action_create_directory, "NewFolder")
+            createWithMenu(R.string.file_list_action_create_directory, "NewFolder")
             screen.assertShown("NewFolder")
             screen.waitUntil("Нет папки NewFolder") { sandbox.root.resolve("NewFolder").isDirectory }
         }
     }
 
     @Test
-    fun fab_createsFile() {
+    fun createMenu_createsFile() {
         sandbox.file("existing.txt")
 
         screen.launch().use {
-            createWithFab(R.string.file_list_action_create_file, "new.txt")
+            createWithMenu(R.string.file_list_action_create_file, "new.txt")
             screen.assertShown("new.txt")
             screen.waitUntil("Нет файла new.txt") { sandbox.root.resolve("new.txt").isFile }
         }
@@ -49,7 +49,7 @@ class FileListCreateTest {
         val title = screen.string(R.string.file_create_directory_title)
 
         screen.launch().use {
-            createWithFab(R.string.file_list_action_create_directory, "Existing")
+            createWithMenu(R.string.file_list_action_create_directory, "Existing")
             screen.assertShown(screen.string(R.string.file_name_error_already_exists))
             screen.assertShown(title)
 
@@ -58,15 +58,15 @@ class FileListCreateTest {
         }
     }
 
-    /** 47: «Назад» при раскрытом FAB закрывает его и не уходит из папки. */
+    /** 47: «Назад» при открытом меню «+» закрывает его и не уходит из папки. */
     @Test
-    fun back_closesFab() {
+    fun back_closesCreateMenu() {
         sandbox.file("here.txt")
         val folder = screen.string(R.string.file_list_action_create_directory)
 
         screen.launch().use {
             screen.assertShown("here.txt")
-            screen.clickFab()
+            screen.openCreateMenu()
             screen.assertShown(folder)
 
             screen.pressBack()
@@ -75,8 +75,8 @@ class FileListCreateTest {
         }
     }
 
-    private fun createWithFab(actionTitle: Int, name: String) {
-        screen.clickFab()
+    private fun createWithMenu(actionTitle: Int, name: String) {
+        screen.openCreateMenu()
         screen.clickText(screen.string(actionTitle))
         screen.waitFor(By.clazz("android.widget.EditText"), "поле имени").text = name
         screen.clickText(screen.string(android.R.string.ok))

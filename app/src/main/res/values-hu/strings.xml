@@ -313,6 +313,7 @@
     <string name="file_list_paste_extract_title_format">%1$,d fájl kibontása</string>
     <string name="file_list_paste_action_extract_here">Kibontás ide</string>
     <string name="file_list_empty">Nincsenek fájlok</string>
+    <string name="file_list_action_create">Létrehozás</string>
     <string name="file_list_action_create_file">Fájl</string>
     <string name="file_list_action_create_directory">Mappa</string>
 

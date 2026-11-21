@@ -313,6 +313,7 @@
     <string name="file_list_paste_extract_title_format">Bezig met uitpakken van %1$,d</string>
     <string name="file_list_paste_action_extract_here">Hier uitpakken</string>
     <string name="file_list_empty">Geen bestanden</string>
+    <string name="file_list_action_create">Maken</string>
     <string name="file_list_action_create_file">Bestand</string>
     <string name="file_list_action_create_directory">Map</string>
 

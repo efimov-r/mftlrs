@@ -343,6 +343,7 @@
     <string name="file_list_paste_extract_title_format">Extraire %1$,d</string>
     <string name="file_list_paste_action_extract_here">Extraire ici</string>
     <string name="file_list_empty">Pas de fichiers</string>
+    <string name="file_list_action_create">Créer</string>
     <string name="file_list_action_create_file">Fichier</string>
     <string name="file_list_action_create_directory">Dossier</string>
 

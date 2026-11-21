@@ -285,6 +285,7 @@
     <string name="file_list_paste_extract_title_format">%1$,d개 항목 압축 해제</string>
     <string name="file_list_paste_action_extract_here">여기에 압축 풀기</string>
     <string name="file_list_empty">파일 없음</string>
+    <string name="file_list_action_create">만들기</string>
     <string name="file_list_action_create_file">파일</string>
     <string name="file_list_action_create_directory">폴더</string>
 

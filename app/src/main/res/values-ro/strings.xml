@@ -327,6 +327,7 @@
     <string name="file_list_paste_extract_title_format">Se extrag %1$,d</string>
     <string name="file_list_paste_action_extract_here">Extrage aici</string>
     <string name="file_list_empty">Fără fișiere</string>
+    <string name="file_list_action_create">Creare</string>
     <string name="file_list_action_create_file">Fișier</string>
     <string name="file_list_action_create_directory">Dosar</string>
 

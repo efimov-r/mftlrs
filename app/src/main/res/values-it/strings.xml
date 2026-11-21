@@ -341,6 +341,7 @@
     <string name="file_list_paste_extract_title_format">Estrazione di %1$,d</string>
     <string name="file_list_paste_action_extract_here">Estrai qui</string>
     <string name="file_list_empty">Nessun file</string>
+    <string name="file_list_action_create">Crea</string>
     <string name="file_list_action_create_file">File</string>
     <string name="file_list_action_create_directory">Cartella</string>
 

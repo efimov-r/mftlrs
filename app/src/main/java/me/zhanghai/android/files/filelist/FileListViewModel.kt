@@ -66,7 +66,6 @@ import me.zhanghai.android.files.filelist.data.TrailLiveData
 import me.zhanghai.android.files.filelist.data.fileItemSetOf
 import me.zhanghai.android.files.filelist.ui.FileItemListener
 import me.zhanghai.android.files.filelist.ui.FileListBottomBarAction
-import me.zhanghai.android.files.filelist.ui.FileListFabAction
 import me.zhanghai.android.files.filelist.ui.FileListSelectionAction
 import me.zhanghai.android.files.filelist.ui.FileListTopBarAction
 import me.zhanghai.android.files.filelist.ui.ScrollPosition
@@ -368,10 +367,6 @@ class FileListViewModel : ViewModel(), FileItemListener {
 
     private var lastIsSearching = false
 
-    fun setFabExpanded(expanded: Boolean) {
-        _uiState.update { it.copy(isFabExpanded = expanded) }
-    }
-
     fun setNavigationOpen(open: Boolean) {
         _uiState.update { it.copy(isNavigationOpen = open) }
     }
@@ -614,6 +609,8 @@ class FileListViewModel : ViewModel(), FileItemListener {
 
     internal fun onTopBarAction(action: FileListTopBarAction) {
         when (action) {
+            FileListTopBarAction.CREATE_FILE -> showDialog(FileListDialog.CreateFile)
+            FileListTopBarAction.CREATE_DIRECTORY -> showDialog(FileListDialog.CreateDirectory)
             FileListTopBarAction.VIEW_LIST -> viewType = FileViewType.LIST
             FileListTopBarAction.VIEW_GRID -> viewType = FileViewType.GRID
             FileListTopBarAction.SORT_BY_NAME -> setSortBy(By.NAME)
@@ -744,16 +741,6 @@ class FileListViewModel : ViewModel(), FileItemListener {
             FileListBottomBarAction.PASTE, FileListBottomBarAction.EXTRACT_HERE ->
                 pasteFiles(currentPath)
         }
-    }
-
-    internal fun onFabAction(action: FileListFabAction) {
-        showDialog(
-            when (action) {
-                FileListFabAction.CREATE_FILE -> FileListDialog.CreateFile
-                FileListFabAction.CREATE_DIRECTORY -> FileListDialog.CreateDirectory
-            }
-        )
-        setFabExpanded(false)
     }
 
     override fun openFile(file: FileItem) {
@@ -1096,7 +1083,6 @@ internal data class FileListUiState(
     val topBar: TopBar = TopBar(),
     val selectionBar: SelectionBar = SelectionBar(),
     val bottomBar: BottomBar = BottomBar(),
-    val isFabExpanded: Boolean = false,
     val isNavigationOpen: Boolean = false, // the modal navigation drawer
     val dialog: FileListDialog? = null,
     // Separate from dialog: may be shown on resume over another dialog.
