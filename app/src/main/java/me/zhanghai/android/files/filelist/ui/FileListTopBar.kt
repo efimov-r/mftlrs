@@ -166,7 +166,6 @@ private fun subtitleText(subtitle: FileListUiState.Subtitle?): String =
 internal fun FileListTopBar(
     state: FileListUiState.TopBar,
     selectionBar: FileListUiState.SelectionBar, // при скрытии гаснет со старыми заголовком и пунктами
-    onNavigationClick: () -> Unit,
     onSearchExpand: () -> Unit,
     onSearchCollapse: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
@@ -180,7 +179,6 @@ internal fun FileListTopBar(
     Box(modifier = Modifier.fillMaxSize()) {
         MainBar(
             state = state,
-            onNavigationClick = onNavigationClick,
             onSearchExpand = onSearchExpand,
             onSearchCollapse = onSearchCollapse,
             onSearchQueryChange = onSearchQueryChange,
@@ -207,7 +205,6 @@ internal fun FileListTopBar(
 @Composable
 private fun MainBar(
     state: FileListUiState.TopBar,
-    onNavigationClick: () -> Unit,
     onSearchExpand: () -> Unit,
     onSearchCollapse: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
@@ -237,16 +234,16 @@ private fun MainBar(
                 modifier = Modifier.weight(1f),
             )
         } else {
-            BarIcon(
-                iconRes = R.drawable.menu_icon_control_normal_24dp,
-                descriptionRes = R.string.open_navigation_drawer,
-                onClick = onNavigationClick,
-            )
-            Spacer(modifier = Modifier.width(TITLE_START - 48.dp - dimensionResource(R.dimen.file_list_toolbar_padding_start)))
+            // Без значка слева заголовок — у края экрана с обычным отступом
             Title(
                 title = fileListTitle(state.pickOptions),
                 subtitle = subtitleText(state.subtitle),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(
+                        start = dimensionResource(R.dimen.screen_edge_margin) -
+                            dimensionResource(R.dimen.file_list_toolbar_padding_start),
+                    ),
             )
             CreateMenu(onAction)
             BarIcon(

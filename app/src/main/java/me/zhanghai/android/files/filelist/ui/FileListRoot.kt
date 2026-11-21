@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.graphics.Insets
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java8.nio.file.Path
@@ -19,10 +20,9 @@ import me.zhanghai.android.files.filelist.FileListPermissionDialog
 import me.zhanghai.android.files.filelist.FileListViewModel
 import me.zhanghai.android.files.navigation.NavigationItem
 import me.zhanghai.android.files.navigation.NavigationItemListLiveData
-import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.util.valueCompat
 
-// Главный экран целиком: «Назад», боковая панель, FileListScreen, диалоги. Состояния элементов
+// Главный экран целиком: «Назад», панель мест, FileListScreen, диалоги. Состояния элементов
 // Compose (прокрутка, поле имени) и отступы под системные панели хранит FileListActivity
 @Composable
 internal fun FileListRoot(
@@ -34,7 +34,6 @@ internal fun FileListRoot(
     onCreateFileNameFocused: () -> Unit,
     navigationListener: NavigationItem.Listener,
     onTitleChange: (String) -> Unit,
-    onNavigationClick: () -> Unit,
     onNavigationOpenChange: (Boolean) -> Unit,
     onCopyPath: (Path) -> Unit,
     onOpenInNewTask: (Path) -> Unit,
@@ -48,16 +47,21 @@ internal fun FileListRoot(
 
     // Порядок как у колбэков фрагмента: добавленный позже срабатывает первым. Условия — только
     // через enabled: BackHandler, появившийся в композиции позже, встал бы в начало очереди
-    FileListExitConfirmation(enabled = state.topBar.pickOptions == null)
+    FileListExitConfirmation(
+        enabled = state.topBar.pickOptions == null,
+        windowInsets = windowInsets,
+    )
     BackHandler(enabled = breadcrumbData != null && breadcrumbData.selectedIndex > 0) { viewModel.navigateUp() }
     BackHandler(enabled = state.topBar.isSearchExpanded) { viewModel.collapseSearch() }
     BackHandler(enabled = state.selectionBar.isVisible) { viewModel.stopSelectionMode() }
-    BackHandler(enabled = state.isNavigationOpen) { onNavigationOpenChange(false) }
+    // Нижнюю панель мест «Назад» закрывает сама: у неё своё окно
+
+    val isFabVisible = !LocalConfiguration.current.isPersistentNavigation &&
+        !state.topBar.isSearchExpanded &&
+        !state.selectionBar.isVisible
 
     FileListNavigation(
         isOpen = state.isNavigationOpen,
-        isPersistentOpen = Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN
-            .observeAsState(Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.valueCompat).value,
         windowInsets = windowInsets,
         items = NavigationItemListLiveData.observeAsState(NavigationItemListLiveData.valueCompat).value,
         currentPath = viewModel.currentPathLiveData.observeAsState().value,
@@ -71,7 +75,6 @@ internal fun FileListRoot(
                 FileListTopBar(
                     state = state.topBar,
                     selectionBar = state.selectionBar,
-                    onNavigationClick = onNavigationClick,
                     onSearchExpand = { viewModel.expandSearch() },
                     onSearchCollapse = { viewModel.collapseSearch() },
                     onSearchQueryChange = { viewModel.onSearchQueryChange(it) },
@@ -110,8 +113,10 @@ internal fun FileListRoot(
             },
             fab = { bottomPadding, endPadding ->
                 FileListFab(
+                    visible = isFabVisible,
                     bottomPadding = bottomPadding,
                     endPadding = endPadding,
+                    onClick = { onNavigationOpenChange(true) },
                 )
             },
         )

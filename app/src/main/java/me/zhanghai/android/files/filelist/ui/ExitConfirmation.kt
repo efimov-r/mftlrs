@@ -24,13 +24,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.Insets
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.ui.compose.MftlrsBottomSheet
 
 // «Назад» спрашивает: закрыть приложение, свернуть или остаться.
 // Ставить раньше остальных BackHandler экрана: позже добавленный срабатывает первым
 @Composable
-internal fun FileListExitConfirmation(enabled: Boolean) {
+internal fun FileListExitConfirmation(
+    enabled: Boolean,
+    windowInsets: Insets, // px
+) {
     val activity = requireNotNull(LocalActivity.current)
     var visible by remember { mutableStateOf(false) }
 
@@ -38,6 +42,7 @@ internal fun FileListExitConfirmation(enabled: Boolean) {
 
     ExitSheet(
         visible = visible,
+        windowInsets = windowInsets,
         onClose = { activity.finishAndRemoveTask() }, // и убрать из недавних
         onMinimize = {
             visible = false
@@ -50,6 +55,7 @@ internal fun FileListExitConfirmation(enabled: Boolean) {
 @Composable
 private fun ExitSheet(
     visible: Boolean,
+    windowInsets: Insets,
     onClose: () -> Unit,
     onMinimize: () -> Unit,
     onDismissRequest: () -> Unit,
@@ -57,6 +63,7 @@ private fun ExitSheet(
     MftlrsBottomSheet(
         visible = visible,
         onDismissRequest = onDismissRequest,
+        windowInsets = windowInsets,
     ) {
         Column(
             modifier = Modifier

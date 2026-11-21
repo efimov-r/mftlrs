@@ -42,7 +42,6 @@ import me.zhanghai.android.files.filelist.ui.isPersistentNavigation
 import me.zhanghai.android.files.filelist.ui.scrollPosition
 import me.zhanghai.android.files.filelist.ui.scrollTo
 import me.zhanghai.android.files.navigation.NavigationItem
-import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.terminal.Terminal
 import me.zhanghai.android.files.ui.theme.MftlrsTheme
 import me.zhanghai.android.files.util.asFileName
@@ -55,7 +54,6 @@ import me.zhanghai.android.files.util.layoutInNavigation
 import me.zhanghai.android.files.util.layoutInStatusBar
 import me.zhanghai.android.files.util.showToast
 import me.zhanghai.android.files.util.startActivitySafe
-import me.zhanghai.android.files.util.valueCompat
 
 // The whole screen is FileListRoot in Compose, the logic and the screen
 // state are in FileListViewModel. This activity executes the one-time events, keeps the states of
@@ -90,7 +88,6 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
                     onCreateFileNameFocused = { isCreateFileNameFocusRequested = false },
                     navigationListener = this@FileListActivity,
                     onTitleChange = { title = it },
-                    onNavigationClick = { onNavigationClick() },
                     onNavigationOpenChange = { setNavigationOpen(it) },
                     onCopyPath = { copyPath(it) },
                     onOpenInNewTask = { startActivitySafe(createOpenInNewTaskIntent(it)) },
@@ -186,17 +183,7 @@ class FileListActivity : AppActivity(), NavigationItem.Listener {
         }
     }
 
-    private fun onNavigationClick() {
-        if (resources.configuration.isPersistentNavigation) {
-            Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.putValue(
-                !Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.valueCompat
-            )
-        } else {
-            setNavigationOpen(true)
-        }
-    }
-
-    // The modal navigation drawer; the persistent one is FILE_LIST_PERSISTENT_DRAWER_OPEN.
+    // The bottom sheet of places; the persistent panel in a wide window is always shown.
     private fun setNavigationOpen(open: Boolean) {
         viewModel.setNavigationOpen(open && !resources.configuration.isPersistentNavigation)
     }

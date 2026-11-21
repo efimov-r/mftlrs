@@ -36,12 +36,6 @@ object Settings {
             Paths.get(Environment.getExternalStorageDirectory().absolutePath)
         )
 
-    val FILE_LIST_PERSISTENT_DRAWER_OPEN: SettingLiveData<Boolean> =
-        BooleanSettingLiveData(
-            R.string.pref_key_file_list_persistent_drawer_open,
-            R.bool.pref_default_value_file_list_persistent_drawer_open
-        )
-
     val FILE_LIST_SHOW_HIDDEN_FILES: SettingLiveData<Boolean> =
         BooleanSettingLiveData(
             R.string.pref_key_file_list_show_hidden_files,
